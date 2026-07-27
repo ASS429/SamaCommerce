@@ -1,24 +1,38 @@
-# SamaCommerce — API Laravel 13 (PHP 8.4) pour Render (runtime: docker)
+# SamaCommerce — API Laravel 13 (PHP 8.4 + Apache) pour Render (runtime: docker)
 # Build context = apps/api (rootDir dans render.yaml).
 # NB : composer.lock (Symfony 8.1 / Laravel 13.17) exige PHP >= 8.4.1.
-FROM php:8.4-cli
+# Apache/mod_php remplace `php artisan serve` (serveur de DEV, instable sous
+# rafales de requêtes SPA → connexions coupées constatées en prod).
+FROM php:8.4-apache
 
 # Dépendances système + extensions PHP (pdo_pgsql pour Supabase).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libpq-dev libzip-dev libicu-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip intl bcmath \
+    && docker-php-ext-install pdo pdo_pgsql zip intl bcmath opcache \
+    && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
+
+# Apache : servir Laravel depuis /public + limites adaptées au free tier (512 Mo).
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+# Recette officielle docker-php pour déplacer le DocumentRoot.
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
+    && printf '<IfModule mpm_prefork_module>\n  StartServers 2\n  MinSpareServers 2\n  MaxSpareServers 4\n  MaxRequestWorkers 10\n  MaxConnectionsPerChild 500\n</IfModule>\n' > /etc/apache2/conf-available/lowmem.conf \
+    && a2enconf lowmem
+
+# Opcache (perfs) + limite mémoire PHP raisonnable.
+RUN printf 'opcache.enable=1\nopcache.memory_consumption=64\nmemory_limit=192M\n' > /usr/local/etc/php/conf.d/samacommerce.ini
 
 # Composer (copié depuis l'image officielle).
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 ENV APP_ENV=production
-EXPOSE 8000
 
-# Migrations + serveur sur le port fourni par Render ($PORT).
+# Migrations/seed puis Apache sur le port fourni par Render ($PORT).
 CMD ["sh", "start.sh"]

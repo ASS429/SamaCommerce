@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Démarrage de l'API sur Render : prépare l'app puis sert sur $PORT.
+# Démarrage de l'API sur Render : prépare l'app puis sert via Apache sur $PORT.
 set -e
 
 # APP_KEY : idéalement défini en variable d'env Render (php artisan key:generate --show
@@ -24,8 +24,9 @@ php artisan db:seed-if-empty || true
 # empêcher le démarrage). On N'utilise PAS route:cache (incompatible closures).
 php artisan config:cache || true
 
-# Multi-workers du serveur PHP intégré (sinon mono-requête : une rafale du SPA
-# sature le backlog → connexions coupées). Render peut surcharger via env.
-export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-8}"
+# Apache doit écouter le port fourni par Render.
+PORT="${PORT:-80}"
+sed -ri "s/^Listen 80$/Listen ${PORT}/" /etc/apache2/ports.conf
+sed -ri "s/:80>/:${PORT}>/" /etc/apache2/sites-available/000-default.conf
 
-exec php artisan serve --host 0.0.0.0 --port "${PORT:-8000}"
+exec apache2-foreground

@@ -13,9 +13,12 @@ fi
 
 php artisan config:clear
 
-# Schéma sur Supabase (idempotent). Ne SEED pas ici : lancer une fois à la main
-# via le Shell Render :  php artisan db:seed --force
+# Schéma sur Supabase (idempotent).
 php artisan migrate --force
+
+# Peuple la démo au TOUT PREMIER démarrage (base vide) — Render free n'a pas de
+# Shell. Ignoré ensuite (ne duplique jamais). Non bloquant.
+php artisan db:seed-if-empty || true
 
 # Cache config pour la performance (non bloquant : un échec ne doit jamais
 # empêcher le démarrage). On N'utilise PAS route:cache (incompatible closures).

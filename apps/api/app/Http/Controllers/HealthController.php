@@ -33,6 +33,7 @@ class HealthController extends Controller
         return response()->json([
             'status' => $status,
             'version' => (string) config('app.version', '3.0.0'),
+            'stats_cache' => (bool) config('app.stats_cache', false), // aide au diagnostic
             'time' => now()->toIso8601String(),
             'services' => [
                 'database' => $db,

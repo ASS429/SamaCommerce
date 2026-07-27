@@ -31,6 +31,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Version applicative
+    |--------------------------------------------------------------------------
+    |
+    | Exposée par /api/health : permet de vérifier quel build est réellement en
+    | ligne (indispensable pour diagnostiquer après un déploiement).
+    |
+    */
+
+    'version' => env('APP_VERSION', '3.1.0'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

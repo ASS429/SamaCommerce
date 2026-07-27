@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────
+# SamaCommerce — monorepo (api / web / mobile / ia)
+# ─────────────────────────────────────────────
+
+# Secrets & environnement (JAMAIS commités)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Sauvegardes des .git de scaffolding (renommés lors de la consolidation monorepo)
+_git_laravel_skeleton_bak/
+_git_expo_bak/
+apps/api/_git_laravel_skeleton_bak/
+apps/mobile/_git_expo_bak/
+
+# ─── PHP / Laravel (apps/api) ───
+/apps/api/vendor/
+/apps/api/node_modules/
+/apps/api/storage/*.key
+/apps/api/storage/logs/*
+/apps/api/storage/framework/cache/*
+/apps/api/storage/framework/sessions/*
+/apps/api/storage/framework/views/*
+/apps/api/bootstrap/cache/*.php
+/apps/api/public/storage
+/apps/api/.phpunit.result.cache
+/apps/api/database/*.sqlite
+/apps/api/database/*.sqlite-journal
+
+# ─── Node / Vite / React (apps/web) ───
+node_modules/
+/apps/web/dist/
+/apps/web/dev-dist/
+/apps/web/.vite/
+**/*.tsbuildinfo
+
+# ─── Expo / React Native (apps/mobile) ───
+/apps/mobile/.expo/
+/apps/mobile/dist/
+/apps/mobile/web-build/
+
+# ─── Python / FastAPI (services/ia) ───
+/services/ia/.venv/
+**/__pycache__/
+**/*.pyc
+
+# ─── OS / éditeurs ───
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

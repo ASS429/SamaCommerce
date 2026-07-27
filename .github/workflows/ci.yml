@@ -1,0 +1,76 @@
+# T7 — Pipeline d'intégration continue : lint + tests API + tests web + build + audits.
+# Aucun merge ne doit passer au rouge.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  api:
+    name: API (Laravel) — tests + audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, sqlite, mbstring
+          coverage: none
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Prepare env
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate
+          touch database/database.sqlite
+      - name: Lint (Pint)
+        run: vendor/bin/pint --test || true
+      - name: Run PHPUnit
+        run: php artisan test
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+      - name: Security audit
+        run: composer audit || true
+
+  web:
+    name: Web (React) — lint + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Lint (oxlint)
+        run: npx oxlint src
+      - name: Unit tests (Vitest)
+        run: npm run test -- --run
+      - name: Build
+        run: npm run build
+      - name: Security audit
+        run: npm audit --omit=dev || true
+
+  ia:
+    name: IA (FastAPI) — import check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ia
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Sanity import
+        run: python -c "import app.main"

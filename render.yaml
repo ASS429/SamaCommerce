@@ -40,13 +40,14 @@ services:
         sync: false          # postgresql://postgres.<ref>:<pwd>@aws-0-<region>.pooler.supabase.com:5432/postgres
       - key: DB_SSLMODE
         value: require
-      # ─ Sessions/queue en base ; CACHE en FICHIER : le store database subit
-      #   des collisions d'écritures concurrentes (500) depuis qu'Apache
-      #   parallélise les requêtes (instance unique → file est idéal) ─
+      # ─ Sessions/cache/queue en base. Le cache FICHIER produisait des 500 sous
+      #   requêtes concurrentes (race sur storage/framework/cache) ; le store
+      #   database s'appuie sur des écritures atomiques Postgres. Le code est de
+      #   toute façon tolérant : une panne de cache recalcule au lieu d'échouer ─
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
-        value: file
+        value: database
       - key: QUEUE_CONNECTION
         value: database
       # ─ Sécurité ─

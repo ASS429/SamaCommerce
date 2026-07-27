@@ -29,26 +29,47 @@ abstract class Controller
     {
         $uid = $request->user()->id;
         $bid = $request->user()->current_boutique_id ?? 0;
-        $ver = static::statsVersion($uid);
 
-        return Cache::remember("stats:{$uid}:{$bid}:{$ver}:{$key}", $ttl, $callback);
+        // TOLÉRANCE AUX PANNES : le cache est une optimisation, jamais une
+        // dépendance. Sous requêtes concurrentes, un store peut échouer
+        // (collision d'écriture fichier/DB) — on renvoie alors la valeur
+        // calculée directement plutôt que de casser la page de statistiques.
+        try {
+            $ver = static::statsVersion($uid);
+
+            return Cache::remember("stats:{$uid}:{$bid}:{$ver}:{$key}", $ttl, $callback);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $callback();
+        }
     }
 
     protected static function statsVersion(int $uid): int
     {
-        $v = Cache::get("stats_ver:{$uid}");
-        if ($v === null) {
-            Cache::forever("stats_ver:{$uid}", 1);
+        try {
+            $v = Cache::get("stats_ver:{$uid}");
+            if ($v === null) {
+                Cache::forever("stats_ver:{$uid}", 1);
 
-            return 1;
+                return 1;
+            }
+
+            return (int) $v;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return 1; // version neutre : on recalcule au lieu d'échouer
         }
-
-        return (int) $v;
     }
 
     /** Périme le cache stats d'un tenant (à appeler après une écriture de vente). */
     public static function invalidateStats(int $uid): void
     {
-        Cache::forever("stats_ver:{$uid}", static::statsVersion($uid) + 1);
+        try {
+            Cache::forever("stats_ver:{$uid}", static::statsVersion($uid) + 1);
+        } catch (\Throwable $e) {
+            report($e); // au pire, les stats restent en cache jusqu'au TTL
+        }
     }
 }

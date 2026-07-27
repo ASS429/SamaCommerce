@@ -55,13 +55,13 @@ services:
         value: ""
 
   # ─── Web React (site statique) ───
+  # NB : un site statique Render n'a PAS de champ `plan` (toujours gratuit).
   - type: web
     name: samacommerce-web
     runtime: static
     rootDir: apps/web
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
-    plan: free
     envVars:
       - key: VITE_API_URL
         sync: false          # ex: https://samacommerce-api.onrender.com/api

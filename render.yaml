@@ -31,6 +31,8 @@ services:
         sync: false          # ex: https://samacommerce-api.onrender.com
       - key: LOG_CHANNEL
         value: stderr        # les logs remontent dans Render
+      - key: PHP_CLI_SERVER_WORKERS
+        value: "8"           # multi-workers pour le serveur PHP (rafales SPA : stats, nav rapide)
       # ─ Base Supabase (utiliser le CONNECTION POOLER, IPv4 — cf. DEPLOY.md) ─
       - key: DB_CONNECTION
         value: pgsql

@@ -24,4 +24,8 @@ php artisan db:seed-if-empty || true
 # empêcher le démarrage). On N'utilise PAS route:cache (incompatible closures).
 php artisan config:cache || true
 
+# Multi-workers du serveur PHP intégré (sinon mono-requête : une rafale du SPA
+# sature le backlog → connexions coupées). Render peut surcharger via env.
+export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-8}"
+
 exec php artisan serve --host 0.0.0.0 --port "${PORT:-8000}"

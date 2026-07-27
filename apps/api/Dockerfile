@@ -1,6 +1,7 @@
-# SamaCommerce — API Laravel 13 (PHP 8.3) pour Render (runtime: docker)
+# SamaCommerce — API Laravel 13 (PHP 8.4) pour Render (runtime: docker)
 # Build context = apps/api (rootDir dans render.yaml).
-FROM php:8.3-cli
+# NB : composer.lock (Symfony 8.1 / Laravel 13.17) exige PHP >= 8.4.1.
+FROM php:8.4-cli
 
 # Dépendances système + extensions PHP (pdo_pgsql pour Supabase).
 RUN apt-get update && apt-get install -y --no-install-recommends \

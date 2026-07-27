@@ -17,8 +17,8 @@ php artisan config:clear
 # via le Shell Render :  php artisan db:seed --force
 php artisan migrate --force
 
-# Cache config/routes pour la performance (env déjà disponible au runtime).
-php artisan config:cache
-php artisan route:cache
+# Cache config pour la performance (non bloquant : un échec ne doit jamais
+# empêcher le démarrage). On N'utilise PAS route:cache (incompatible closures).
+php artisan config:cache || true
 
 exec php artisan serve --host 0.0.0.0 --port "${PORT:-8000}"

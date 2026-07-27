@@ -25,17 +25,20 @@ class HealthController extends Controller
             return Http::timeout(2)->get($url.'/health')->successful();
         });
 
-        $ok = $db['ok'] && $ia['ok'];
+        // La SANTÉ HTTP ne dépend que de la base : l'IA est optionnelle (repli
+        // heuristique PHP), donc une IA absente = « degraded » mais toujours 200
+        // (sinon le health check Render échouerait alors que l'app est utilisable).
+        $status = $db['ok'] ? ($ia['ok'] ? 'ok' : 'degraded') : 'down';
 
         return response()->json([
-            'status' => $ok ? 'ok' : 'degraded',
+            'status' => $status,
             'version' => (string) config('app.version', '3.0.0'),
             'time' => now()->toIso8601String(),
             'services' => [
                 'database' => $db,
                 'ia' => $ia, // si down, l'app bascule sur l'heuristique PHP (dégradation gracieuse)
             ],
-        ], $ok ? 200 : 503);
+        ], $db['ok'] ? 200 : 503);
     }
 
     /** @param callable():bool $probe */

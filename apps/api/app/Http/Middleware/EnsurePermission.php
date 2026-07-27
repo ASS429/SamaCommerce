@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Vérifie qu'un employé possède une permission. Le propriétaire a tout.
  * Usage route: ->middleware('perm:vente')
+ * Alternatives (OU) : ->middleware('perm:stock|vente') — accès si l'employé a
+ * L'UNE des permissions (ex. un vendeur doit LIRE les produits pour le POS).
  */
 class EnsurePermission
 {
@@ -20,14 +22,16 @@ class EnsurePermission
         }
 
         $perms = $request->attributes->get('permissions', []);
-        if (empty($perms[$permission])) {
-            return response()->json([
-                'error' => 'Accès refusé',
-                'permission' => $permission,
-                'message' => "Vous n'avez pas la permission « {$permission} ». Contactez le propriétaire.",
-            ], 403);
+        foreach (explode('|', $permission) as $p) {
+            if (! empty($perms[$p])) {
+                return $next($request);
+            }
         }
 
-        return $next($request);
+        return response()->json([
+            'error' => 'Accès refusé',
+            'permission' => $permission,
+            'message' => "Vous n'avez pas la permission « {$permission} ». Contactez le propriétaire.",
+        ], 403);
     }
 }

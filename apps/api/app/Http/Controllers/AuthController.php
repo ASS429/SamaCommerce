@@ -41,6 +41,22 @@ class AuthController extends Controller
         return $user->createToken($device)->plainTextToken;
     }
 
+    /**
+     * Utilisateur enrichi pour la réponse de login : l'UI a besoin de
+     * is_employee/permissions IMMÉDIATEMENT pour filtrer la navigation
+     * (sans attendre le /auth/me asynchrone).
+     */
+    private function userPayload(User $user): array
+    {
+        $member = \App\Models\BoutiqueMember::where('member_id', $user->id)
+            ->where('status', 'accepted')->first();
+
+        return array_merge($user->toArray(), [
+            'is_employee' => (bool) $member,
+            'permissions' => $member?->permissions,
+        ]);
+    }
+
     public function register(Request $request)
     {
         $data = $request->validate([
@@ -131,7 +147,7 @@ class AuthController extends Controller
         $this->auditLogin($request, $user->username, true);
 
         return response()->json([
-            'user' => $user,
+            'user' => $this->userPayload($user),
             'token' => $this->issueToken($user, $request),
         ]);
     }
@@ -162,7 +178,7 @@ class AuthController extends Controller
         $this->auditLogin($request, $user->username, true);
 
         return response()->json([
-            'user' => $user,
+            'user' => $this->userPayload($user),
             'token' => $this->issueToken($user, $request),
         ]);
     }

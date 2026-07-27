@@ -29,8 +29,10 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         // S8 — Limiteurs de débit nommés.
-        // Global par utilisateur (ou IP si anonyme) : 90 requêtes / minute.
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(90)
+        // Global par utilisateur (ou IP si anonyme). 300/min : un SPA réel
+        // rafale légitimement (Chiffres ≈ 10 appels, navigation rapide) — 90
+        // déclenchait des 429 en usage normal au comptoir.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(300)
             ->by($request->user()?->id ?: $request->ip()));
 
         // L'IA est coûteuse (micro-service ML) : 20 appels / minute / utilisateur.

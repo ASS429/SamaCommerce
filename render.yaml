@@ -40,11 +40,13 @@ services:
         sync: false          # postgresql://postgres.<ref>:<pwd>@aws-0-<region>.pooler.supabase.com:5432/postgres
       - key: DB_SSLMODE
         value: require
-      # ─ Sessions/cache/queue en base (pas de Redis) ─
+      # ─ Sessions/queue en base ; CACHE en FICHIER : le store database subit
+      #   des collisions d'écritures concurrentes (500) depuis qu'Apache
+      #   parallélise les requêtes (instance unique → file est idéal) ─
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
-        value: database
+        value: file
       - key: QUEUE_CONNECTION
         value: database
       # ─ Sécurité ─

@@ -2,18 +2,16 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * L'application est une API : la racine redirige vers le healthcheck
+     * (route « cacheable », sans closure — cf. contrainte route:cache).
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_root_redirects_to_health(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/')->assertRedirect('/api/health');
     }
 }

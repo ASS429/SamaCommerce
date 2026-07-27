@@ -77,9 +77,10 @@ Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function ()
     Route::match(['put', 'patch'], '/members/{id}', [MemberController::class, 'update']);
     Route::delete('/members/{id}', [MemberController::class, 'destroy']);
 
-    // Produits
+    // Produits — la LECTURE de la liste est aussi ouverte aux vendeurs (POS) :
+    // un employé avec la seule permission « vente » doit voir les produits.
+    Route::get('/products', [ProductController::class, 'index'])->middleware('perm:stock|vente');
     Route::middleware('perm:stock')->group(function () {
-        Route::get('/products', [ProductController::class, 'index']);
         Route::get('/products/trash', [ProductController::class, 'trash']); // T4 corbeille
         Route::get('/products/{id}', [ProductController::class, 'show']);
         Route::post('/products', [ProductController::class, 'store']);
@@ -88,9 +89,9 @@ Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function ()
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 
-    // Catégories
+    // Catégories — lecture ouverte aux vendeurs (filtres du POS).
+    Route::get('/categories', [CategoryController::class, 'index'])->middleware('perm:categories|vente');
     Route::middleware('perm:categories')->group(function () {
-        Route::get('/categories', [CategoryController::class, 'index']);
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::match(['put', 'patch'], '/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);

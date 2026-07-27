@@ -10,19 +10,29 @@ const cspProd: Plugin = {
   name: 'html-csp-prod',
   apply: 'build',
   transformIndexHtml(html) {
+    // L'API est sur un autre domaine (Render) : on autorise son origine dans
+    // connect-src, dérivée de VITE_API_URL au build (pas de domaine en dur).
+    let apiOrigin = ''
+    try {
+      const u = process.env.VITE_API_URL || ''
+      apiOrigin = u ? new URL(u).origin : ''
+    } catch { apiOrigin = '' }
+    const connectSrc = ["'self'", apiOrigin].filter(Boolean).join(' ')
+
+    // NB : `frame-ancestors` est ignoré dans une balise <meta> (nécessite un
+    // en-tête HTTP) → on ne le met pas ici pour éviter un warning console.
     const csp = [
       "default-src 'self'",
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
-      "connect-src 'self'",
+      `connect-src ${connectSrc}`,
       "media-src 'self' blob:",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
-      "frame-ancestors 'none'",
       "form-action 'self'",
       'upgrade-insecure-requests',
     ].join('; ')

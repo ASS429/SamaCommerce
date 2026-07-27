@@ -17,6 +17,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cache des statistiques (T13)
+    |--------------------------------------------------------------------------
+    |
+    | Désactivé par défaut : à l'échelle d'une boutique les statistiques se
+    | calculent en quelques millisecondes, alors qu'un store de cache en défaut
+    | provoquait des erreurs 500 en production. Activer avec STATS_CACHE=true
+    | seulement si le volume de données le justifie.
+    |
+    */
+
+    'stats_cache' => env('STATS_CACHE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

@@ -27,13 +27,22 @@ abstract class Controller
      */
     protected function tenantCachedStats(Request $request, string $key, \Closure $callback, int $ttl = 300)
     {
+        // Le cache est DÉSACTIVÉ par défaut en production.
+        //
+        // Historique : mis en cache (T13), ces 4 statistiques renvoyaient des 500
+        // en production dès que le store de cache était en défaut (race du driver
+        // fichier, table absente en base). À l'échelle d'une boutique, les requêtes
+        // s'exécutent en quelques millisecondes : le cache apportait un gain
+        // négligeable pour un mode de panne bien réel. On calcule donc directement,
+        // et le cache ne peut être réactivé qu'explicitement (STATS_CACHE=true).
+        if (! config('app.stats_cache', false)) {
+            return $callback();
+        }
+
         $uid = $request->user()->id;
         $bid = $request->user()->current_boutique_id ?? 0;
 
-        // TOLÉRANCE AUX PANNES : le cache est une optimisation, jamais une
-        // dépendance. Sous requêtes concurrentes, un store peut échouer
-        // (collision d'écriture fichier/DB) — on renvoie alors la valeur
-        // calculée directement plutôt que de casser la page de statistiques.
+        // Même activé, le cache reste une optimisation et jamais une dépendance.
         try {
             $ver = static::statsVersion($uid);
 
@@ -66,6 +75,10 @@ abstract class Controller
     /** Périme le cache stats d'un tenant (à appeler après une écriture de vente). */
     public static function invalidateStats(int $uid): void
     {
+        if (! config('app.stats_cache', false)) {
+            return; // cache désactivé : rien à invalider
+        }
+
         try {
             Cache::forever("stats_ver:{$uid}", static::statsVersion($uid) + 1);
         } catch (\Throwable $e) {

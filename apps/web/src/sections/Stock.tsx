@@ -5,6 +5,7 @@ const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'))
 import { confirmAsync } from '../lib/toast'
 import { haptic } from '../lib/haptics'
 import { SkeletonList } from '../components/Skeleton'
+import { productIcon, productTint } from '../lib/productIcon'
 
 export default function Stock() {
   const [products, setProducts] = useState<Product[]>([])
@@ -22,6 +23,7 @@ export default function Stock() {
   useEffect(() => { localStorage.setItem('sc_stock_sort', sort) }, [sort])
 
   const catName = (id: number | null) => categories.find((c) => c.id === id)?.name
+  const catEmoji = (id: number | null) => categories.find((c) => c.id === id)?.emoji
   const filtered = products
     .filter((p) => filter === 'tous' || p.category_id === filter)
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search))
@@ -89,13 +91,20 @@ export default function Stock() {
             <span className="produit-cat-badge">{catName(p.category_id) || 'Sans catégorie'}</span>
             <span className={`produit-stock-pill ${pillClass(ds)}`}>{stockTxt} en stock</span>
           </div>
-          <div className="produit-card-body">
+          <div className="produit-card-body produit-card-body--icon">
+            {/* Même pictogramme qu'au point de vente : le produit se reconnaît
+                à l'identique dans tout l'outil. */}
+            <span className="produit-icon" style={{ background: productTint(p.name) }} aria-hidden="true">
+              {productIcon(p.name, catEmoji(p.category_id))}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
             <div className="produit-name">{p.name}{(p.units?.length ?? 0) > 0 && <span className="produit-cat-badge" style={{ marginLeft: 6 }}>+ gros</span>}</div>
             {p.scent && <div className="produit-desc">{p.scent}</div>}
             <div className="produit-prices">
               <span className="produit-price-main">{fcfa(p.price)}{pesable && <span style={{ fontSize: 12, fontWeight: 500 }}> /{dl}</span>}</span>
               <span className="produit-price-achat">achat {fcfa(p.price_achat)}{pesable ? ` /${dl}` : ''}</span>
               {p.prix_min != null && <span className="produit-price-achat" style={{ color: 'var(--warning)' }}>plancher {fcfa(p.prix_min)}</span>}
+            </div>
             </div>
           </div>
           <div className="produit-card-actions">

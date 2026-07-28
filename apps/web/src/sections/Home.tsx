@@ -118,18 +118,27 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
       </div>
 
       {guide && (
+        // Parcours en 3 étapes montré par l'IMAGE : une liste de phrases est
+        // illisible pour un commerçant peu alphabétisé, et elle repoussait le
+        // bouton « Vendre » hors de l'écran. Ici, 3 pictogrammes et 1 mot.
         <div className="guide">
-          <div style={{ flex: 1 }}>
-            <div className="guide-title">👋 Bienvenue !</div>
-            <ol className="guide-list">
-              <li>Créez vos <strong>Catégories</strong> pour organiser vos produits</li>
-              <li>Ajoutez vos produits dans <strong>Stock</strong></li>
-              <li>Appuyez sur <strong>Vendre</strong> pour commencer</li>
-              <li>Consultez <strong>Chiffres</strong> pour vos gains</li>
-              <li>Gérez les dettes clients dans <strong>Crédits</strong></li>
-            </ol>
+          <div className="guide-steps">
+            <button className="guide-step" onClick={() => onNavigate('stock')}>
+              <span className="guide-step-icon" style={{ background: '#DBEAFE' }}>📦</span>
+              <span>Remplir</span>
+            </button>
+            <span className="guide-arrow" aria-hidden="true">→</span>
+            <button className="guide-step" onClick={() => onNavigate('vente')}>
+              <span className="guide-step-icon" style={{ background: '#DCFCE7' }}>🛒</span>
+              <span>Vendre</span>
+            </button>
+            <span className="guide-arrow" aria-hidden="true">→</span>
+            <button className="guide-step" onClick={() => onNavigate('rapports')}>
+              <span className="guide-step-icon" style={{ background: '#FEF3C7' }}>💰</span>
+              <span>Gagner</span>
+            </button>
           </div>
-          <button className="guide-close" onClick={() => setGuide(false)}>✕</button>
+          <button className="guide-close" onClick={() => setGuide(false)} aria-label="Masquer le guide">✕</button>
         </div>
       )}
 

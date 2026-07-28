@@ -6,6 +6,7 @@ import { SkeletonGrid } from '../components/Skeleton'
 import ReceiptModal from '../components/ReceiptModal'
 import { confetti } from '../lib/celebrate'
 import { enqueueSale, uuid, type PendingSale } from '../lib/offlineQueue'
+import { productIcon, productTint } from '../lib/productIcon'
 import { flyToCart } from '../lib/flyToCart'
 import {
   type CartLine, lFactor, lCount, lTotal, lRefTotal, lCogs, lLabel, lPerDisplay, qtyStr, cartTotal,
@@ -29,6 +30,8 @@ export default function Vente() {
 
   const isEmp = !!getUser()?.is_employee
   const negoOf = (p: Product) => p.negociable ?? categories.find((c) => c.id === p.category_id)?.negociable ?? false
+  /** Emoji de la catégorie : sert de repli quand le nom n'est pas reconnu. */
+  const catEmoji = (p: Product) => categories.find((c) => c.id === p.category_id)?.emoji
 
   const visible = (activeCat === 'tous' ? products : products.filter((p) => p.category_id === activeCat))
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search))
@@ -122,10 +125,22 @@ export default function Vente() {
                     const pesable = (p.unite_base || 'piece') !== 'piece'
                     const ds = p.stock / df
                     return (
-                    <button key={p.id} className="vente-card" disabled={p.stock <= 0} style={{ opacity: p.stock <= 0 ? 0.5 : 1 }} onClick={(e) => addToCart(p, e)}>
-                      <div className="vn">{p.name} {negoOf(p) && <span title="Négociable">💬</span>}{(p.units?.length ?? 0) > 0 && <span title="Vente en gros possible">📦</span>}</div>
-                      <div className="vp">{fcfa(p.price)}{pesable && <span style={{ fontSize: 11, fontWeight: 500 }}> /{dl}</span>}</div>
-                      <div className="vs">Stock : {Number.isInteger(ds) ? ds : ds.toFixed(2)} {pesable ? dl : ''}</div>
+                    <button key={p.id} className="vente-card" disabled={p.stock <= 0} onClick={(e) => addToCart(p, e)}
+                      title={`${p.name} — ${fcfa(p.price)}`}>
+                      {/* Le pictogramme domine : on reconnaît la marchandise sans lire. */}
+                      <span className="v-icon" style={{ background: productTint(p.name) }} aria-hidden="true">
+                        {productIcon(p.name, catEmoji(p))}
+                      </span>
+                      <span className="v-body">
+                        <span className="vn">{p.name}</span>
+                        <span className="vp">{fcfa(p.price)}{pesable && <small> /{dl}</small>}</span>
+                      </span>
+                      {/* Pastille de stock : la COULEUR porte l'information, le
+                          nombre la précise. Rouge = il n'y en a presque plus. */}
+                      <span className={`v-stock ${ds <= 0 ? 'is-out' : ds <= 5 ? 'is-low' : 'is-ok'}`}>
+                        {p.stock <= 0 ? '✕' : Number.isInteger(ds) ? ds : ds.toFixed(1)}
+                      </span>
+                      {negoOf(p) && <span className="v-tag" title="Prix négociable">💬</span>}
                     </button>
                     )
                   })}
@@ -191,6 +206,10 @@ function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
   return (
     <div style={{ padding: '10px 0', borderBottom: '1px solid var(--line-soft)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Le pictogramme suit le produit jusque dans le panier. */}
+        <span className="produit-icon" style={{ width: 34, height: 34, fontSize: 19, borderRadius: 11, background: productTint(p.name) }} aria-hidden="true">
+          {productIcon(p.name)}
+        </span>
         <div className="sora" style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{p.name}</div>
         <div className="sora" style={{ fontWeight: 800, color: 'var(--green-dark)' }}>{fcfa(total)}</div>
         <button className="prd-btn prd-btn-del" style={{ padding: '4px 8px' }} aria-label="Retirer" onClick={onRemove}>✕</button>

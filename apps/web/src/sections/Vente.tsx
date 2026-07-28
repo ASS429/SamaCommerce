@@ -109,7 +109,7 @@ export default function Vente() {
             Choisir produits
             <button className="badge-soft" style={{ background: 'var(--brand-tint)', color: 'var(--brand-dark)' }} onClick={() => setShowAdd(true)}>＋ Produit</button>
           </div>
-          <input className="search-bar" placeholder="🔍 Rechercher un produit (nom ou code-barres)..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="search-bar" placeholder="🔍 Chercher un produit" value={search} onChange={(e) => setSearch(e.target.value)} />
           <div className="chips">
             <button className={`chip ${activeCat === 'tous' ? 'active' : ''}`} onClick={() => setActiveCat('tous')}>Tous</button>
             {categories.map((c) => <button key={c.id} className={`chip ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>{c.emoji} {c.name}</button>)}

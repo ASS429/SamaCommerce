@@ -153,6 +153,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM San
 /* ─── PAGE HEADER / BOUTONS ─── */
 .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .page-header h2 { font-family: var(--sora); font-size: 20px; font-weight: 800; color: var(--ink); margin: 0; letter-spacing: -.3px; }
+/* Sur mobile, l'en-tete de l'application affiche deja le titre de la section :
+   le repeter juste en dessous ne fait qu'occuper la hauteur d'ecran utile. */
+@media (max-width: 1023px) { .page-header h2 { display: none; } .page-header:empty { display: none; } }
 .btn-primary { background: var(--brand); color: #fff; border: none; padding: 11px 18px; border-radius: 13px; font-family: var(--sora); font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(124,58,237,.25); white-space: nowrap; }
 .btn-primary:active { transform: scale(.97); }
 .btn-pdf { background: var(--danger-bg); color: var(--danger); border: none; padding: 9px 13px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }

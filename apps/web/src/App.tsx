@@ -270,7 +270,7 @@ export default function App() {
                 <div className="sora" style={{ fontWeight: 700 }}>{user?.username}</div>
                 <div style={{ color: 'var(--muted2)', fontSize: 11 }}>{user?.is_employee ? 'Employé' : 'Propriétaire'}</div>
               </div>
-              <button className="prd-btn prd-btn-del" style={{ marginLeft: 8 }} onClick={doLogout}>Quitter</button>
+              <button className="btn-quiet" style={{ marginLeft: 8 }} onClick={doLogout}>Quitter</button>
             </div>
           </div>
           <div className="dk-content"><div className="dk-content-inner">{section}</div></div>

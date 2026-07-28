@@ -222,6 +222,11 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM San
 .stock-count { font-family: var(--sora); font-size: 16px; font-weight: 800; padding: 0 10px; min-width: 38px; text-align: center; }
 .prd-btn { border: none; cursor: pointer; border-radius: 11px; font-size: 13px; font-weight: 700; padding: 9px 14px; font-family: var(--sora); }
 .prd-btn-edit { background: var(--brand-tint); color: var(--brand-dark); } .prd-btn-del { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+/* Bouton compact discret pour une action NEUTRE (déconnexion…). Distinct des
+   .prd-btn-del, réservés aux suppressions : un sélecteur visant une suppression
+   ne doit jamais atteindre la déconnexion. */
+.btn-quiet { cursor: pointer; border-radius: 11px; font-size: 13px; font-weight: 700; padding: 9px 14px; font-family: var(--sora); background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.btn-quiet:hover { background: var(--line-soft); color: var(--ink); }
 
 /* ─── CATEGORIES ─── */
 .categories-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px; }

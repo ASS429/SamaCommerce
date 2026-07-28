@@ -1,4 +1,5 @@
 import { fcfa, getUser } from '../lib/api'
+import Logo from './Logo'
 
 export type ReceiptItem = { name: string; qty: number; price: number }
 
@@ -17,7 +18,7 @@ export default function ReceiptModal({ items, onClose, onWhatsapp }: {
       <div className="modal-box" style={{ maxWidth: 340 }} onClick={(e) => e.stopPropagation()}>
         <div className="receipt-print">
           <div style={{ textAlign: 'center', marginBottom: 10 }}>
-            <div style={{ fontSize: 30 }}>🏪</div>
+            <Logo size={44} style={{ margin: '0 auto 6px', borderRadius: 12 }} />
             <div className="sora" style={{ fontSize: 18, fontWeight: 800 }}>{boutique}</div>
             <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{date}</div>
           </div>

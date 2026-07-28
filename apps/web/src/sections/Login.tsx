@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { login, register, forgotPassword, resetPassword, verify2fa, type User } from '../lib/api'
 import { toast } from '../lib/toast'
 import HeroBackdrop from '../components/HeroBackdrop'
+import Logo from '../components/Logo'
 
 export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login')
@@ -61,7 +62,7 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
       <HeroBackdrop />
       <div className="modal-box login-card" style={{ animation: 'none' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 18, background: 'var(--brand-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 12px' }}>🏪</div>
+          <Logo size={64} style={{ margin: '0 auto 12px', borderRadius: 18, boxShadow: '0 6px 18px rgba(30,27,75,.18)' }} />
           <div className="modal-title" style={{ marginBottom: 2 }}>Sama<span style={{ color: 'var(--brand)' }}>Commerce</span></div>
           <div style={{ color: 'var(--muted)', fontSize: 13 }}>Gestion de boutique · FCFA</div>
         </div>

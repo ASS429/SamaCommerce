@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api'
+import { PAY_METHODS } from '../lib/payments'
 
 export default function Premium({ onClose, onUpgraded }: { onClose: () => void; onUpgraded: () => void }) {
   const [phone, setPhone] = useState('')
@@ -35,12 +36,25 @@ export default function Premium({ onClose, onUpgraded }: { onClose: () => void; 
         <form onSubmit={submit} className="space-y-3 text-left">
           <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
             placeholder="Numéro de téléphone (WhatsApp de préférence)" className="w-full border rounded-lg px-3 py-2" />
-          <select value={method} onChange={(e) => setMethod(e.target.value)} className="w-full border rounded-lg px-3 py-2">
-            <option value="">-- Moyen de paiement --</option>
-            <option value="wave">Wave</option>
-            <option value="orange">Orange Money</option>
-            <option value="cash">Espèces</option>
-          </select>
+          {/* Choix illustré plutôt qu'une liste déroulante : les logos des
+              opérateurs sont reconnus d'un coup d'œil. */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Moyen de paiement</label>
+            <div className="pay-list">
+              {PAY_METHODS.map((m) => (
+                <button key={m.id} type="button"
+                  className={`pay-opt${m.tone ? ' pay-opt-' + m.tone : ''}${method === m.id ? ' pay-opt-selected' : ''}`}
+                  aria-pressed={method === m.id}
+                  onClick={() => setMethod(m.id)}>
+                  {m.logo
+                    ? <img className="pay-logo" src={m.logo} alt="" width={40} height={40} loading="lazy" />
+                    : <span className="pay-logo pay-logo-emoji">{m.emoji}</span>}
+                  <span className="pay-opt-text"><b>{m.label}</b><small>{m.sub}</small></span>
+                  <span className="pay-opt-go">{method === m.id ? '✓' : '›'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <input value="5000 F CFA" readOnly className="w-full border rounded-lg px-3 py-2 bg-gray-100" />
           <input value={`Expire le ${expStr}`} readOnly className="w-full border rounded-lg px-3 py-2 bg-gray-100" />
           <button disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold w-full disabled:opacity-60">Envoyer</button>

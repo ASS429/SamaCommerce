@@ -247,16 +247,45 @@ function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
 }
 
 function PayModal({ total, onClose, onPay, onCredit }: { total: number; onClose: () => void; onPay: (m: string) => void; onCredit: () => void }) {
+  // Le montant est affiché en grand : au comptoir, c'est l'information que le
+  // commerçant annonce au client avant de choisir le moyen de paiement.
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">💳 Choisir le paiement</div>
-        <p style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 16 }}>Total : <b style={{ color: 'var(--green)' }}>{fcfa(total)}</b></p>
-        <button className="pay-btn pay-g" onClick={() => onPay('especes')}>💵 Espèces</button>
-        <button className="pay-btn pay-b" onClick={() => onPay('wave')}>📱 Wave</button>
-        <button className="pay-btn pay-o" onClick={() => onPay('orange')}>📞 Orange Money</button>
-        <button className="pay-btn pay-p" onClick={onCredit}>📝 Crédit</button>
-        <button className="btn-cancel" style={{ width: '100%', marginTop: 4 }} onClick={onClose}>Annuler</button>
+        <div className="modal-title">Encaisser</div>
+
+        <div className="pay-amount">
+          <span className="pay-amount-label">Montant à encaisser</span>
+          <span className="pay-amount-value">{fcfa(total)}</span>
+        </div>
+
+        <div className="pay-list">
+          <button className="pay-opt pay-opt-cash" onClick={() => onPay('especes')}>
+            <span className="pay-logo pay-logo-emoji">💵</span>
+            <span className="pay-opt-text"><b>Espèces</b><small>Paiement en liquide</small></span>
+            <span className="pay-opt-go">›</span>
+          </button>
+
+          <button className="pay-opt" onClick={() => onPay('wave')}>
+            <img className="pay-logo" src="/pay/wave.png" alt="" width={40} height={40} loading="lazy" />
+            <span className="pay-opt-text"><b>Wave</b><small>Paiement mobile</small></span>
+            <span className="pay-opt-go">›</span>
+          </button>
+
+          <button className="pay-opt" onClick={() => onPay('orange')}>
+            <img className="pay-logo" src="/pay/orange-money.png" alt="" width={40} height={40} loading="lazy" />
+            <span className="pay-opt-text"><b>Orange Money</b><small>Paiement mobile</small></span>
+            <span className="pay-opt-go">›</span>
+          </button>
+
+          <button className="pay-opt pay-opt-credit" onClick={onCredit}>
+            <span className="pay-logo pay-logo-emoji">📝</span>
+            <span className="pay-opt-text"><b>Crédit</b><small>À payer plus tard</small></span>
+            <span className="pay-opt-go">›</span>
+          </button>
+        </div>
+
+        <button className="btn-cancel" style={{ width: '100%', marginTop: 10 }} onClick={onClose}>Annuler</button>
       </div>
     </div>
   )

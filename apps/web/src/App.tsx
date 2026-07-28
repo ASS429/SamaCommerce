@@ -31,6 +31,7 @@ import BoutiquesSection from './sections/BoutiquesSection'
 import Equipe from './sections/Equipe'
 import Profil from './sections/Profil'
 import IaReappro from './sections/IaReappro'
+import Logo from './components/Logo'
 
 const TITLES: Record<View, string> = {
   menu: t('title.menu'), vente: t('title.vente'), stock: t('title.stock'),
@@ -203,7 +204,10 @@ export default function App() {
     return (
       <div className="dk-shell">
         <aside className="dk-sidebar">
-          <div className="dk-logo"><span className="dk-logo-badge">🏪</span> Sama<span style={{ opacity: .85 }}>Commerce</span></div>
+          {/* Le logo ramène à l'accueil (convention web attendue). */}
+          <button className="dk-logo" onClick={() => go('menu')} title="Retour à l'accueil" aria-label="Retour à l'accueil">
+            <Logo size={38} className="dk-logo-badge" /> Sama<span style={{ opacity: .85 }}>Commerce</span>
+          </button>
           <nav className="dk-nav">
             {NAV.filter((n) => canAccess(user, n.view)).map((n) => (
               <button key={n.view} className={`dk-nav-item ${view === n.view ? 'active' : ''}`} onClick={() => go(n.view)}>

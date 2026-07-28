@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Products, Sales, Ia, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
-import { promptAsync } from '../lib/toast'
 import { SkeletonLine } from '../components/Skeleton'
 import ScoreRing from '../components/ScoreRing'
+import PaymentPicker from '../components/PaymentPicker'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -45,7 +45,16 @@ export default function Credits() {
     try { await Sales.create({ product_id: Number(productId), quantity: Number(qty) || 1, payment_method: 'credit', client_name: client || null, client_phone: phone || null, due_date: due || null } as any); setClient(''); setPhone(''); setProductId(''); setQty('1'); setDue(''); load() }
     catch (err: any) { alert(err?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
   }
-  const rembourser = async (s: Sale) => { const m = await promptAsync('Mode de remboursement (especes / wave / orange) :', 'especes', 'especes'); if (!m) return; await Sales.update(s.id, { paid: true, repayment_method: m } as any); load() }
+  // Remboursement : on choisit le moyen de paiement dans une liste illustrée
+  // (auparavant il fallait taper « especes / wave / orange » au clavier).
+  const [repaying, setRepaying] = useState<Sale | null>(null)
+  const confirmRepay = async (m: string) => {
+    const s = repaying
+    setRepaying(null)
+    if (!s) return
+    await Sales.update(s.id, { paid: true, repayment_method: m } as any)
+    load()
+  }
 
   const exportPdf = () => {
     const doc = new jsPDF(); doc.setFontSize(16); doc.text('SamaCommerce — Crédits', 14, 18); doc.setFontSize(10)
@@ -56,6 +65,14 @@ export default function Credits() {
 
   return (
     <>
+      {repaying && (
+        <PaymentPicker
+          title="💰 Remboursement reçu"
+          amount={Number(repaying.total)}
+          onPick={confirmRepay}
+          onClose={() => setRepaying(null)}
+        />
+      )}
       <div className="page-header"><h2>📝 Crédits</h2><button className="btn-pdf" onClick={exportPdf} disabled={sales.length === 0}>📄 PDF</button></div>
 
       <div className="cred-tiles">
@@ -106,7 +123,7 @@ export default function Credits() {
                 <td>{fcfa(Number(s.total))}</td>
                 <td>{s.due_date || '—'}</td>
                 <td>{s.paid ? <span style={{ color: 'var(--green)', fontWeight: 700 }}>Remboursé</span> : <span style={{ color: 'var(--red)', fontWeight: 700 }}>Impayé</span>}</td>
-                <td>{!s.paid && <button className="prd-btn prd-btn-edit" onClick={() => rembourser(s)}>💰</button>}</td>
+                <td>{!s.paid && <button className="prd-btn prd-btn-edit" onClick={() => setRepaying(s)} title="Enregistrer le remboursement">💰</button>}</td>
               </tr>
             ))}
           </tbody>

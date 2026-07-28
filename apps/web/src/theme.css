@@ -40,6 +40,20 @@ html.dark {
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* ─── BARRES DE DÉFILEMENT ───
+   Les barres natives de Windows (avec leurs flèches) cassaient la mise en page,
+   surtout au milieu du cadre mobile. On garde l'affordance (on voit qu'il y a
+   du contenu plus bas et où l'on se situe) mais en discret et aux couleurs de
+   la charte. */
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-light); background-clip: content-box; }
+/* Supprime les boutons fléchés d'extrémité (aspect daté). */
+::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
+::-webkit-scrollbar-corner { background: transparent; }
 .sora, h1, h2, h3 { font-family: var(--sora); }
 
 /* Coquille d'application mobile : hauteur FIGÉE à l'écran. Seul .scroll-content
@@ -388,7 +402,9 @@ html.dark .vente-card .v-icon { filter: brightness(.9); }
 /* ═══════════════════════════════════════════════════
    DESKTOP (≥ 1024px) — sidebar + topbar + contenu large
 ═══════════════════════════════════════════════════ */
-.dk-shell { display: flex; min-height: 100dvh; background: var(--bg); }
+/* Coquille bureau figee a l'ecran : seule la zone de contenu defile, ce qui
+   evite la double barre de defilement (page + contenu). */
+.dk-shell { display: flex; height: 100dvh; overflow: hidden; background: var(--bg); }
 .dk-sidebar { width: 240px; flex: none; background: linear-gradient(180deg, #2e1065, #4c1d95); color: #fff; padding: 20px 14px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh; }
 html.dark .dk-sidebar { background: linear-gradient(180deg, #1a1230, #2a1d4d); }
 /* Bouton (ramène à l'accueil) rendu visuellement comme un simple logo. */
@@ -411,7 +427,7 @@ html.dark .dk-sidebar { background: linear-gradient(180deg, #1a1230, #2a1d4d); }
 .dk-icon-btn { width: 42px; height: 42px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line-soft); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; position: relative; }
 .dk-profile { display: flex; align-items: center; gap: 9px; }
 .dk-avatar { width: 42px; height: 42px; border-radius: 12px; background: var(--brand-tint); display: flex; align-items: center; justify-content: center; font-family: var(--sora); font-weight: 800; color: var(--brand); }
-.dk-content { flex: 1; overflow-y: auto; padding: 24px 26px; }
+.dk-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 26px; }
 .dk-content-inner { max-width: 1080px; margin: 0 auto; }
 /* densifie les grilles sur desktop */
 .dk-content .vente-grid, .dk-content .categories-grid { grid-template-columns: repeat(4, 1fr); }

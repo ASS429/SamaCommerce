@@ -52,6 +52,7 @@ class LivraisonController extends Controller
 
         $liv = RestockDelivery::create([
             'user_id' => $request->user()->id,
+            'boutique_id' => $request->user()->current_boutique_id,
             'commande_id' => $data['commande_id'] ?? null,
             'tracking_note' => $data['tracking_note'] ?? null,
             'status' => 'en_attente',

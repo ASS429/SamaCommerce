@@ -12,9 +12,6 @@ class ActivityController extends Controller
     {
         $query = ActivityLog::where('owner_id', $request->user()->id);
 
-        if ($bid = $request->user()->current_boutique_id) {
-            $query->where(fn ($q) => $q->where('boutique_id', $bid)->orWhereNull('boutique_id'));
-        }
         $query->orderByDesc('id');
 
         // T9 — pagination opt-in (?page=N) ; sinon 50 dernières (rétro-compatible).

@@ -11,10 +11,7 @@ class ReturnController extends Controller
 {
     public function index(Request $request)
     {
-        $bid = $request->user()->current_boutique_id;
-
         return Retour::where('returns.user_id', $request->user()->id)
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('returns.boutique_id', $bid)->orWhereNull('returns.boutique_id')))
             ->join('products', 'products.id', '=', 'returns.product_id')
             ->orderByDesc('returns.created_at')->limit(100)
             ->get(['returns.*', 'products.name as product_name', 'products.price as product_price']);

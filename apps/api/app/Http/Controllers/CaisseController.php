@@ -44,7 +44,13 @@ class CaisseController extends Controller
         $net = $a['total_encaisse'] - $retours;
 
         $closing = CaisseClosing::updateOrCreate(
-            ['user_id' => $request->user()->id, 'date' => Carbon::today()->toDateString()],
+            // La clé inclut la boutique : deux points de vente clôturent le même
+            // jour sans que le second écrase la caisse du premier.
+            [
+                'user_id' => $request->user()->id,
+                'boutique_id' => $request->user()->current_boutique_id,
+                'date' => Carbon::today()->toDateString(),
+            ],
             [
                 'total_especes' => $a['especes'], 'total_wave' => $a['wave'], 'total_orange' => $a['orange'],
                 'total_credits' => $a['credits'], 'total_retours' => $retours, 'total_net' => $net,

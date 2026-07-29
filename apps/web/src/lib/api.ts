@@ -279,6 +279,18 @@ export const Admin = {
 }
 
 export type Boutique = { id: number; name: string; phone: string | null; address: string | null; emoji: string; is_primary: boolean; photo?: string | null; nb_produits?: number; nb_ventes?: number; nb_membres?: number }
+export type BoutiqueLine = {
+  id: number; name: string; emoji: string; photo?: string | null; is_primary: boolean
+  ca_jour: number; nb_ventes_jour: number; ca_mois: number
+  nb_produits: number; stock_total: number; ruptures: number; stock_faible: number
+  credits_impayes: number; nb_membres: number
+}
+export type BoutiquesDashboard = {
+  boutiques: BoutiqueLine[]
+  total: { ca_jour: number; nb_ventes_jour: number; ca_mois: number; nb_produits: number; ruptures: number; credits_impayes: number; nb_boutiques: number }
+  meilleure: BoutiqueLine | null
+}
+
 export type Member = {
   id: number; email: string; role: string; status: string; permissions: Record<string, boolean>; member_id: number | null
   /** Fiche saisie par le patron (prime sur le compte lié). */
@@ -295,6 +307,8 @@ export const Boutiques = {
   update: (id: number, b: Partial<Boutique>) => api.patch(`/boutiques/${id}`, b).then((r) => r.data),
   remove: (id: number) => api.delete(`/boutiques/${id}`),
   switch: (id: number) => api.post(`/boutiques/${id}/switch`).then((r) => r.data),
+  /** Vue consolidée de toutes les boutiques (multi-boutique). */
+  dashboard: () => api.get<BoutiquesDashboard>('/boutiques/dashboard').then((r) => r.data),
 }
 export const Members = {
   list: () => api.get<Member[]>('/members').then((r) => r.data),

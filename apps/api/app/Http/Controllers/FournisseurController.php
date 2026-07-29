@@ -8,10 +8,8 @@ class FournisseurController extends Controller
 {
     public function index(Request $request)
     {
-        $bid = $request->user()->current_boutique_id;
 
         return $request->user()->fournisseurs()
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('boutique_id', $bid)->orWhereNull('boutique_id')))
             ->orderBy('name')->get();
     }
 

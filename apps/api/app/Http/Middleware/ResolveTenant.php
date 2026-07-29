@@ -38,6 +38,13 @@ class ResolveTenant
             $request->attributes->set('is_employee', false);
         }
 
+        /* Cloisonnement par boutique active, appliqué une fois pour toute la
+         * requête (cf. BoutiqueScope). L'administrateur en est exclu : ses
+         * écrans agrègent volontairement tous les commerçants. */
+        if ($request->user()->role !== 'admin') {
+            \App\Models\Scopes\BoutiqueScope::activate($request->user()->current_boutique_id);
+        }
+
         return $next($request);
     }
 }

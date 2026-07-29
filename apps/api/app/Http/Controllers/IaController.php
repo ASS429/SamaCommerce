@@ -20,7 +20,6 @@ class IaController extends Controller
         $user = $request->user();
         $bid = $user->current_boutique_id;
         $products = $user->products()
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('boutique_id', $bid)->orWhereNull('boutique_id')))
             ->get();
 
         $since = Carbon::today()->subDays(30);

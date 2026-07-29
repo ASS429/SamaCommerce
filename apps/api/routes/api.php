@@ -55,6 +55,9 @@ Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function ()
 
     // Boutiques (multi-boutique)
     Route::get('/boutiques', [BoutiqueController::class, 'index']);
+    // Vue consolidée de TOUTES les boutiques (déclarée avant /{id} pour ne pas
+    // être capturée par le paramètre de route).
+    Route::get('/boutiques/dashboard', [BoutiqueController::class, 'dashboard']);
     Route::post('/boutiques', [BoutiqueController::class, 'store']);
     Route::post('/boutiques/{id}/switch', [BoutiqueController::class, 'switch']);
     Route::get('/boutiques/{id}/stats', [BoutiqueController::class, 'stats']);

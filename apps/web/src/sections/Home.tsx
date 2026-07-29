@@ -3,7 +3,7 @@ import { Stats, Members, Caisse, fcfa, type User } from '../lib/api'
 import { t, getLang, setLang, LANGS, type Lang } from '../lib/i18n'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
 
-export type View = 'menu' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
+export type View = 'menu' | 'dashboard' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
   | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'returns' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia'
 
 const BUTTONS: { view: View; emoji: string; key: string; sub: string; ai: string; featured?: boolean }[] = [

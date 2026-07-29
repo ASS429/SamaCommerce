@@ -11,9 +11,6 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = $request->user()->products()->with('units');
-        if ($bid = $request->user()->current_boutique_id) {
-            $query->where(fn ($q) => $q->where('boutique_id', $bid)->orWhereNull('boutique_id'));
-        }
         $query->orderByDesc('id');
 
         // T9 — pagination opt-in (?page=N) ; sinon tableau complet (rétro-compatible).

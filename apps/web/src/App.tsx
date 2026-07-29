@@ -9,6 +9,7 @@ import CategoriesSection from './sections/CategoriesSection'
 const Rapports = lazy(() => import('./sections/Rapports'))
 const Credits = lazy(() => import('./sections/Credits'))
 const Inventaire = lazy(() => import('./sections/Inventaire'))
+const BoutiquesDashboard = lazy(() => import('./sections/BoutiquesDashboard'))
 const AdminApp = lazy(() => import('./sections/admin/AdminApp'))
 import Premium from './sections/Premium'
 import PlusSheet from './sections/PlusSheet'
@@ -36,7 +37,7 @@ import IaReappro from './sections/IaReappro'
 import Logo from './components/Logo'
 
 const TITLES: Record<View, string> = {
-  menu: t('title.menu'), vente: t('title.vente'), stock: t('title.stock'),
+  menu: t('title.menu'), dashboard: 'Toutes mes boutiques', vente: t('title.vente'), stock: t('title.stock'),
   categories: t('title.categories'), rapports: t('title.rapports'), inventaire: t('title.inventaire'), credits: t('title.credits'),
   clients: t('title.clients'), fournisseurs: t('title.fournisseurs'), caisse: t('title.caisse'), commandes: t('title.commandes'), returns: t('title.returns'), livraisons: t('title.livraisons'), boutiques: t('title.boutiques'), equipe: t('title.equipe'), profil: t('title.profil'), ia: t('title.ia'),
 }
@@ -67,7 +68,7 @@ const PERM_BY_VIEW: Partial<Record<View, string>> = {
   inventaire: 'stock', credits: 'vente', clients: 'clients', fournisseurs: 'fournisseurs',
   caisse: 'caisse', commandes: 'commandes', returns: 'credits', livraisons: 'livraisons', ia: 'stock',
 }
-const OWNER_ONLY: View[] = ['boutiques', 'equipe']
+const OWNER_ONLY: View[] = ['boutiques', 'equipe', 'dashboard']
 
 /**
  * Deux filtres bien distincts se superposent sur la navigation :
@@ -194,9 +195,11 @@ export default function App() {
   if (user?.role === 'admin') return <Suspense fallback={<SectionLoader />}><AdminApp user={user} onLogout={doLogout} /></Suspense>
 
   const go = (v: View) => setView(canAccess(user, v) ? v : view)
+  const boutiqueActive = boutiques.find((b) => b.id === user?.current_boutique_id)
 
   void modulesRev // relit les modules actifs à chaque changement
   const section = !canAccess(user, view) ? <AccessDenied /> : (<Suspense fallback={<SectionLoader />}>
+    {view === 'dashboard' && <BoutiquesDashboard onNavigate={setView} />}
     {view === 'menu' && <Home user={user} can={(v) => isVisible(user, v)} onNavigate={setView} onLogout={doLogout} onUpgrade={() => setShowPremium(true)} desktop={desktop} stats={stats} />}
     {view === 'vente' && <Vente />}
     {view === 'stock' && <Stock />}
@@ -283,6 +286,12 @@ export default function App() {
               <button className="dk-boutique" style={{ marginLeft: 0, cursor: 'pointer' }} onClick={() => setShowBoutiques((s) => !s)}>🏪 {user?.company_name || 'Ma Boutique'} ▾</button>
               {showBoutiques && (
                 <div className="bsel-menu">
+                  {/* Vue consolidée : elle ne change pas de boutique, elle les réunit. */}
+                  {!user?.is_employee && boutiques.length > 1 && (
+                    <button className="bsel-item" onClick={() => { setView('dashboard'); setShowBoutiques(false) }}>
+                      <span>📊</span> Toutes mes boutiques
+                    </button>
+                  )}
                   {boutiques.map((b) => (
                     <button key={b.id} className={`bsel-item ${b.id === user?.current_boutique_id ? 'active' : ''}`} onClick={() => switchBoutique(b)}>
                       <span>{b.emoji}</span> {b.name} {b.id === user?.current_boutique_id && '✓'}
@@ -341,7 +350,22 @@ export default function App() {
               </button>}
           <div className="header-center" style={{ textAlign: view === 'menu' ? 'left' : 'center' }}>
             {view === 'menu'
-              ? <><div className="header-sub">Bonjour 👋</div><div className="header-title">{user?.company_name || 'Sama Commerce'}</div></>
+              ? (
+                <>
+                  <div className="header-sub">Bonjour 👋</div>
+                  {/* Le sélecteur de boutique n'existait que sur ordinateur : sur
+                      téléphone, on ne pouvait pas changer de point de vente.
+                      Le nom devient donc un bouton dès qu'il y a plusieurs boutiques. */}
+                  {boutiques.length > 1 ? (
+                    <button className="header-shop" onClick={() => setShowBoutiques(true)} aria-label="Changer de boutique">
+                      <span className="header-title">{boutiqueActive?.name || user?.company_name || 'Sama Commerce'}</span>
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  ) : (
+                    <div className="header-title">{user?.company_name || 'Sama Commerce'}</div>
+                  )}
+                </>
+              )
               : <div className="header-title">{TITLES[view]}</div>}
           </div>
           <button className="header-icon" aria-label="Notifications" style={{ border: 'none', cursor: 'pointer', position: 'relative' }} onClick={() => setShowNotif((s) => !s)}>🔔{alerts.length > 0 && <span style={{ position: 'absolute', top: 7, right: 8, width: 8, height: 8, background: '#fbbf24', borderRadius: '50%' }} />}</button>
@@ -392,6 +416,32 @@ export default function App() {
         <NavBtn active={view === 'profil'} icon="👤" label={t('nav.profil')} onClick={() => setView('profil')} />
         <NavBtn active={showPlus} icon="＋" label="Plus" onClick={() => setShowPlus(true)} />
       </div>
+
+      {showBoutiques && (
+        <div className="modal-overlay" style={{ alignItems: 'flex-end' }} onClick={() => setShowBoutiques(false)}>
+          <div className="modal-box" style={{ maxWidth: 480, borderRadius: '22px 22px 0 0' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">🏬 Ma boutique</div>
+            {!user?.is_employee && (
+              <button className="sheet-item" onClick={() => { setView('dashboard'); setShowBoutiques(false) }}>
+                <span className="sheet-icon" style={{ background: '#EDE9FE' }}>📊</span>
+                <div><h3>Toutes mes boutiques</h3><p>Vue d'ensemble et comparaison</p></div>
+                <span className="sheet-chevron">›</span>
+              </button>
+            )}
+            {boutiques.map((b) => (
+              <button key={b.id} className="sheet-item" onClick={() => switchBoutique(b)}>
+                <Avatar photo={b.photo} icon={b.photo ? undefined : (b.emoji || '🏪')} name={b.name} size={46} radius={13} />
+                <div>
+                  <h3>{b.name}</h3>
+                  <p>{b.nb_produits || 0} produit(s) · {b.nb_ventes || 0} vente(s)</p>
+                </div>
+                <span className="sheet-chevron">{b.id === user?.current_boutique_id ? '✅' : '›'}</span>
+              </button>
+            ))}
+            <button className="btn-cancel" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowBoutiques(false)}>Fermer</button>
+          </div>
+        </div>
+      )}
 
       {showPlus && <PlusSheet can={(v) => isVisible(user, v)} onClose={() => setShowPlus(false)} onNavigate={(v) => { setView(v); setShowPlus(false) }} />}
       {modals}

@@ -11,10 +11,8 @@ class CommandeController extends Controller
 {
     public function index(Request $request)
     {
-        $bid = $request->user()->current_boutique_id;
 
         return RestockOrder::where('restock_orders.user_id', $request->user()->id)
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('restock_orders.boutique_id', $bid)->orWhereNull('restock_orders.boutique_id')))
             ->leftJoin('fournisseurs', 'fournisseurs.id', '=', 'restock_orders.fournisseur_id')
             ->withCount('items')
             ->orderByDesc('restock_orders.created_at')

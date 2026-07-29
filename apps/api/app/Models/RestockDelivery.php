@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RestockDelivery extends Model
 {
-    protected $fillable = ['user_id', 'commande_id', 'tracking_note', 'status', 'delivered_at'];
+    protected $fillable = ['user_id', 'boutique_id', 'commande_id', 'tracking_note', 'status', 'delivered_at'];
 
     protected $casts = ['delivered_at' => 'datetime'];
 

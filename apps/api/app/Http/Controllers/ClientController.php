@@ -12,19 +12,15 @@ class ClientController extends Controller
     /** Liste légère pour l'autocomplete de la vente. */
     public function forSale(Request $request)
     {
-        $bid = $request->user()->current_boutique_id;
 
         return $request->user()->clients()
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('boutique_id', $bid)->orWhereNull('boutique_id')))
             ->orderBy('name')->get(['id', 'name', 'phone']);
     }
 
     public function index(Request $request)
     {
         $userId = $request->user()->id;
-        $bid = $request->user()->current_boutique_id;
         $clients = Client::where('user_id', $userId)
-            ->when($bid, fn ($q) => $q->where(fn ($w) => $w->where('boutique_id', $bid)->orWhereNull('boutique_id')))
             ->get();
 
         // Ventes du commerçant (liées par client_id OU par nom)

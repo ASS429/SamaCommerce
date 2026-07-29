@@ -749,3 +749,12 @@ html.dark .fa-wa { background: #0d3b22; color: #6EE7B7; }
 .client-chip-body b { font-family: var(--sora); font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client-chip-body small { font-size: 11.5px; color: var(--muted); }
 .client-chip-go { font-size: 18px; color: var(--muted2); }
+
+/* ═══ Sélecteur de boutique dans l'en-tête mobile ═══
+   Il n'existait que sur ordinateur : sur téléphone, aucun moyen de changer de
+   point de vente. Le nom de la boutique devient un bouton dès qu'il y en a
+   plusieurs — le chevron signale qu'on peut toucher. */
+.header-shop { display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  padding: 0; color: inherit; cursor: pointer; font: inherit; max-width: 100%; }
+.header-shop .header-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.header-shop > span:last-child { font-size: 13px; opacity: .8; }

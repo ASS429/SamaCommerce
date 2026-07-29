@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
   TOGGLEABLE, getDisabled, isModuleEnabled, setModuleEnabled, resetModules,
-  autoPrintEnabled, setAutoPrint, MODULES_EVENT,
+  autoPrintEnabled, setAutoPrint, MODULES_EVENT, hydrateFromServer, clearLocalPreferences,
 } from './modules'
 import { dateFr } from './api'
 
@@ -66,6 +66,44 @@ describe('impression automatique du reçu', () => {
     setAutoPrint(true)
     expect(autoPrintEnabled()).toBe(true)
     setAutoPrint(false)
+    expect(autoPrintEnabled()).toBe(false)
+  })
+})
+
+describe('synchronisation avec le compte', () => {
+  it('adopte les réglages du serveur sur un appareil neuf', () => {
+    hydrateFromServer({ modules_off: ['caisse', 'equipe'], auto_print: true })
+    expect(isModuleEnabled('caisse')).toBe(false)
+    expect(isModuleEnabled('equipe')).toBe(false)
+    expect(isModuleEnabled('vente')).toBe(true)
+    expect(autoPrintEnabled()).toBe(true)
+  })
+
+  it('remplace l\'état local (et ne fusionne pas) : le compte fait foi', () => {
+    hydrateFromServer({ modules_off: ['caisse'] })
+    hydrateFromServer({ modules_off: ['equipe'] })
+    expect(isModuleEnabled('caisse')).toBe(true)
+    expect(isModuleEnabled('equipe')).toBe(false)
+  })
+
+  it('ne perd PAS un réglage local pas encore envoyé (modifié hors ligne)', () => {
+    setModuleEnabled('caisse', false)          // pose le drapeau « dirty »
+    hydrateFromServer({ modules_off: [] })     // le serveur ignore encore ce choix
+    expect(isModuleEnabled('caisse')).toBe(false)
+  })
+
+  it('ignore une charge serveur mal formée', () => {
+    setModuleEnabled('caisse', false)
+    clearLocalPreferences()
+    hydrateFromServer({ modules_off: [42, null, 'equipe'] as unknown as string[] })
+    expect(getDisabled()).toEqual(['equipe'])
+  })
+
+  it('la déconnexion purge les réglages locaux', () => {
+    setModuleEnabled('caisse', false)
+    setAutoPrint(true)
+    clearLocalPreferences()
+    expect(getDisabled()).toEqual([])
     expect(autoPrintEnabled()).toBe(false)
   })
 })

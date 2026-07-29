@@ -48,6 +48,8 @@ Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function ()
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/logout-all', [AuthController::class, 'logoutAll']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    // Réglages d'écran du compte connecté (sections masquées, impression auto).
+    Route::put('/auth/preferences', [AuthController::class, 'updatePreferences']);
     Route::put('/auth/upgrade', [AuthController::class, 'upgrade']);
     Route::put('/auth/2fa', [AuthController::class, 'toggle2fa']);
 

@@ -41,6 +41,8 @@ export type User = {
   permissions?: Record<string, boolean> | null
   /** Photo de profil (data-URL réduite). */
   photo?: string | null
+  /** Réglages d'écran du compte (sections masquées, impression auto). */
+  preferences?: { modules_off?: string[]; auto_print?: boolean } | null
 }
 
 export type ProductUnit = { id: number; product_id?: number; libelle: string; facteur: number; prix: number }
@@ -305,6 +307,13 @@ export const Members = {
 }
 
 export function me() { return api.get('/auth/me').then((r) => r.data) }
+/** Réglages d'écran synchronisés entre les appareils du compte. */
+export type Preferences = { modules_off?: string[]; auto_print?: boolean }
+
+export function updatePreferences(prefs: Preferences) {
+  return api.put<{ preferences: Preferences }>('/auth/preferences', prefs).then((r) => r.data.preferences)
+}
+
 export function updateProfile(payload: { company_name?: string; phone?: string; photo?: string | null }) {
   return api.put('/auth/profile', payload).then((r) => r.data)
 }

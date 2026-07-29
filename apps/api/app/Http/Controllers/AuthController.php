@@ -239,7 +239,48 @@ class AuthController extends Controller
             'is_employee' => $request->attributes->get('is_employee', false),
             'permissions' => $request->attributes->get('permissions'),
             'boutiques' => $user->boutiques()->orderByDesc('is_primary')->get(),
+            // Écrase la valeur venue de toArray() : pour un employé, $user est le
+            // PROPRIÉTAIRE, et chacun doit retrouver SES propres réglages d'écran.
+            'preferences' => $this->preferencesOwner($request)->preferences ?? new \stdClass,
         ]));
+    }
+
+    /**
+     * Compte porteur des préférences d'affichage : le compte réellement
+     * connecté, jamais le propriétaire résolu par ResolveTenant.
+     */
+    private function preferencesOwner(Request $request): User
+    {
+        return $request->attributes->get('real_user') ?? $request->user();
+    }
+
+    /**
+     * Réglages d'interface synchronisés entre les appareils du même compte
+     * (sections masquées, impression automatique du reçu).
+     *
+     * Fusion et non remplacement : un appareil qui ne connaît pas encore une
+     * option future ne doit pas l'effacer en enregistrant les siennes.
+     */
+    public function updatePreferences(Request $request)
+    {
+        $data = $request->validate([
+            'modules_off' => ['nullable', 'array', 'max:40'],
+            'modules_off.*' => ['string', 'max:32'],
+            'auto_print' => ['nullable', 'boolean'],
+        ]);
+
+        $user = $this->preferencesOwner($request);
+        $merged = array_merge($user->preferences ?? [], $data);
+
+        // `modules_off` est une LISTE : on la dédoublonne et on la réindexe,
+        // sinon le JSON stocké devient un objet {"0":…,"2":…} après filtrage.
+        if (isset($merged['modules_off'])) {
+            $merged['modules_off'] = array_values(array_unique($merged['modules_off']));
+        }
+
+        $user->update(['preferences' => $merged]);
+
+        return response()->json(['preferences' => $merged]);
     }
 
     public function logout(Request $request)

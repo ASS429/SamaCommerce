@@ -10,14 +10,24 @@
  * défaut, au lieu de rester invisible chez tous ceux qui avaient déjà réglé
  * leurs préférences.
  *
- * OÙ. En localStorage : c'est un réglage d'AFFICHAGE, il doit s'appliquer
- * instantanément et hors ligne. Conséquence assumée : il est propre à
- * l'appareil ; le même commerçant sur un second téléphone repart de zéro.
+ * OÙ. Le localStorage reste la source de vérité LOCALE : le réglage s'applique
+ * instantanément, même hors ligne. Il est ensuite POUSSÉ sur le compte
+ * (`PUT /auth/preferences`), et rechargé à chaque `/auth/me` : le commerçant
+ * retrouve donc son application sur son second téléphone.
+ *
+ * Règle d'arbitrage en cas de conflit : si des changements locaux n'ont pas
+ * encore pu partir (drapeau « dirty », typiquement une modification faite hors
+ * ligne), c'est le LOCAL qui gagne et qui est envoyé au serveur. Sinon le
+ * serveur fait foi. Simple, prévisible, et sans horloge à synchroniser.
  */
 
+import { updatePreferences, type Preferences } from './api'
 import type { View } from '../sections/Home'
 
 const KEY = 'samacommerce_modules_off'
+const PRINT_KEY = 'samacommerce_autoprint'
+/** Des réglages locaux attendent d'être envoyés au serveur. */
+const DIRTY_KEY = 'samacommerce_prefs_dirty'
 /** Événement interne : permet à App de se redessiner quand on change un réglage. */
 export const MODULES_EVENT = 'sc:modules'
 
@@ -63,25 +73,23 @@ export function isModuleEnabled(view: View): boolean {
   return !read().includes(view)
 }
 
-/** Active ou masque une section, puis prévient l'application. */
+/** Active ou masque une section, puis prévient l'application et le serveur. */
 export function setModuleEnabled(view: View, enabled: boolean) {
   if (ALWAYS.includes(view)) return
   const off = new Set(read())
   if (enabled) off.delete(view)
   else off.add(view)
   localStorage.setItem(KEY, JSON.stringify([...off]))
-  window.dispatchEvent(new Event(MODULES_EVENT))
+  changed()
 }
 
 /** Réactive tout (bouton « Tout afficher »). */
 export function resetModules() {
   localStorage.removeItem(KEY)
-  window.dispatchEvent(new Event(MODULES_EVENT))
+  changed()
 }
 
 /* ─── Réglages annexes de la même famille (options d'usage) ─── */
-
-const PRINT_KEY = 'samacommerce_autoprint'
 
 /** Impression automatique du reçu après encaissement (boutiques équipées). */
 export function autoPrintEnabled(): boolean {
@@ -91,5 +99,63 @@ export function autoPrintEnabled(): boolean {
 export function setAutoPrint(on: boolean) {
   if (on) localStorage.setItem(PRINT_KEY, '1')
   else localStorage.removeItem(PRINT_KEY)
+  changed()
+}
+
+/* ─────────────────── Synchronisation avec le compte ─────────────────── */
+
+/** État local complet, tel qu'il part au serveur. */
+function snapshot(): Preferences {
+  return { modules_off: read(), auto_print: autoPrintEnabled() }
+}
+
+function isDirty(): boolean {
+  return localStorage.getItem(DIRTY_KEY) === '1'
+}
+
+let timer: ReturnType<typeof setTimeout> | undefined
+
+/** Réglage modifié : on prévient l'UI, puis on pousse (groupé). */
+function changed() {
+  localStorage.setItem(DIRTY_KEY, '1')
   window.dispatchEvent(new Event(MODULES_EVENT))
+  // Regroupe une rafale de bascules en un seul appel réseau.
+  clearTimeout(timer)
+  timer = setTimeout(() => { void pushPreferences() }, 500)
+}
+
+/**
+ * Envoie les réglages locaux au compte. En cas d'échec (hors ligne), le
+ * drapeau reste posé : la prochaine ouverture ou le retour du réseau réessaie.
+ */
+export async function pushPreferences(): Promise<void> {
+  if (!localStorage.getItem('samacommerce_token')) return
+  try {
+    await updatePreferences(snapshot())
+    localStorage.removeItem(DIRTY_KEY)
+  } catch { /* on retentera : le drapeau « dirty » est conservé */ }
+}
+
+/**
+ * Applique les réglages venus du compte (réponse de `/auth/me`).
+ * Si des changements locaux attendent d'être envoyés, c'est l'inverse : on
+ * pousse le local plutôt que de l'écraser.
+ */
+export function hydrateFromServer(prefs?: Preferences | null): void {
+  if (isDirty()) { void pushPreferences(); return }
+  if (!prefs) return
+
+  const off = Array.isArray(prefs.modules_off) ? prefs.modules_off.filter((v) => typeof v === 'string') : []
+  localStorage.setItem(KEY, JSON.stringify(off))
+  if (prefs.auto_print) localStorage.setItem(PRINT_KEY, '1')
+  else localStorage.removeItem(PRINT_KEY)
+
+  window.dispatchEvent(new Event(MODULES_EVENT))
+}
+
+/** Nettoyage à la déconnexion : le compte suivant ne doit pas hériter de l'écran du précédent. */
+export function clearLocalPreferences(): void {
+  localStorage.removeItem(KEY)
+  localStorage.removeItem(PRINT_KEY)
+  localStorage.removeItem(DIRTY_KEY)
 }

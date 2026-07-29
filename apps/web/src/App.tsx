@@ -17,7 +17,7 @@ import PinLock from './components/PinLock'
 import Odometer from './components/Odometer'
 import CommandPalette, { type Command } from './components/CommandPalette'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from './lib/theme'
-import { isModuleEnabled, MODULES_EVENT } from './lib/modules'
+import { isModuleEnabled, MODULES_EVENT, hydrateFromServer, pushPreferences, clearLocalPreferences } from './lib/modules'
 import Avatar from './components/Avatar'
 import { usePullToRefresh } from './lib/usePullToRefresh'
 import { initOfflineSync, pendingCount, syncPending } from './lib/offlineQueue'
@@ -136,11 +136,18 @@ export default function App() {
     Products.list().then((ps) => setStats((p) => ({ ...p, stock: ps.reduce((a, x) => a + x.stock, 0) }))).catch(() => {})
   }
   useEffect(() => { if (authed && user?.role !== 'admin') refreshStats() }, [authed, view, user?.role])
-  useEffect(() => { if (authed) me().then((full) => { saveUser(full); setUser(full) }).catch(() => {}) }, [authed])
+  // /auth/me rapporte aussi les réglages d'écran du compte : c'est ce qui fait
+  // qu'un second téléphone retrouve les mêmes sections activées.
+  useEffect(() => {
+    if (!authed) return
+    me().then((full) => { saveUser(full); setUser(full); hydrateFromServer(full.preferences) }).catch(() => {})
+  }, [authed])
 
   // Réseau (indicateur hors-ligne)
   useEffect(() => {
-    const on = () => setOnline(true), off = () => setOnline(false)
+    // Au retour du réseau, on renvoie les réglages modifiés hors ligne.
+    const on = () => { setOnline(true); void pushPreferences() }
+    const off = () => setOnline(false)
     window.addEventListener('online', on); window.addEventListener('offline', off)
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
   }, [])
@@ -180,7 +187,10 @@ export default function App() {
 
   if (!authed) return <Login onLogin={(u) => { setUser(u); setAuthed(true) }} />
 
-  const doLogout = () => { logout(); setAuthed(false); setUser(null); setView('menu') }
+  // Les réglages d'écran sont rechargés depuis le compte à la connexion : on
+  // purge le local pour qu'un autre commerçant sur le même téléphone ne récupère
+  // pas l'application configurée du précédent.
+  const doLogout = () => { logout(); clearLocalPreferences(); setAuthed(false); setUser(null); setView('menu') }
   if (user?.role === 'admin') return <Suspense fallback={<SectionLoader />}><AdminApp user={user} onLogout={doLogout} /></Suspense>
 
   const go = (v: View) => setView(canAccess(user, v) ? v : view)

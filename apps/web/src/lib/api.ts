@@ -8,6 +8,24 @@ export const api = axios.create({
 })
 
 const TOKEN_KEY = 'samacommerce_token'
+const DEVICE_KEY = 'samacommerce_device'
+
+/* Identifiant d'APPAREIL, envoyé comme "device_name" à la connexion.
+ *
+ * Le serveur révoque l'ancien token portant le MÊME nom (hygiène : une
+ * reconnexion ne laisse pas traîner de jeton orphelin). Sans identifiant
+ * distinct, tous les appareils s'appelaient « app » : se connecter sur le
+ * téléphone déconnectait donc le PC dans la seconde — d'où l'impression que la
+ * session « expirait tout le temps ». */
+function deviceName(): string {
+  let d = localStorage.getItem(DEVICE_KEY)
+  if (!d) {
+    const rnd = (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8)
+    d = (/Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'ordi') + '-' + rnd
+    localStorage.setItem(DEVICE_KEY, d)
+  }
+  return d
+}
 const USER_KEY = 'samacommerce_user'
 
 export type User = {
@@ -21,6 +39,8 @@ export type User = {
   upgrade_status: string
   is_employee?: boolean
   permissions?: Record<string, boolean> | null
+  /** Photo de profil (data-URL réduite). */
+  photo?: string | null
 }
 
 export type ProductUnit = { id: number; product_id?: number; libelle: string; facteur: number; prix: number }
@@ -52,6 +72,8 @@ export type Category = { id: number; name: string; emoji: string; couleur: strin
 export type Sale = {
   id: number
   product_id: number
+  /** Fiche client liée (null = vente anonyme au comptoir). */
+  client_id?: number | null
   product_name?: string
   quantity: number
   total: number
@@ -92,13 +114,13 @@ api.interceptors.request.use((config) => {
 // --- Auth ---
 export type LoginResult = { user: User } | { twofa_required: true; dev_code?: string | null }
 export async function login(username: string, password: string): Promise<LoginResult> {
-  const { data } = await api.post('/auth/login', { username, password })
+  const { data } = await api.post('/auth/login', { username, password, device_name: deviceName() })
   if (data.twofa_required) return { twofa_required: true, dev_code: data.dev_code }
   persist(data.token, data.user)
   return { user: data.user as User }
 }
 export async function verify2fa(username: string, code: string): Promise<User> {
-  const { data } = await api.post('/auth/verify-2fa', { username, code })
+  const { data } = await api.post('/auth/verify-2fa', { username, code, device_name: deviceName() })
   persist(data.token, data.user)
   return data.user as User
 }
@@ -107,7 +129,7 @@ export async function toggle2fa(enabled: boolean): Promise<{ twofa_enabled: bool
   return data
 }
 export async function register(payload: { username: string; password: string; company_name?: string; phone?: string }) {
-  const { data } = await api.post('/auth/register', payload)
+  const { data } = await api.post('/auth/register', { ...payload, device_name: deviceName() })
   persist(data.token, data.user)
   return data.user as User
 }
@@ -164,6 +186,8 @@ export type Fournisseur = { id: number; name: string; phone: string | null; emai
 
 export const Clients = {
   list: () => api.get<Client[]>('/clients').then((r) => r.data),
+  /** Liste allégée (id/nom/téléphone) : autorisée aux employés qui vendent. */
+  forSale: () => api.get<{ id: number; name: string; phone: string | null }[]>('/clients/for-sale').then((r) => r.data),
   show: (id: number) => api.get(`/clients/${id}`).then((r) => r.data),
   create: (c: Partial<Client>) => api.post<Client>('/clients', c).then((r) => r.data),
   update: (id: number, c: Partial<Client>) => api.patch<Client>(`/clients/${id}`, c).then((r) => r.data),
@@ -189,7 +213,7 @@ export const Commandes = {
 export const Livraisons = {
   list: () => api.get('/livraisons').then((r) => r.data),
   create: (commande_id: number | null, tracking_note?: string) => api.post('/livraisons', { commande_id, tracking_note }).then((r) => r.data),
-  setStatus: (id: number, status: string) => api.patch(`/livraisons/${id}`, { status }).then((r) => r.data),
+  setStatus: (id: number, status: string, recevoir = false) => api.patch(`/livraisons/${id}`, { status, recevoir }).then((r) => r.data),
   remove: (id: number) => api.delete(`/livraisons/${id}`),
 }
 
@@ -281,11 +305,27 @@ export const Members = {
 }
 
 export function me() { return api.get('/auth/me').then((r) => r.data) }
-export function updateProfile(payload: { company_name?: string; phone?: string }) {
+export function updateProfile(payload: { company_name?: string; phone?: string; photo?: string | null }) {
   return api.put('/auth/profile', payload).then((r) => r.data)
 }
 
 export const fcfa = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' F'
+
+/**
+ * Date lisible par un humain (« 01/08/2026 »).
+ *
+ * Postgres renvoie les dates en ISO complet (`2026-08-01T00:00:00.000000Z`).
+ * Affichée telle quelle sur une fiche de crédit, cette chaîne est illisible —
+ * a fortiori pour quelqu'un qui déchiffre difficilement. On ne garde donc que
+ * le jour, et on ne convertit PAS en heure locale : une échéance est une date
+ * civile, pas un instant (sinon minuit UTC recule d'un jour à l'ouest).
+ */
+export function dateFr(value?: string | null): string {
+  if (!value) return '—'
+  const jour = String(value).slice(0, 10)
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(jour)
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(value)
+}
 
 /** Identité de la boutique, en-tête des messages WhatsApp et des exports. */
 export function boutiqueIdentity(): { nom: string; telephone?: string | null } {

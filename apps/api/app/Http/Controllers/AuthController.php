@@ -33,12 +33,32 @@ class AuthController extends Controller
      * (évite l'accumulation de tokens à vie). Le token hérite de l'expiration
      * globale (config sanctum.expiration = 7 jours).
      */
+    /**
+     * Émet un jeton pour CET appareil.
+     *
+     * On révoque l'ancien jeton portant le même nom (pas de jeton orphelin
+     * après une reconnexion). Le client envoie donc un `device_name` distinct
+     * par appareil : sans lui, tous s'appelaient « app » et se connecter sur le
+     * téléphone déconnectait le PC dans la seconde.
+     */
     private function issueToken(User $user, Request $request): string
     {
         $device = (string) ($request->input('device_name') ?: 'app');
         $user->tokens()->where('name', $device)->delete();
 
         return $user->createToken($device)->plainTextToken;
+    }
+
+    /**
+     * Date d'expiration du jeton (config sanctum.expiration, en minutes).
+     * Renvoyée au client pour qu'une session qui tombe soit diagnosticable
+     * sans accès au serveur — et non plus attribuée au hasard.
+     */
+    private function tokenExpiry(): ?string
+    {
+        $minutes = (int) config('sanctum.expiration', 0);
+
+        return $minutes > 0 ? now()->addMinutes($minutes)->toIso8601String() : null;
     }
 
     /**
@@ -89,6 +109,7 @@ class AuthController extends Controller
             'message' => 'Compte créé avec succès',
             'user' => $user->fresh(),
             'token' => $this->issueToken($user->fresh(), $request),
+            'token_expires_at' => $this->tokenExpiry(),
         ], 201);
     }
 
@@ -149,6 +170,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $this->userPayload($user),
             'token' => $this->issueToken($user, $request),
+            'token_expires_at' => $this->tokenExpiry(),
         ]);
     }
 
@@ -180,6 +202,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $this->userPayload($user),
             'token' => $this->issueToken($user, $request),
+            'token_expires_at' => $this->tokenExpiry(),
         ]);
     }
 
@@ -247,10 +270,18 @@ class AuthController extends Controller
         $data = $request->validate([
             'company_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32'],
+            'photo' => self::PHOTO_RULES,
         ]);
 
         $user = $request->user();
+        // array_filter écarte les valeurs vides : on ne veut pas effacer le nom
+        // de la boutique parce que le champ n'était pas dans la requête. La photo
+        // fait exception — `null` y signifie « retirer la photo », un geste
+        // explicite de l'utilisateur.
         $user->update(array_filter($data, fn ($v) => $v !== null && $v !== ''));
+        if ($request->exists('photo')) {
+            $user->update(['photo' => $data['photo'] ?? null]);
+        }
 
         if (! empty($data['company_name'])) {
             $user->boutiques()->where('is_primary', true)->update(['name' => $data['company_name']]);

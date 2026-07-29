@@ -18,6 +18,8 @@ export type PendingSale = {
   quantity?: number | null
   prix_reel?: number | null
   payment_method: string
+  /** Fiche client rattachée (null = vente de passage). */
+  client_id?: number | null
   client_name?: string | null
   client_phone?: string | null
   due_date?: string | null

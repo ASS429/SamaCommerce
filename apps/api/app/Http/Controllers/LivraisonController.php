@@ -6,6 +6,7 @@ use App\Models\CommandeItem;
 use App\Models\RestockDelivery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LivraisonController extends Controller
 {
@@ -67,16 +68,47 @@ class LivraisonController extends Controller
             'status' => ['sometimes', 'in:en_attente,en_cours,livree'],
             'tracking_note' => ['nullable', 'string'],
             'delivered_at' => ['nullable', 'date'],
+            // Réceptionner la commande liée dans le même geste (voir plus bas).
+            'recevoir' => ['nullable', 'boolean'],
         ]);
 
+        $livree = ($data['status'] ?? null) === 'livree';
+
         // Date automatique à la livraison
-        if (($data['status'] ?? null) === 'livree' && empty($data['delivered_at'])) {
+        if ($livree && empty($data['delivered_at'])) {
             $data['delivered_at'] = Carbon::now();
         }
 
-        $liv->update($data);
+        $liv->update(collect($data)->except('recevoir')->all());
 
-        return $liv;
+        /* Le suivi de livraison et la réception de commande étaient deux gestes
+         * sans lien : on pouvait marquer « Livrée » sans que le stock bouge, et
+         * le commerçant se demandait pourquoi ses quantités ne montaient pas.
+         * Désormais, marquer livrée signale la commande à réceptionner — et
+         * `recevoir: true` fait les deux d'un coup (stock incrémenté). */
+        $commande = $liv->commande_id
+            ? $request->user()->restockOrders()->with('items')->find($liv->commande_id)
+            : null;
+        $aRecevoir = $livree && $commande && $commande->status !== 'recue';
+
+        if ($aRecevoir && $request->boolean('recevoir')) {
+            DB::transaction(function () use ($request, $commande) {
+                foreach ($commande->items as $it) {
+                    $request->user()->products()->where('id', $it->product_id)->increment('stock', $it->quantity);
+                }
+                $commande->update(['status' => 'recue']);
+            });
+
+            return array_merge($liv->fresh()->toArray(), [
+                'commande_recue' => true,
+                'message' => "Livraison enregistrée et stock mis à jour pour {$commande->items->count()} produit(s)",
+            ]);
+        }
+
+        return array_merge($liv->fresh()->toArray(), [
+            // L'UI propose alors « Ajouter au stock » sur la fiche livraison.
+            'commande_a_recevoir' => $aRecevoir ? $commande->id : null,
+        ]);
     }
 
     public function destroy(Request $request, int $id)

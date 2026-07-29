@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Products, Sales, Ia, boutiqueIdentity, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
+import { Products, Sales, Clients, Ia, boutiqueIdentity, dateFr, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
 import { SkeletonList } from '../components/Skeleton'
 import ScoreRing from '../components/ScoreRing'
 import PaymentPicker from '../components/PaymentPicker'
@@ -22,6 +22,21 @@ export default function Credits() {
   const load = () => { Sales.list().then((s) => setSales(s.filter((x) => x.payment_method === 'credit'))).finally(() => setLoading(false)); Products.list().then(setProducts) }
   useEffect(load, [])
 
+  /* Un crédit se fait TOUJOURS à quelqu'un d'identifié : soit un client déjà
+     enregistré, soit un nouveau dont la fiche est créée à l'enregistrement.
+     Sans cela, l'historique et le score se calculent sur un nom écrit à la
+     main — et « Awa », « awa » et « Awa N. » deviennent trois personnes. */
+  const [clientList, setClientList] = useState<{ id: number; name: string; phone: string | null }[]>([])
+  const [clientId, setClientId] = useState('')            // '' = nouveau client
+  useEffect(() => { Clients.forSale().then(setClientList).catch(() => {}) }, [])
+
+  const pickClient = (value: string) => {
+    setClientId(value)
+    const c = clientList.find((x) => String(x.id) === value)
+    setClient(c ? c.name : '')
+    setPhone(c?.phone || '')
+  }
+
   const resume = useMemo(() => ({
     enCours: sales.filter((s) => !s.paid).reduce((a, s) => a + Number(s.total), 0),
     rembourses: sales.filter((s) => s.paid).reduce((a, s) => a + Number(s.total), 0),
@@ -37,14 +52,25 @@ export default function Credits() {
   useEffect(() => {
     if (!client.trim() || !productId || montant <= 0) { setScore(null); return }
     const t = setTimeout(() => {
-      Ia.creditScore({ amount: montant, due_date: due || null, client_name: client.trim() }).then(setScore).catch(() => setScore(null))
+      Ia.creditScore({ amount: montant, due_date: due || null, client_id: clientId ? Number(clientId) : null, client_name: client.trim() })
+        .then(setScore).catch(() => setScore(null))
     }, 450)
     return () => clearTimeout(t)
-  }, [client, productId, montant, due])
+  }, [client, clientId, productId, montant, due])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!productId) return alert('Choisir un produit'); setSaving(true)
-    try { await Sales.create({ product_id: Number(productId), quantity: Number(qty) || 1, payment_method: 'credit', client_name: client || null, client_phone: phone || null, due_date: due || null } as any); setClient(''); setPhone(''); setProductId(''); setQty('1'); setDue(''); load() }
+    if (!client.trim()) { setSaving(false); return alert('Choisissez un client (ou saisissez un nouveau nom)') }
+    try {
+      await Sales.create({
+        product_id: Number(productId), quantity: Number(qty) || 1, payment_method: 'credit',
+        client_id: clientId ? Number(clientId) : null,
+        client_name: client || null, client_phone: phone || null, due_date: due || null,
+      } as any)
+      setClientId(''); setClient(''); setPhone(''); setProductId(''); setQty('1'); setDue('')
+      Clients.forSale().then(setClientList).catch(() => {}) // la fiche vient peut-être d'être créée
+      load()
+    }
     catch (err: any) { alert(err?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
   }
   // Remboursement : on choisit le moyen de paiement dans une liste illustrée
@@ -70,7 +96,7 @@ export default function Credits() {
     columns: ['Date', 'Client', 'Produit', 'Montant', 'Échéance', 'Statut'],
     rows: sales.map((s) => [
       (s.created_at || '').slice(0, 10), s.client_name || '—', s.product_name || '—',
-      money(Number(s.total)), s.due_date || '—', s.paid ? 'Remboursé' : 'Impayé',
+      money(Number(s.total)), dateFr(s.due_date), s.paid ? 'Remboursé' : 'Impayé',
     ]),
     foot: ['TOTAL', '', '', money(sales.reduce((a, s) => a + Number(s.total), 0)), '', ''],
     rightAlign: [3],
@@ -88,7 +114,7 @@ export default function Credits() {
     ],
     rows: sales.map((s) => [
       (s.created_at || '').slice(0, 10), s.client_name || '', s.client_phone || '',
-      s.product_name || '', Number(s.total), s.due_date || '', s.paid ? 'Remboursé' : 'Impayé',
+      s.product_name || '', Number(s.total), dateFr(s.due_date), s.paid ? 'Remboursé' : 'Impayé',
     ]),
     totals: ['TOTAL', '', '', '', sales.reduce((a, s) => a + Number(s.total), 0), '', ''],
   })
@@ -127,8 +153,19 @@ export default function Credits() {
 
       <form className="card" onSubmit={submit}>
         <div className="card-title">➕ Nouvelle vente à crédit</div>
-        <div className="form-group"><label>Client</label><input value={client} onChange={(e) => setClient(e.target.value)} placeholder="Nom du client" /></div>
-        <div className="form-group"><label>Téléphone</label><input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Téléphone" /></div>
+        <div className="form-group"><label>👤 Client</label>
+          <select value={clientId} onChange={(e) => pickClient(e.target.value)}>
+            <option value="">➕ Nouveau client</option>
+            {clientList.map((c) => <option key={c.id} value={c.id}>👤 {c.name}{c.phone ? ` — ${c.phone}` : ''}</option>)}
+          </select>
+        </div>
+        {!clientId && (
+          <>
+            <div className="form-group"><label>Nom du nouveau client</label><input value={client} onChange={(e) => setClient(e.target.value)} placeholder="Ex. Awa Ndiaye" /></div>
+            <div className="form-group"><label>📞 Téléphone</label><input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="77 123 45 67" /></div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', margin: '-6px 0 12px' }}>Sa fiche client sera créée automatiquement.</div>
+          </>
+        )}
         <div className="form-group"><label>Produit</label>
           <select value={productId} onChange={(e) => setProductId(e.target.value)}>
             <option value="">Choisir un produit</option>
@@ -178,7 +215,7 @@ export default function Credits() {
               <div className="fiche-id">
                 <div className="fiche-name">{s.client_name || 'Client'}</div>
                 <div className="fiche-sub">📦 {s.product_name || '—'} · 📅 {(s.created_at || '').slice(0, 10)}</div>
-                {s.due_date && <div className="fiche-sub">{enRetard ? '⏰' : '🗓️'} Échéance {s.due_date}</div>}
+                {s.due_date && <div className="fiche-sub">{enRetard ? '⏰' : '🗓️'} Échéance {dateFr(s.due_date)}</div>}
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div className="produit-price-main" style={{ color: s.paid ? 'var(--green)' : 'var(--red)' }}>{fcfa(Number(s.total))}</div>

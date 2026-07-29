@@ -38,6 +38,10 @@ class SaleController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1'],  // legacy : nb d'unités de vente
             'prix_reel' => ['nullable', 'integer', 'min:0'],  // prix négocié (FCFA / unité choisie)
             'payment_method' => ['required', 'string'],
+            // Rattachement au FICHIER clients : sans lui, l'historique d'achat et
+            // le score de crédit se reconstruisent à partir du nom écrit, donc
+            // « Awa », « awa » et « Awa Ndiaye » comptent pour trois personnes.
+            'client_id' => ['nullable', 'integer'],
             'client_name' => ['nullable', 'string', 'max:255'],
             'client_phone' => ['nullable', 'string', 'max:32'],
             'due_date' => ['nullable', 'date'],
@@ -106,6 +110,52 @@ class SaleController extends Controller
     }
 
     /**
+     * Rattache la vente au FICHIER clients et renvoie [id, nom, téléphone].
+     *
+     * Trois cas, du plus fiable au moins fiable :
+     *  1. `client_id` fourni → on vérifie qu'il appartient au commerçant (S4).
+     *  2. Un nom est saisi et correspond déjà à une fiche → on la réutilise.
+     *  3. Vente à CRÉDIT avec un nom inconnu → on CRÉE la fiche.
+     *     Une dette doit toujours pointer vers quelqu'un d'identifié : c'est ce
+     *     qui rend l'historique et le score de crédit exploitables. Les ventes
+     *     comptant, elles, restent anonymes si le commerçant ne saisit rien.
+     */
+    private function resolveClient(Request $request, array $data): array
+    {
+        $user = $request->user();
+        $nom = trim((string) ($data['client_name'] ?? ''));
+        $tel = $data['client_phone'] ?? null;
+
+        if (! empty($data['client_id'])) {
+            $client = $user->clients()->find($data['client_id']);
+            if ($client) {
+                return [$client->id, $client->name, $client->phone ?: $tel];
+            }
+        }
+
+        if ($nom === '') {
+            return [null, null, $tel];
+        }
+
+        $existant = $user->clients()->whereRaw('LOWER(name) = ?', [mb_strtolower($nom)])->first();
+        if ($existant) {
+            return [$existant->id, $existant->name, $existant->phone ?: $tel];
+        }
+
+        if (($data['payment_method'] ?? null) === 'credit') {
+            $cree = $user->clients()->create([
+                'name' => $nom,
+                'phone' => $tel,
+                'boutique_id' => $user->current_boutique_id,
+            ]);
+
+            return [$cree->id, $cree->name, $cree->phone];
+        }
+
+        return [null, $nom, $tel];
+    }
+
+    /**
      * Persiste une vente (logique unifiée store/sync). Renvoie
      * ['status' => int, 'body' => mixed, 'duplicate' => bool].
      */
@@ -156,6 +206,8 @@ class SaleController extends Controller
             $actor = $request->attributes->get('real_user') ?? $request->user();
             $paid = $data['payment_method'] !== 'credit';
 
+            [$clientId, $clientName, $clientPhone] = $this->resolveClient($request, $data);
+
             $sale = $request->user()->sales()->create([
                 'product_id' => $product->id,
                 'boutique_id' => $request->user()->current_boutique_id,
@@ -163,8 +215,9 @@ class SaleController extends Controller
                 'quantity' => max(1, (int) round($qb / $factor)),
                 'total' => $total,
                 'payment_method' => $data['payment_method'],
-                'client_name' => $data['client_name'] ?? null,
-                'client_phone' => $data['client_phone'] ?? null,
+                'client_id' => $clientId,
+                'client_name' => $clientName,
+                'client_phone' => $clientPhone,
                 'due_date' => $data['due_date'] ?? null,
                 'paid' => $paid,
                 'quantite_base' => $qb,

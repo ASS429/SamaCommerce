@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Livraisons as Api, Commandes, boutiqueIdentity, fcfa } from '../lib/api'
-import { confirmAsync } from '../lib/toast'
+import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import { deliveryMessage, openWhatsapp } from '../lib/whatsapp'
@@ -25,10 +25,20 @@ export default function Livraisons() {
   }
   useEffect(() => { load() }, [])
 
+  /* Suivi ET réception étaient dissociés : on pouvait marquer « Livrée » sans
+     que le stock bouge. Désormais, si la livraison porte une commande encore
+     en attente, on propose de l'ajouter au stock dans la foulée. */
   const advance = async (l: any) => {
     const next = l.status === 'en_attente' ? 'en_cours' : 'livree'
     setList((xs) => xs.map((x) => x.id === l.id ? { ...x, status: next } : x))
-    await Api.setStatus(l.id, next); load()
+    const res = await Api.setStatus(l.id, next)
+    if (res?.commande_a_recevoir) {
+      if (await confirmAsync('Livraison arrivée ✅\n\nAjouter les articles de la commande à votre stock ?', 'Ajouter au stock')) {
+        const done = await Api.setStatus(l.id, 'livree', true)
+        toast(done?.message || 'Stock mis à jour', 'success')
+      }
+    }
+    load()
   }
   const remove = async (l: any) => { if (await confirmAsync('Supprimer cette livraison ?')) { await Api.remove(l.id); load() } }
 

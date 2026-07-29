@@ -17,6 +17,8 @@ import PinLock from './components/PinLock'
 import Odometer from './components/Odometer'
 import CommandPalette, { type Command } from './components/CommandPalette'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from './lib/theme'
+import { isModuleEnabled, MODULES_EVENT } from './lib/modules'
+import Avatar from './components/Avatar'
 import { usePullToRefresh } from './lib/usePullToRefresh'
 import { initOfflineSync, pendingCount, syncPending } from './lib/offlineQueue'
 import { notifyStock } from './lib/notifications'
@@ -67,12 +69,24 @@ const PERM_BY_VIEW: Partial<Record<View, string>> = {
 }
 const OWNER_ONLY: View[] = ['boutiques', 'equipe']
 
+/**
+ * Deux filtres bien distincts se superposent sur la navigation :
+ *  - `canAccess` = DROIT (permissions de l'employé) — non négociable ;
+ *  - `isModuleEnabled` = CHOIX d'affichage du commerçant (Paramètres).
+ * On les garde séparés : masquer une section ne doit jamais donner un droit,
+ * et un employé ne doit pas pouvoir s'ouvrir une section en la « réactivant ».
+ */
 function canAccess(user: User | null, view: View): boolean {
   if (view === 'menu') return true
   if (!user?.is_employee) return true
   if (OWNER_ONLY.includes(view)) return false
   const key = PERM_BY_VIEW[view]
   return key ? !!user.permissions?.[key] : true
+}
+
+/** Section réellement affichable : droit ET activée dans les Paramètres. */
+function isVisible(user: User | null, view: View): boolean {
+  return canAccess(user, view) && isModuleEnabled(view)
 }
 
 export default function App() {
@@ -96,12 +110,20 @@ export default function App() {
   const [gProducts, setGProducts] = useState<Product[]>([])
   const [gClients, setGClients] = useState<Client[]>([])
   const [themePref, setThemePref] = useState<ThemePref>(getThemePref())
+  // Redessine la navigation quand l'utilisateur active/masque une section.
+  const [modulesRev, setModulesRev] = useState(0)
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)')
     const handler = (e: MediaQueryListEvent) => setDesktop(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    const onModules = () => setModulesRev((n) => n + 1)
+    window.addEventListener(MODULES_EVENT, onModules)
+    return () => window.removeEventListener(MODULES_EVENT, onModules)
   }, [])
 
   const refreshStats = () => {
@@ -163,8 +185,9 @@ export default function App() {
 
   const go = (v: View) => setView(canAccess(user, v) ? v : view)
 
+  void modulesRev // relit les modules actifs à chaque changement
   const section = !canAccess(user, view) ? <AccessDenied /> : (<Suspense fallback={<SectionLoader />}>
-    {view === 'menu' && <Home user={user} can={(v) => canAccess(user, v)} onNavigate={setView} onLogout={doLogout} onUpgrade={() => setShowPremium(true)} desktop={desktop} stats={stats} />}
+    {view === 'menu' && <Home user={user} can={(v) => isVisible(user, v)} onNavigate={setView} onLogout={doLogout} onUpgrade={() => setShowPremium(true)} desktop={desktop} stats={stats} />}
     {view === 'vente' && <Vente />}
     {view === 'stock' && <Stock />}
     {view === 'categories' && <CategoriesSection />}
@@ -185,7 +208,7 @@ export default function App() {
 
   // Design 3.6 — commandes de la palette (Ctrl+K) : navigation + actions rapides.
   const commands: Command[] = [
-    ...NAV.filter((n) => canAccess(user, n.view)).map((n) => ({
+    ...NAV.filter((n) => isVisible(user, n.view)).map((n) => ({
       id: 'go-' + n.view, icon: n.icon, label: n.label, hint: 'Aller à', run: () => go(n.view),
     })),
     { id: 'act-vendre', icon: '💳', label: 'Nouvelle vente', hint: 'Action', run: () => go('vente') },
@@ -210,7 +233,7 @@ export default function App() {
             <Logo size={38} className="dk-logo-badge" /> Sama<span style={{ opacity: .85 }}>Commerce</span>
           </button>
           <nav className="dk-nav">
-            {NAV.filter((n) => canAccess(user, n.view)).map((n) => (
+            {NAV.filter((n) => isVisible(user, n.view)).map((n) => (
               <button key={n.view} className={`dk-nav-item ${view === n.view ? 'active' : ''}`} onClick={() => go(n.view)}>
                 <span className="di">{n.icon}</span> {n.label}
               </button>
@@ -302,7 +325,10 @@ export default function App() {
         <div className="header-inner">
           {view !== 'menu'
             ? <button className="back-btn" aria-label="Retour à l'accueil" onClick={() => setView('menu')}>←</button>
-            : <div className="header-icon" style={{ fontWeight: 800, fontSize: 15 }}>{(user?.company_name || 'SC').slice(0, 2).toUpperCase()}</div>}
+            : <button className="header-icon" style={{ border: 'none', padding: 0, cursor: 'pointer', background: 'transparent' }}
+                aria-label="Mon profil" onClick={() => setView('profil')}>
+                <Avatar photo={user?.photo} name={user?.company_name} size={40} radius={12} tint="rgba(255,255,255,.18)" />
+              </button>}
           <div className="header-center" style={{ textAlign: view === 'menu' ? 'left' : 'center' }}>
             {view === 'menu'
               ? <><div className="header-sub">Bonjour 👋</div><div className="header-title">{user?.company_name || 'Sama Commerce'}</div></>
@@ -335,15 +361,29 @@ export default function App() {
 
       <div className="bottom-nav">
         <NavBtn active={view === 'menu'} icon="🏠" label={t('nav.menu')} onClick={() => setView('menu')} />
-        {canAccess(user, 'rapports')
-          ? <NavBtn active={view === 'rapports'} icon="📈" label={t('nav.rapports')} onClick={() => setView('rapports')} />
-          : <NavBtn active={view === 'stock'} icon="📦" label={t('nav.stock')} onClick={() => setView('stock')} />}
-        <button className="nav-fab" aria-label={t('nav.vente')} onClick={() => go('vente')} title={t('nav.vente')}>💳</button>
+        {/* Raccourci de gauche : la première section utile encore activée. Si
+            le commerçant a tout masqué sauf Vendre, on ne laisse pas un bouton
+            mort dans sa barre. */}
+        {(() => {
+          const shortcut = (['rapports', 'stock', 'inventaire', 'clients', 'credits'] as View[]).find((v) => isVisible(user, v))
+          const meta = NAV.find((n) => n.view === shortcut)
+          return shortcut && meta
+            ? <NavBtn active={view === shortcut} icon={meta.icon} label={meta.label} onClick={() => setView(shortcut)} />
+            : <span className="nav-btn" aria-hidden="true" />
+        })()}
+        {/* Bouton central : Vendre, ou la principale section restante. */}
+        {(() => {
+          const main = (['vente', 'stock', 'rapports'] as View[]).find((v) => isVisible(user, v))
+          const meta = NAV.find((n) => n.view === main)
+          return main
+            ? <button className="nav-fab" aria-label={meta?.label || t('nav.vente')} onClick={() => go(main)} title={meta?.label}>{main === 'vente' ? '💳' : meta?.icon}</button>
+            : <button className="nav-fab" aria-label={t('nav.menu')} onClick={() => setView('menu')}>🏠</button>
+        })()}
         <NavBtn active={view === 'profil'} icon="👤" label={t('nav.profil')} onClick={() => setView('profil')} />
         <NavBtn active={showPlus} icon="＋" label="Plus" onClick={() => setShowPlus(true)} />
       </div>
 
-      {showPlus && <PlusSheet can={(v) => canAccess(user, v)} onClose={() => setShowPlus(false)} onNavigate={(v) => { setView(v); setShowPlus(false) }} />}
+      {showPlus && <PlusSheet can={(v) => isVisible(user, v)} onClose={() => setShowPlus(false)} onNavigate={(v) => { setView(v); setShowPlus(false) }} />}
       {modals}
     </div>
   )

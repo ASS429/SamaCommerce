@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Categories, Products, Sales, fcfa, getUser, displayInfo, type Category, type Product } from '../lib/api'
+import { Categories, Products, Sales, boutiqueIdentity, fcfa, getUser, displayInfo, type Category, type Product } from '../lib/api'
 import { promptAsync, toast } from '../lib/toast'
 import { haptic } from '../lib/haptics'
 import { SkeletonGrid } from '../components/Skeleton'
@@ -8,6 +8,8 @@ import { confetti } from '../lib/celebrate'
 import { enqueueSale, uuid, type PendingSale } from '../lib/offlineQueue'
 import { productIcon, productTint } from '../lib/productIcon'
 import { flyToCart } from '../lib/flyToCart'
+import Avatar from '../components/Avatar'
+import { openWhatsapp, receiptMessage } from '../lib/whatsapp'
 import {
   type CartLine, lFactor, lCount, lTotal, lRefTotal, lCogs, lLabel, lPerDisplay, qtyStr, cartTotal,
 } from '../lib/cart'
@@ -21,6 +23,7 @@ export default function Vente() {
   const [showPay, setShowPay] = useState(false)
   const [showCredit, setShowCredit] = useState(false)
   const [lastSale, setLastSale] = useState<CartLine[] | null>(null)
+  const [lastMethod, setLastMethod] = useState<string | null>(null)
   const [showReceipt, setShowReceipt] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -67,7 +70,7 @@ export default function Vente() {
       await enqueueSale(sale)
     }
     haptic.success()
-    setLastSale(cart); setCart([]); setShowPay(false); setShowCredit(false)
+    setLastSale(cart); setLastMethod(method); setCart([]); setShowPay(false); setShowCredit(false)
     toast('📴 Vente enregistrée hors-ligne — sera synchronisée au retour du réseau', 'info')
   }
 
@@ -80,7 +83,7 @@ export default function Vente() {
       }
       haptic.success()
       confetti() // Design 3.4 — célébration d'encaissement
-      setLastSale(cart); setCart([]); setShowPay(false); setShowCredit(false); load()
+      setLastSale(cart); setLastMethod(method); setCart([]); setShowPay(false); setShowCredit(false); load()
     } catch (e: any) {
       // Erreur RÉSEAU (pas de réponse serveur) → on bascule en file hors-ligne.
       if (!e?.response) return queueOffline(method, credit)
@@ -89,14 +92,19 @@ export default function Vente() {
     }
   }
 
+  /* Reçu WhatsApp : gabarit commun (lib/whatsapp.ts) — en-tête boutique avec
+     son numéro, lignes pictogrammées, total en gras, moyen de paiement. Le
+     numéro du client est normalisé au format international, sinon WhatsApp
+     répond « numéro invalide » et le commerçant croit l'appli cassée. */
   const whatsappReceipt = async () => {
     if (!lastSale) return
     const phone = await promptAsync('Numéro WhatsApp du client (ex: 77 123 45 67) :', '')
     if (!phone) return
-    const lines = lastSale.map((l) => `• ${l.product.name} ${qtyStr(l)} = ${fcfa(lTotal(l))}`).join('\n')
-    const tot = lastSale.reduce((s, l) => s + lTotal(l), 0)
-    const msg = `🧾 *Reçu — ${getUser()?.company_name || 'Ma Boutique'}*\n${new Date().toLocaleString('fr-FR')}\n\n${lines}\n\n*TOTAL : ${fcfa(tot)}*\n\nMerci de votre achat ! 🙏`
-    window.open(`https://wa.me/${phone.replace(/\s+/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+    openWhatsapp(phone, receiptMessage(boutiqueIdentity(), {
+      lignes: lastSale.map((l) => ({ label: `${l.product.name} ${qtyStr(l)}`, total: lTotal(l) })),
+      total: lastSale.reduce((s, l) => s + lTotal(l), 0),
+      paiement: lastMethod,
+    }))
   }
 
   return (
@@ -128,9 +136,8 @@ export default function Vente() {
                     <button key={p.id} className="vente-card" disabled={p.stock <= 0} onClick={(e) => addToCart(p, e)}
                       title={`${p.name} — ${fcfa(p.price)}`}>
                       {/* Le pictogramme domine : on reconnaît la marchandise sans lire. */}
-                      <span className="v-icon" style={{ background: productTint(p.name) }} aria-hidden="true">
-                        {productIcon(p.name, catEmoji(p))}
-                      </span>
+                      <Avatar photo={p.photo} icon={productIcon(p.name, catEmoji(p))} name={p.name}
+                        size={62} radius={18} tint={productTint(p.name)} className="v-icon-av" />
                       <span className="v-body">
                         <span className="vn">{p.name}</span>
                         <span className="vp">{fcfa(p.price)}{pesable && <small> /{dl}</small>}</span>
@@ -207,9 +214,7 @@ function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
     <div style={{ padding: '10px 0', borderBottom: '1px solid var(--line-soft)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* Le pictogramme suit le produit jusque dans le panier. */}
-        <span className="produit-icon" style={{ width: 34, height: 34, fontSize: 19, borderRadius: 11, background: productTint(p.name) }} aria-hidden="true">
-          {productIcon(p.name)}
-        </span>
+        <Avatar photo={p.photo} icon={productIcon(p.name)} name={p.name} size={34} radius={11} tint={productTint(p.name)} />
         <div className="sora" style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{p.name}</div>
         <div className="sora" style={{ fontWeight: 800, color: 'var(--green-dark)' }}>{fcfa(total)}</div>
         <button className="prd-btn prd-btn-del" style={{ padding: '4px 8px' }} aria-label="Retirer" onClick={onRemove}>✕</button>

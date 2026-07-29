@@ -48,6 +48,7 @@ class ProductController extends Controller
             'unite_base' => $data['unite_base'] ?? 'piece',
             'prix_min' => $data['prix_min'] ?? null,
             'negociable' => $data['negociable'] ?? null,
+            'photo' => $data['photo'] ?? null,
         ]);
 
         $this->syncUnits($product, $data['units'] ?? null);
@@ -111,6 +112,7 @@ class ProductController extends Controller
             'unite_base' => ['nullable', 'in:piece,g,ml'],
             'prix_min' => ['nullable', 'integer', 'min:0'],
             'negociable' => ['nullable', 'boolean'],
+            'photo' => self::PHOTO_RULES,
             'units' => ['nullable', 'array'],
             'units.*.libelle' => ['required_with:units', 'string', 'max:64'],
             'units.*.facteur' => ['required_with:units', 'integer', 'min:1'],

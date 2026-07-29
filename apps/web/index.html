@@ -13,6 +13,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <!-- Thème appliqué AVANT le premier rendu : sans ça, un téléphone en mode
+         nuit affiche un grand flash blanc le temps que le bundle se charge.
+         Même règle que src/lib/theme.ts : préférence enregistrée, sinon appareil. -->
+    <script>
+      (function () {
+        try {
+          var p = localStorage.getItem('samacommerce_theme')
+          var dark = p === 'dark' || (p !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+          if (dark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#13111F')
+        } catch (e) { /* mode privé : on reste en clair */ }
+      })()
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

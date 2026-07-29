@@ -1,11 +1,15 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
-import { Categories, Products, fcfa, DISPLAY_UNIT, type Category, type Product } from '../lib/api'
+import { Categories, Products, boutiqueIdentity, fcfa, DISPLAY_UNIT, type Category, type Product } from '../lib/api'
 // Design 3.7 — html5-qrcode chargé en lazy (uniquement à l'ouverture du scanner).
 const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'))
 import { confirmAsync } from '../lib/toast'
 import { haptic } from '../lib/haptics'
 import { SkeletonList } from '../components/Skeleton'
 import { productIcon, productTint } from '../lib/productIcon'
+import Avatar from '../components/Avatar'
+import PhotoPicker from '../components/PhotoPicker'
+import { exportXlsx } from '../lib/xlsx'
+import { exportPdf, money } from '../lib/pdf'
 
 export default function Stock() {
   const [products, setProducts] = useState<Product[]>([])
@@ -46,11 +50,57 @@ export default function Stock() {
   const stockClass = (s: number) => s <= 0 ? 'stock-critical' : s <= 5 ? 'stock-low' : 'stock-ok'
   const pillClass = (s: number) => s <= 0 ? 'pill-critical' : s <= 5 ? 'pill-low' : 'pill-ok'
 
+  /* Exports : le stock est le document que l'on montre au fournisseur ou au
+     comptable. On exporte ce qui est À L'ÉCRAN (filtre et tri compris). */
+  const exportRows = () => filtered.map((p) => {
+    const [dl, dfac] = DISPLAY_UNIT[p.unite_base || 'piece'] || DISPLAY_UNIT.piece
+    return { p, dl, ds: p.stock / dfac }
+  })
+  const valeurStock = filtered.reduce((a, p) => a + Number(p.price_achat) * p.stock, 0)
+
+  const exportExcel = () => exportXlsx('stock-samacommerce', {
+    sheet: 'Stock',
+    title: '📦 Inventaire du stock',
+    subtitle: `${boutiqueIdentity().nom} — ${filtered.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    columns: [
+      { header: 'Produit', width: 30 }, { header: 'Catégorie', width: 18 },
+      { header: 'Unité', width: 10 }, { header: 'Stock', width: 12, type: 'number' },
+      { header: "Prix d'achat", width: 14, type: 'money' }, { header: 'Prix de vente', width: 14, type: 'money' },
+      { header: 'Valeur stock', width: 15, type: 'money' }, { header: 'Code-barres', width: 18 },
+    ],
+    rows: exportRows().map(({ p, dl, ds }) => [
+      p.name, catName(p.category_id) || 'Sans catégorie', dl, ds,
+      Number(p.price_achat), Number(p.price), Number(p.price_achat) * p.stock, p.barcode || '',
+    ]),
+    totals: ['TOTAL', '', '', null, null, null, valeurStock, ''],
+  })
+
+  const exportListePdf = () => exportPdf('stock-samacommerce', {
+    title: 'Stock',
+    subtitle: `${filtered.length} référence(s)${filter !== 'tous' ? ` — ${catName(filter as number) || ''}` : ''}`,
+    boutique: boutiqueIdentity(),
+    summary: [
+      { label: 'Références', value: String(filtered.length) },
+      { label: 'Valeur du stock', value: money(valeurStock), tone: 'green' },
+      { label: 'Ruptures', value: String(filtered.filter((p) => p.stock <= 0).length), tone: 'red' },
+    ],
+    columns: ['Produit', 'Catégorie', 'Stock', 'Achat', 'Vente'],
+    rows: exportRows().map(({ p, dl, ds }) => [
+      p.name, catName(p.category_id) || '—', `${ds} ${dl}`, money(Number(p.price_achat)), money(Number(p.price)),
+    ]),
+    foot: ['TOTAL', '', '', money(valeurStock), ''],
+    rightAlign: [2, 3, 4],
+  })
+
   return (
     <>
       <div className="page-header">
         <h2>📦 Mon Stock</h2>
-        <button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportExcel} disabled={filtered.length === 0}>📊 Excel</button>
+          <button className="btn-pdf" onClick={exportListePdf} disabled={filtered.length === 0}>📄 PDF</button>
+          <button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
@@ -92,11 +142,11 @@ export default function Stock() {
             <span className={`produit-stock-pill ${pillClass(ds)}`}>{stockTxt} en stock</span>
           </div>
           <div className="produit-card-body produit-card-body--icon">
-            {/* Même pictogramme qu'au point de vente : le produit se reconnaît
-                à l'identique dans tout l'outil. */}
-            <span className="produit-icon" style={{ background: productTint(p.name) }} aria-hidden="true">
-              {productIcon(p.name, catEmoji(p.category_id))}
-            </span>
+            {/* Photo du produit si le commerçant en a pris une, sinon le même
+                pictogramme qu'au point de vente : l'article se reconnaît à
+                l'identique dans tout l'outil. */}
+            <Avatar photo={p.photo} icon={productIcon(p.name, catEmoji(p.category_id))} name={p.name}
+              size={52} radius={15} tint={productTint(p.name)} className="produit-icon-av" />
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="produit-name">{p.name}{(p.units?.length ?? 0) > 0 && <span className="produit-cat-badge" style={{ marginLeft: 6 }}>+ gros</span>}</div>
             {p.scent && <div className="produit-desc">{p.scent}</div>}
@@ -146,6 +196,7 @@ function ProductModal({ product, categories, onClose, onSaved }: {
   )
   const [scent, setScent] = useState(product?.scent ?? '')
   const [barcode, setBarcode] = useState(product?.barcode ?? '')
+  const [photo, setPhoto] = useState<string | null>(product?.photo ?? null)
   const [scanning, setScanning] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -162,6 +213,7 @@ function ProductModal({ product, categories, onClose, onSaved }: {
       negociable: negociable === 'oui' ? true : negociable === 'non' ? false : null,
       units: units.filter((u) => u.libelle.trim() && Number(u.qte) > 0).map((u) => ({ libelle: u.libelle.trim(), facteur: Math.round(Number(u.qte) * dfactor), prix: Number(u.prix) || 0 })),
       scent: scent || null,
+      photo,
     }
     try { if (product) await Products.update(product.id, payload as any); else await Products.create(payload as any); onSaved() }
     catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
@@ -174,6 +226,9 @@ function ProductModal({ product, categories, onClose, onSaved }: {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">{product ? '✏️ Modifier le produit' : '📦 Nouveau produit'}</div>
+        {/* Photo de l'article : c'est elle que le vendeur cherche des yeux au
+            comptoir. Le pictogramme déduit du nom reste le repli. */}
+        <PhotoPicker value={photo} onChange={setPhoto} name={name} icon={productIcon(name)} label="📷 Photo du produit (facultatif)" />
         <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du produit" /></div>
         <div className="form-group"><label>Catégorie</label>
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Ia, type ReapproItem } from '../lib/api'
 import { SkeletonList } from '../components/Skeleton'
+import { productIcon, productTint } from '../lib/productIcon'
 import type { View } from './Home'
 
 export default function IaReappro({ onNavigate }: { onNavigate?: (v: View) => void }) {
@@ -61,8 +62,13 @@ export default function IaReappro({ onNavigate }: { onNavigate?: (v: View) => vo
         const urgent = it.days_until_stockout !== null && it.days_until_stockout <= 5
         return (
           <div key={it.product_id} className={`card${urgent ? ' ia-urgent-rise' : ''}`} style={{ borderLeft: `4px solid ${u.border}`, marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="produit-name">{it.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* Le pictogramme du produit, identique au stock et à la caisse :
+                  on repère « le riz » sans lire la ligne. */}
+              <span className="produit-icon" style={{ width: 40, height: 40, fontSize: 21, borderRadius: 13, background: productTint(it.name) }} aria-hidden="true">
+                {productIcon(it.name)}
+              </span>
+              <div className="produit-name" style={{ flex: 1, minWidth: 0 }}>{it.name}</div>
               <span className="produit-stock-pill" style={{ background: 'var(--bg)', color: u.c, fontWeight: 700 }}>⏳ {u.t}</span>
             </div>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8, fontSize: 12.5, color: 'var(--muted)' }}>

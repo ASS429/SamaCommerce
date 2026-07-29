@@ -1,20 +1,41 @@
 import { useEffect, useState } from 'react'
 import { Categories, Products, type Category, type Product } from '../lib/api'
-import { confirmAsync } from '../lib/toast'
+import { confirmAsync, toast } from '../lib/toast'
+import { SkeletonGrid } from '../components/Skeleton'
+import { productIcon } from '../lib/productIcon'
 
-const EMOJIS = ['🏷️','👕','👖','👗','👔','👟','👠','🎩','👜','💍','⌚','💄','💅','🧴','🍎','🍌','🍇','🥦','🍞','🥩','🍔','🍕','🍟','🍩','🥤','🍷','📱','💻','🖥️','🎧','🎮','📷','📺','🔋','🛋️','🛏️','🪑','⚽','🏀','🎾','🧸','🎲','🔧','🔨','🧰','🛒','🥫','🧹','🧼','💊']
+/* Palette d'icônes ORGANISÉE par famille de commerce : on cherche des yeux, pas
+   au clavier. L'ordre suit ce qu'on trouve dans une boutique de quartier
+   sénégalaise — alimentaire d'abord, puis entretien, puis le reste. */
+const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  { label: '🍚 Alimentaire', emojis: ['🍚', '🍞', '🍝', '🌾', '🫘', '🧂', '🍬', '🧴', '🍅', '🧅', '🧄', '🌶️', '🥜', '🍯', '🧈', '🧀', '🥚', '🥫'] },
+  { label: '🥤 Boissons', emojis: ['💧', '🥤', '🧃', '🥛', '☕', '🍵', '🍶', '🧊'] },
+  { label: '🐟 Frais', emojis: ['🐟', '🥩', '🍗', '🥬', '🥕', '🥔', '🍌', '🍊', '🥭', '🍉', '🍎', '🍋'] },
+  { label: '🍪 Snacks', emojis: ['🍪', '🍫', '🍦', '🍟', '🍩', '🥐', '🍭'] },
+  { label: '🧼 Hygiène & entretien', emojis: ['🧼', '🧻', '🦷', '🍼', '💨', '🧹', '🧽', '💊'] },
+  { label: '🏠 Maison & divers', emojis: ['🔥', '🕯️', '🔋', '💡', '📱', '🚬', '📒', '🔧', '🧱', '🛒', '🏷️'] },
+  { label: '👕 Mode', emojis: ['👕', '👖', '👗', '👔', '👟', '👠', '👜', '💍', '⌚', '💄', '🎩'] },
+]
 
 export default function CategoriesSection() {
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [editing, setEditing] = useState<Category | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const load = () => { Categories.list().then(setCategories); Products.list().then(setProducts) }
+  const load = () => {
+    Categories.list().then(setCategories).finally(() => setLoading(false))
+    Products.list().then(setProducts).catch(() => {})
+  }
   useEffect(load, [])
 
   const count = (id: number) => products.filter((p) => p.category_id === id).length
-  const toggleNego = async (c: Category) => { await Categories.update(c.id, { negociable: !c.negociable }); load() }
+  const toggleNego = async (c: Category) => {
+    setCategories((list) => list.map((x) => x.id === c.id ? { ...x, negociable: !c.negociable } : x))
+    try { await Categories.update(c.id, { negociable: !c.negociable }) } catch { toast('Modification non enregistrée', 'error'); load() }
+  }
   const remove = async (c: Category) => {
     if (!await confirmAsync(`Supprimer « ${c.name} » ?`)) return
     try { await Categories.remove(c.id); load() } catch (e: any) { alert(e?.response?.data?.error || 'Suppression impossible') }
@@ -23,49 +44,101 @@ export default function CategoriesSection() {
 
   return (
     <>
-      <div className="page-header"><h2>🏷️ Catégories</h2><button className="btn-primary" onClick={() => setShowModal(true)}>+ Ajouter</button></div>
+      <div className="page-header"><h2>🏷️ Catégories</h2><button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button></div>
       <input className="search-bar" placeholder="🔍 Rechercher une catégorie..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
-      {filtered.length === 0 && <div className="empty-state"><div className="empty-icon">🏷️</div><div className="empty-text">Aucune catégorie</div></div>}
+      {loading && <SkeletonGrid count={6} />}
+      {!loading && filtered.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">🏷️</div>
+          <div className="empty-text">{categories.length === 0 ? 'Aucune catégorie' : 'Aucun résultat'}</div>
+          <div className="empty-sub">{categories.length === 0 ? 'Rangez vos produits par famille : riz, boissons, savons…' : 'Essayez un autre nom'}</div>
+        </div>
+      )}
 
-      <div className="categories-grid">
-        {filtered.map((c) => (
-          <div key={c.id} className="cat-card">
-            <button className="cat-delete" onClick={() => remove(c)}>🗑️</button>
-            <span className="cat-emoji">{c.emoji}</span>
-            <span className="cat-name">{c.name}</span>
-            <span className="cat-badge">{count(c.id)} produit(s)</span>
-            <button className="cat-badge" style={{ cursor: 'pointer', border: 'none', background: c.negociable ? '#ECFDF5' : 'var(--bg)', color: c.negociable ? 'var(--green)' : 'var(--muted)' }} onClick={() => toggleNego(c)} title="Autoriser le marchandage pour cette catégorie">
-              {c.negociable ? '💬 Négociable' : 'Prix fixe'}
-            </button>
-          </div>
-        ))}
-      </div>
+      {!loading && (
+        <div className="categories-grid">
+          {filtered.map((c) => (
+            <div key={c.id} className="cat-card">
+              <div className="cat-tools">
+                <button className="cat-tool" aria-label="Modifier" onClick={() => { setEditing(c); setShowModal(true) }}>✏️</button>
+                <button className="cat-tool cat-delete" aria-label="Supprimer" onClick={() => remove(c)}>🗑️</button>
+              </div>
+              <span className="cat-emoji">{c.emoji}</span>
+              <span className="cat-name">{c.name}</span>
+              <span className="cat-badge">📦 {count(c.id)} produit(s)</span>
+              <button className="cat-badge" style={{ cursor: 'pointer', border: 'none', background: c.negociable ? '#ECFDF5' : 'var(--bg)', color: c.negociable ? 'var(--green)' : 'var(--muted)' }}
+                onClick={() => toggleNego(c)} title="Autoriser le marchandage pour cette catégorie">
+                {c.negociable ? '💬 Négociable' : '🔒 Prix fixe'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {showModal && <CategoryModal onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load() }} />}
+      {showModal && <CategoryModal item={editing} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load() }} />}
     </>
   )
 }
 
-function CategoryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(''); const [emoji, setEmoji] = useState('🏷️'); const [nego, setNego] = useState(false); const [saving, setSaving] = useState(false)
-  const save = async () => { if (!name.trim()) return alert('Le nom est requis'); setSaving(true); try { await Categories.create({ name: name.trim(), emoji, negociable: nego }); onSaved() } finally { setSaving(false) } }
+function CategoryModal({ item, onClose, onSaved }: { item: Category | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(item?.name ?? '')
+  const [emoji, setEmoji] = useState(item?.emoji || '🏷️')
+  const [touched, setTouched] = useState(!!item) // l'utilisateur a-t-il choisi l'icône lui-même ?
+  const [nego, setNego] = useState(!!item?.negociable)
+  const [saving, setSaving] = useState(false)
+
+  /* Suggestion automatique : « Boissons » propose 🥤 avant même que le
+     commerçant ouvre la grille. Le même moteur que les produits, donc la
+     catégorie et ses articles portent des images cohérentes. */
+  const onName = (v: string) => {
+    setName(v)
+    if (!touched) {
+      const suggested = productIcon(v)
+      setEmoji(suggested === '📦' ? '🏷️' : suggested)
+    }
+  }
+
+  const save = async () => {
+    if (!name.trim()) return alert('Le nom est requis')
+    setSaving(true)
+    const payload = { name: name.trim(), emoji, negociable: nego }
+    try { if (item) await Categories.update(item.id, payload); else await Categories.create(payload); onSaved() }
+    catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">🏷️ Nouvelle catégorie</div>
-        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom de la catégorie" /></div>
-        <div className="form-group"><label>Icône (sélectionnée : {emoji})</label></div>
-        <div className="emoji-grid">
-          {EMOJIS.map((e) => <button key={e} className={`emoji-btn ${emoji === e ? 'sel' : ''}`} onClick={() => setEmoji(e)}>{e}</button>)}
+        <div className="modal-title">{item ? '✏️ Modifier la catégorie' : '🏷️ Nouvelle catégorie'}</div>
+
+        <div className="cat-preview"><span>{emoji}</span><b>{name || 'Nom de la catégorie'}</b></div>
+
+        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => onName(e.target.value)} placeholder="Ex. Boissons, Savons, Céréales" autoFocus /></div>
+
+        <div className="form-group"><label>Icône — touchez une image</label></div>
+        <div className="emoji-groups">
+          {EMOJI_GROUPS.map((g) => (
+            <div key={g.label}>
+              <div className="emoji-group-label">{g.label}</div>
+              <div className="emoji-grid">
+                {g.emojis.map((e) => (
+                  <button key={e} type="button" className={`emoji-btn ${emoji === e ? 'sel' : ''}`}
+                    onClick={() => { setEmoji(e); setTouched(true) }} aria-label={`Icône ${e}`} aria-pressed={emoji === e}>{e}</button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, fontWeight: 600, margin: '4px 0 12px', cursor: 'pointer' }}>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, fontWeight: 600, margin: '10px 0 12px', cursor: 'pointer' }}>
           <input type="checkbox" checked={nego} onChange={(e) => setNego(e.target.checked)} style={{ width: 18, height: 18 }} />
           💬 Prix négociable (marchandage autorisé)
         </label>
+
         <div className="modal-actions">
           <button className="btn-cancel" onClick={onClose}>Annuler</button>
-          <button className="btn-confirm" onClick={save} disabled={saving}>Ajouter</button>
+          <button className="btn-confirm" onClick={save} disabled={saving}>{item ? 'Mettre à jour' : 'Ajouter'}</button>
         </div>
       </div>
     </div>

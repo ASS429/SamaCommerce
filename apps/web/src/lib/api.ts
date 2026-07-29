@@ -37,6 +37,8 @@ export type Product = {
   prix_min?: number | null
   negociable?: boolean | null
   units?: ProductUnit[]
+  /** Photo de la fiche (data-URL réduite, cf. lib/photo.ts). */
+  photo?: string | null
 }
 
 // Affichage du détail selon l'unité de base : [libellé, facteur vers la base]
@@ -155,9 +157,10 @@ export const Sales = {
 }
 export type Client = {
   id: number; name: string; phone: string | null; email: string | null; address: string | null; notes: string | null
+  photo?: string | null
   nb_achats?: number; total_achats?: number; credits_ouverts?: number; credits_montant?: number
 }
-export type Fournisseur = { id: number; name: string; phone: string | null; email: string | null; address: string | null; notes: string | null }
+export type Fournisseur = { id: number; name: string; phone: string | null; email: string | null; address: string | null; notes: string | null; photo?: string | null }
 
 export const Clients = {
   list: () => api.get<Client[]>('/clients').then((r) => r.data),
@@ -249,8 +252,14 @@ export const Admin = {
   toggle2fa: () => api.patch('/admin-settings/twofa').then((r) => r.data),
 }
 
-export type Boutique = { id: number; name: string; phone: string | null; address: string | null; emoji: string; is_primary: boolean; nb_produits?: number; nb_ventes?: number; nb_membres?: number }
-export type Member = { id: number; email: string; role: string; status: string; permissions: Record<string, boolean>; member_id: number | null }
+export type Boutique = { id: number; name: string; phone: string | null; address: string | null; emoji: string; is_primary: boolean; photo?: string | null; nb_produits?: number; nb_ventes?: number; nb_membres?: number }
+export type Member = {
+  id: number; email: string; role: string; status: string; permissions: Record<string, boolean>; member_id: number | null
+  /** Fiche saisie par le patron (prime sur le compte lié). */
+  name?: string | null; phone?: string | null; photo?: string | null
+  /** Repli : infos du compte utilisateur quand l'invitation a été acceptée. */
+  user_company_name?: string | null; user_phone?: string | null
+}
 
 export const ALL_PERMS = ['vente', 'stock', 'categories', 'rapports', 'caisse', 'credits', 'clients', 'fournisseurs', 'commandes', 'livraisons']
 
@@ -263,9 +272,11 @@ export const Boutiques = {
 }
 export const Members = {
   list: () => api.get<Member[]>('/members').then((r) => r.data),
-  invite: (email: string, role: string, permissions?: Record<string, boolean>) => api.post('/members/invite', { email, role, permissions }).then((r) => r.data),
+  invite: (payload: { email: string; role: string; permissions?: Record<string, boolean>; name?: string | null; phone?: string | null; photo?: string | null }) =>
+    api.post('/members/invite', payload).then((r) => r.data),
   accept: (invite_token: string) => api.post('/members/accept', { invite_token }).then((r) => r.data),
-  update: (id: number, payload: { permissions?: Record<string, boolean>; role?: string }) => api.patch(`/members/${id}`, payload).then((r) => r.data),
+  update: (id: number, payload: { permissions?: Record<string, boolean>; role?: string; name?: string | null; phone?: string | null; photo?: string | null }) =>
+    api.patch(`/members/${id}`, payload).then((r) => r.data),
   remove: (id: number) => api.delete(`/members/${id}`),
 }
 
@@ -275,3 +286,9 @@ export function updateProfile(payload: { company_name?: string; phone?: string }
 }
 
 export const fcfa = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' F'
+
+/** Identité de la boutique, en-tête des messages WhatsApp et des exports. */
+export function boutiqueIdentity(): { nom: string; telephone?: string | null } {
+  const u = getUser()
+  return { nom: u?.company_name || 'Ma Boutique', telephone: u?.phone }
+}

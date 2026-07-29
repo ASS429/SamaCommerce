@@ -21,6 +21,8 @@ class LivraisonController extends Controller
                 'restock_orders.total as commande_total',
                 'restock_orders.expected_date',
                 'fournisseurs.name as fournisseur_name',
+                // Le suivi se fait par WhatsApp : le numéro doit remonter avec la ligne.
+                'fournisseurs.phone as fournisseur_phone',
             ]);
     }
 

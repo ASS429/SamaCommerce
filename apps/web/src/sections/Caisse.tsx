@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Caisse as Api, fcfa } from '../lib/api'
 import { confirmAsync } from '../lib/toast'
 import ClotureScene from '../components/ClotureScene'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import { boutiqueIdentity } from '../lib/api'
+import { exportPdf, money } from '../lib/pdf'
+import { exportXlsx } from '../lib/xlsx'
+import { SkeletonList } from '../components/Skeleton'
 
 export default function Caisse() {
   const [today, setToday] = useState<any>(null)
@@ -14,6 +16,9 @@ export default function Caisse() {
 
   const load = () => { Api.today().then(setToday); Api.history().then(setHistory); Api.weekly().then(setWeekly) }
   useEffect(() => { load() }, [])
+
+  /** Somme d'une colonne de l'historique (ligne de totaux des exports). */
+  const sumHist = (key: string) => history.reduce((a, h) => a + Number(h[key] || 0), 0)
 
   const close = async () => {
     if (!await confirmAsync('Clôturer la caisse pour aujourd\'hui ?')) return
@@ -26,20 +31,62 @@ export default function Caisse() {
     } finally { setClosing(false) }
   }
 
-  const exportPdf = () => {
-    const doc = new jsPDF(); doc.setFontSize(16); doc.text('SamaCommerce — Caisse', 14, 18); doc.setFontSize(10)
-    doc.text(`Jour: especes ${fcfa(today.especes)}  wave ${fcfa(today.wave)}  orange ${fcfa(today.orange)}  net ${fcfa(today.net)}`, 14, 28)
-    autoTable(doc, { startY: 36, head: [['Date', 'Especes', 'Wave', 'Orange', 'Net']], body: history.map((h) => [(h.date || '').slice(0, 10), fcfa(Number(h.total_especes)), fcfa(Number(h.total_wave)), fcfa(Number(h.total_orange)), fcfa(Number(h.total_net))]) })
-    doc.save('caisse-samacommerce.pdf')
-  }
+  /* Le PDF de caisse est LE document de fin de journée : on le montre au
+     patron, on le classe, parfois on le porte à la banque. */
+  const exportCaissePdf = () => exportPdf('caisse-samacommerce', {
+    title: 'Caisse',
+    subtitle: `Journée du ${new Date().toLocaleDateString('fr-FR')}`,
+    boutique: boutiqueIdentity(),
+    summary: [
+      { label: 'Espèces', value: money(today.especes), tone: 'green' },
+      { label: 'Wave', value: money(today.wave) },
+      { label: 'Orange Money', value: money(today.orange), tone: 'orange' },
+      { label: 'Net du jour', value: money(today.net), tone: 'brand' },
+    ],
+    columns: ['Date', 'Espèces', 'Wave', 'Orange', 'Net'],
+    rows: history.map((h) => [(h.date || '').slice(0, 10), money(Number(h.total_especes)), money(Number(h.total_wave)), money(Number(h.total_orange)), money(Number(h.total_net))]),
+    foot: ['TOTAL', money(sumHist('total_especes')), money(sumHist('total_wave')), money(sumHist('total_orange')), money(sumHist('total_net'))],
+    rightAlign: [1, 2, 3, 4],
+    note: 'Historique des clôtures de caisse enregistrées.',
+  })
 
-  if (!today) return <div className="empty-state"><div className="empty-sub">Chargement…</div></div>
+  const exportCaisseExcel = () => exportXlsx('caisse-samacommerce', {
+    sheet: 'Caisse',
+    title: '💰 Clôtures de caisse',
+    subtitle: `${boutiqueIdentity().nom} — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    columns: [
+      { header: 'Date', width: 14 },
+      { header: 'Espèces', width: 14, type: 'money' }, { header: 'Wave', width: 14, type: 'money' },
+      { header: 'Orange', width: 14, type: 'money' }, { header: 'Net', width: 14, type: 'money' },
+    ],
+    rows: history.map((h) => [(h.date || '').slice(0, 10), Number(h.total_especes), Number(h.total_wave), Number(h.total_orange), Number(h.total_net)]),
+    totals: ['TOTAL', sumHist('total_especes'), sumHist('total_wave'), sumHist('total_orange'), sumHist('total_net')],
+  })
+
+  // Écran de chargement : des cadres qui « respirent » plutôt qu'un mot seul.
+  if (!today) {
+    return (
+      <>
+        <div className="page-header"><h2>💰 Caisse du jour</h2></div>
+        <div className="stat-2x2">
+          {[0, 1, 2, 3].map((i) => <div className="st" key={i}><div className="skeleton" style={{ height: 22, width: '70%' }} /><div className="skeleton" style={{ height: 11, width: '50%', marginTop: 6 }} /></div>)}
+        </div>
+        <SkeletonList count={3} />
+      </>
+    )
+  }
   const maxW = Math.max(1, ...weekly.map((d) => Number(d.total_encaisse)))
 
   return (
     <>
       {scene && <ClotureScene today={scene} onClose={() => setScene(null)} />}
-      <div className="page-header"><h2>💰 Caisse du jour</h2><button className="btn-pdf" onClick={exportPdf}>📄 PDF</button></div>
+      <div className="page-header">
+        <h2>💰 Caisse du jour</h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportCaisseExcel} disabled={history.length === 0}>📊 Excel</button>
+          <button className="btn-pdf" onClick={exportCaissePdf}>📄 PDF</button>
+        </div>
+      </div>
 
       <div className="stat-2x2">
         <div className="st st-g"><div className="sv">{fcfa(today.especes)}</div><div className="sl">💵 Espèces</div></div>

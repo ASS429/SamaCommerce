@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Products, Sales, Ia, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
-import { SkeletonLine } from '../components/Skeleton'
+import { Products, Sales, Ia, boutiqueIdentity, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
+import { SkeletonList } from '../components/Skeleton'
 import ScoreRing from '../components/ScoreRing'
 import PaymentPicker from '../components/PaymentPicker'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import { exportPdf, money } from '../lib/pdf'
+import { exportXlsx } from '../lib/xlsx'
+import { productIcon, productTint } from '../lib/productIcon'
+import { creditReminderMessage, openWhatsapp, telLink } from '../lib/whatsapp'
 
 const RISK = { green: { c: 'var(--green)', bg: '#ECFDF5', t: 'Risque faible' }, amber: { c: 'var(--warning)', bg: '#FFF7ED', t: 'Risque moyen' }, red: { c: 'var(--danger)', bg: '#FEF2F2', t: 'Risque élevé' } }
 
@@ -56,12 +58,48 @@ export default function Credits() {
     load()
   }
 
-  const exportPdf = () => {
-    const doc = new jsPDF(); doc.setFontSize(16); doc.text('SamaCommerce — Crédits', 14, 18); doc.setFontSize(10)
-    doc.text(`En cours: ${fcfa(resume.enCours)}   Rembourse: ${fcfa(resume.rembourses)}   Impayes: ${resume.nb}`, 14, 28)
-    autoTable(doc, { startY: 36, head: [['Date', 'Client', 'Produit', 'Montant', 'Echeance', 'Statut']], body: sales.map((s) => [(s.created_at || '').slice(0, 10), s.client_name || '—', s.product_name || '—', fcfa(Number(s.total)), s.due_date || '—', s.paid ? 'Rembourse' : 'Impaye']) })
-    doc.save('credits-samacommerce.pdf')
-  }
+  const exportCreditsPdf = () => exportPdf('credits-samacommerce', {
+    title: 'Crédits',
+    subtitle: `${sales.length} crédit(s) enregistré(s)`,
+    boutique: boutiqueIdentity(),
+    summary: [
+      { label: 'En cours', value: money(resume.enCours), tone: 'red' },
+      { label: 'Remboursé', value: money(resume.rembourses), tone: 'green' },
+      { label: 'Impayés', value: String(resume.nb), tone: 'orange' },
+    ],
+    columns: ['Date', 'Client', 'Produit', 'Montant', 'Échéance', 'Statut'],
+    rows: sales.map((s) => [
+      (s.created_at || '').slice(0, 10), s.client_name || '—', s.product_name || '—',
+      money(Number(s.total)), s.due_date || '—', s.paid ? 'Remboursé' : 'Impayé',
+    ]),
+    foot: ['TOTAL', '', '', money(sales.reduce((a, s) => a + Number(s.total), 0)), '', ''],
+    rightAlign: [3],
+    note: 'Un crédit impayé après son échéance doit être relancé : bouton « Rappel » dans l\'application.',
+  })
+
+  const exportCreditsExcel = () => exportXlsx('credits-samacommerce', {
+    sheet: 'Crédits',
+    title: '📝 Crédits clients',
+    subtitle: `${boutiqueIdentity().nom} — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    columns: [
+      { header: 'Date', width: 12 }, { header: 'Client', width: 22 }, { header: 'Téléphone', width: 16 },
+      { header: 'Produit', width: 26 }, { header: 'Montant', width: 14, type: 'money' },
+      { header: 'Échéance', width: 12 }, { header: 'Statut', width: 14 },
+    ],
+    rows: sales.map((s) => [
+      (s.created_at || '').slice(0, 10), s.client_name || '', s.client_phone || '',
+      s.product_name || '', Number(s.total), s.due_date || '', s.paid ? 'Remboursé' : 'Impayé',
+    ]),
+    totals: ['TOTAL', '', '', '', sales.reduce((a, s) => a + Number(s.total), 0), '', ''],
+  })
+
+  /** Relance WhatsApp d'un crédit précis (montant, produit et échéance inclus). */
+  const rappel = (s: Sale) => openWhatsapp(s.client_phone, creditReminderMessage(boutiqueIdentity(), {
+    client: s.client_name || 'cher client',
+    montant: Number(s.total),
+    echeance: s.due_date,
+    produit: s.product_name,
+  }))
 
   return (
     <>
@@ -73,7 +111,13 @@ export default function Credits() {
           onClose={() => setRepaying(null)}
         />
       )}
-      <div className="page-header"><h2>📝 Crédits</h2><button className="btn-pdf" onClick={exportPdf} disabled={sales.length === 0}>📄 PDF</button></div>
+      <div className="page-header">
+        <h2>📝 Crédits</h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportCreditsExcel} disabled={sales.length === 0}>📊 Excel</button>
+          <button className="btn-pdf" onClick={exportCreditsPdf} disabled={sales.length === 0}>📄 PDF</button>
+        </div>
+      </div>
 
       <div className="cred-tiles">
         <div className="ct"><div className="cv" style={{ color: 'var(--red)' }}>{fcfa(resume.enCours)}</div><div className="cl">En cours</div></div>
@@ -88,7 +132,7 @@ export default function Credits() {
         <div className="form-group"><label>Produit</label>
           <select value={productId} onChange={(e) => setProductId(e.target.value)}>
             <option value="">Choisir un produit</option>
-            {products.map((p) => <option key={p.id} value={p.id}>{p.name} — {fcfa(p.price)} (stock {p.stock})</option>)}
+            {products.map((p) => <option key={p.id} value={p.id}>{productIcon(p.name)} {p.name} — {fcfa(p.price)} (stock {p.stock})</option>)}
           </select>
         </div>
         <div className="form-group"><label>Quantité</label><input type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} /></div>
@@ -108,27 +152,52 @@ export default function Credits() {
         <button className="btn-confirm" style={{ width: '100%' }} disabled={saving}>💾 Enregistrer à crédit</button>
       </form>
 
-      <div className="card" style={{ overflowX: 'auto' }}>
-        <div className="card-title">📜 Historique des crédits</div>
-        <table className="hist-table">
-          <thead><tr><th>Date</th><th>Client</th><th>Produit</th><th>Montant</th><th>Échéance</th><th>Statut</th><th>Action</th></tr></thead>
-          <tbody>
-            {loading && [0, 1, 2].map((i) => <tr key={i}><td colSpan={7} style={{ padding: 8 }}><SkeletonLine h={18} /></td></tr>)}
-            {!loading && sales.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 16 }}>Aucun crédit</td></tr>}
-            {!loading && sales.map((s) => (
-              <tr key={s.id}>
-                <td>{(s.created_at || '').slice(0, 10)}</td>
-                <td>{s.client_name || '—'}</td>
-                <td>{s.product_name || '—'}</td>
-                <td>{fcfa(Number(s.total))}</td>
-                <td>{s.due_date || '—'}</td>
-                <td>{s.paid ? <span style={{ color: 'var(--green)', fontWeight: 700 }}>Remboursé</span> : <span style={{ color: 'var(--red)', fontWeight: 700 }}>Impayé</span>}</td>
-                <td>{!s.paid && <button className="prd-btn prd-btn-edit" onClick={() => setRepaying(s)} title="Enregistrer le remboursement">💰</button>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div className="section-label">📜 Historique des crédits</div>
+
+      {loading && <SkeletonList count={4} />}
+      {!loading && sales.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">📝</div>
+          <div className="empty-text">Aucun crédit</div>
+          <div className="empty-sub">Les ventes à crédit apparaîtront ici, avec leur échéance</div>
+        </div>
+      )}
+
+      {/* Une ligne de tableau à 7 colonnes est illisible sur téléphone. Ici,
+          une fiche par crédit : image du produit, montant, et l'état porté par
+          la couleur — vert remboursé, rouge en retard, ambre en cours. */}
+      {!loading && sales.map((s) => {
+        const enRetard = !s.paid && !!s.due_date && new Date(s.due_date) < new Date(new Date().toDateString())
+        const tel = telLink(s.client_phone)
+        return (
+          <div key={s.id} className={`card fiche ${enRetard ? 'fiche-late' : ''}`}>
+            <div className="fiche-head">
+              <span className="produit-icon" style={{ width: 44, height: 44, fontSize: 22, borderRadius: 14, background: productTint(s.product_name) }} aria-hidden="true">
+                {productIcon(s.product_name)}
+              </span>
+              <div className="fiche-id">
+                <div className="fiche-name">{s.client_name || 'Client'}</div>
+                <div className="fiche-sub">📦 {s.product_name || '—'} · 📅 {(s.created_at || '').slice(0, 10)}</div>
+                {s.due_date && <div className="fiche-sub">{enRetard ? '⏰' : '🗓️'} Échéance {s.due_date}</div>}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div className="produit-price-main" style={{ color: s.paid ? 'var(--green)' : 'var(--red)' }}>{fcfa(Number(s.total))}</div>
+                <span className={`produit-stock-pill ${s.paid ? 'pill-ok' : enRetard ? 'pill-critical' : 'pill-low'}`}>
+                  {s.paid ? '✅ Remboursé' : enRetard ? '⏰ En retard' : '⏳ En cours'}
+                </span>
+              </div>
+            </div>
+
+            {!s.paid && (
+              <div className="fiche-actions">
+                <button className="fa-btn fa-ok" onClick={() => setRepaying(s)}>💰 Il a payé</button>
+                {s.client_phone && <button className="fa-btn fa-wa" onClick={() => rappel(s)}>🔔 Rappel WhatsApp</button>}
+                {tel && <a className="fa-btn fa-call" href={tel}>📞 Appeler</a>}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </>
   )
 }

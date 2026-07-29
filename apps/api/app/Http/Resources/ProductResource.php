@@ -28,6 +28,10 @@ class ProductResource extends JsonResource
             'unite_base' => $this->unite_base,
             'prix_min' => $this->prix_min === null ? null : (int) $this->prix_min,
             'negociable' => $this->negociable, // bool | null (null = hérite de la catégorie)
+            // Photo de l'article (data-URL réduite à 256 px). C'est l'élément
+            // d'identification principal pour un vendeur qui ne lit pas : elle
+            // fait donc partie du contrat de la LISTE, pas d'un appel séparé.
+            'photo' => $this->photo,
             'units' => ProductUnitResource::collection($this->whenLoaded('units')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

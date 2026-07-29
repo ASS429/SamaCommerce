@@ -24,7 +24,10 @@ class MemberController extends Controller
             $query->where('boutique_members.ref_boutique_id', $request->integer('boutique_id'));
         }
 
-        return $query->get(['boutique_members.*', 'users.company_name', 'users.phone']);
+        // Les colonnes du membre priment : `boutique_members.name/phone` sont la
+        // fiche saisie par le patron, `users.*` ne sont qu'un repli quand
+        // l'employé a déjà un compte. Sans alias, la jointure les écraserait.
+        return $query->get(['boutique_members.*', 'users.company_name as user_company_name', 'users.phone as user_phone']);
     }
 
     public function invite(Request $request)
@@ -34,6 +37,11 @@ class MemberController extends Controller
             'role' => ['nullable', 'in:employe,gerant'],
             'permissions' => ['nullable', 'array'],
             'boutique_id' => ['nullable', 'integer'],
+            // Fiche employé : un patron reconnaît un visage et un prénom, pas une
+            // adresse email. Ces champs sont facultatifs mais fortement conseillés.
+            'name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'photo' => self::PHOTO_RULES,
         ]);
 
         $owner = $request->user();
@@ -55,6 +63,9 @@ class MemberController extends Controller
             'role' => $role,
             'status' => 'pending',
             'permissions' => $data['permissions'] ?? BoutiqueMember::defaultPermissions($role),
+            'name' => $data['name'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'photo' => $data['photo'] ?? null,
             'invite_token' => $token,
             'invite_expires_at' => Carbon::now()->addHours(72),
         ]);
@@ -119,6 +130,9 @@ class MemberController extends Controller
         $member->update($request->validate([
             'permissions' => ['nullable', 'array'],
             'role' => ['nullable', 'in:employe,gerant'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'photo' => self::PHOTO_RULES,
         ]));
 
         return $member;

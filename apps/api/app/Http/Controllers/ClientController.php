@@ -78,6 +78,7 @@ class ClientController extends Controller
             'email' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'photo' => self::PHOTO_RULES,
         ]);
 
         $exists = $request->user()->clients()->whereRaw('LOWER(name) = ?', [mb_strtolower($data['name'])])->exists();
@@ -105,6 +106,7 @@ class ClientController extends Controller
             'email' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'photo' => self::PHOTO_RULES,
         ]));
 
         return $client;

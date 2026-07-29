@@ -13,7 +13,7 @@ class Product extends Model
 
     protected $fillable = [
         'user_id', 'boutique_id', 'category_id', 'name', 'scent', 'barcode', 'price', 'price_achat', 'stock',
-        'unite_base', 'prix_min', 'negociable',
+        'unite_base', 'prix_min', 'negociable', 'photo',
     ];
 
     protected $casts = [

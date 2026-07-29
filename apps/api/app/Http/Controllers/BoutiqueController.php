@@ -38,6 +38,7 @@ class BoutiqueController extends Controller
             'phone' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string'],
             'emoji' => ['nullable', 'string', 'max:8'],
+            'photo' => self::PHOTO_RULES,
         ]);
 
         $owner = $request->user();
@@ -66,6 +67,7 @@ class BoutiqueController extends Controller
             'phone' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string'],
             'emoji' => ['nullable', 'string', 'max:8'],
+            'photo' => self::PHOTO_RULES,
         ]));
 
         if ($boutique->is_primary && $request->filled('name')) {

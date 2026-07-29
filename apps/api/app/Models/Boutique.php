@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Boutique extends Model
 {
-    protected $fillable = ['owner_id', 'name', 'phone', 'address', 'emoji', 'is_primary'];
+    protected $fillable = ['owner_id', 'name', 'phone', 'address', 'emoji', 'is_primary', 'photo'];
 
     protected $casts = ['is_primary' => 'boolean'];
 

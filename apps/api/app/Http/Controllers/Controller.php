@@ -10,6 +10,26 @@ use Illuminate\Validation\Rules\Exists;
 abstract class Controller
 {
     /**
+     * Photo de fiche : data-URL d'image produite par le téléphone (cf.
+     * apps/web/src/lib/photo.ts, qui réduit à 256 px et vise ≤ 24 Ko).
+     *
+     * Trois garde-fous, car ce champ finit dans une colonne texte de la base :
+     *  - `regex`  : SEULES des images en base64 passent. Sans ça, le champ
+     *               deviendrait un stockage de texte arbitraire (et un vecteur
+     *               XSS le jour où on l'injecterait ailleurs qu'en `src`).
+     *  - `max`    : 60 Ko, soit ~2,5× le budget client. Une photo non compressée
+     *               par un client bricolé est refusée, pas stockée.
+     *  - `string` : jamais de tableau/objet.
+     *
+     * Les règles sont volontairement passées EN TABLEAU : la regex contient un
+     * « | » que Laravel découperait dans une chaîne de règles.
+     */
+    public const PHOTO_RULES = [
+        'nullable', 'string', 'max:61440',
+        'regex:/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+\/]+={0,2}$/',
+    ];
+
+    /**
      * S4 — Règle "exists" limitée aux ressources du TENANT (colonne user_id du
      * propriétaire résolu). Empêche un commerçant de référencer la catégorie /
      * le fournisseur / etc. d'un autre commerçant (IDOR / fuite d'ID).

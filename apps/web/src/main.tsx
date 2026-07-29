@@ -4,11 +4,12 @@ import './index.css'
 import './theme.css'
 import App from './App.tsx'
 import { toast } from './lib/toast'
+import { applyStoredTheme, watchSystemTheme } from './lib/theme'
 
-// Applique le thème sauvegardé (mode sombre) avant le rendu
-if (localStorage.getItem('samacommerce_theme') === 'dark') {
-  document.documentElement.classList.add('dark')
-}
+// Thème : préférence enregistrée, sinon celle du téléphone (mode auto par
+// défaut). Le watcher suit ensuite le passage jour/nuit du système en direct.
+applyStoredTheme()
+watchSystemTheme()
 
 // Remplace les alert() natifs par des toasts stylés (succès/erreur/info auto)
 window.alert = (msg?: unknown) => {

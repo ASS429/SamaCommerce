@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import { Sales, Stats, fcfa, type Sale } from '../lib/api'
+import { Sales, Stats, boutiqueIdentity, fcfa, type Sale } from '../lib/api'
+import { exportPdf, money } from '../lib/pdf'
+import { exportXlsx } from '../lib/xlsx'
+import { productIcon } from '../lib/productIcon'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend)
 
@@ -19,6 +20,7 @@ export default function Rapports() {
   const [clients, setClients] = useState<any[]>([])
   const [marchandage, setMarchandage] = useState<any>(null)
   const [periode, setPeriode] = useState<Periode>('tout')
+  const [loading, setLoading] = useState(true)
   const [hist, setHist] = useState<Sale[]>([])
   const [histPage, setHistPage] = useState(0)
   const [histLast, setHistLast] = useState(1)
@@ -42,7 +44,14 @@ export default function Rapports() {
   }, [loadMore])
 
   useEffect(() => {
-    Sales.list().then(setSales); Stats.ventesParJour().then(setParJour); Stats.paiements().then(setPaiements); Stats.topProduits().then(setTop)
+    // `loading` sert à afficher des cadres qui « respirent » plutôt que des
+    // 0 F trompeurs : voir un chiffre d'affaires à zéro fait paniquer.
+    Promise.all([
+      Sales.list().then(setSales).catch(() => {}),
+      Stats.ventesParJour().then(setParJour).catch(() => {}),
+      Stats.paiements().then(setPaiements).catch(() => {}),
+      Stats.topProduits().then(setTop).catch(() => {}),
+    ]).finally(() => setLoading(false))
     Stats.margeCategorie().then(setMarge).catch(() => {}); Stats.rotationStock().then(setRotation).catch(() => {}); Stats.meilleursClients().then(setClients).catch(() => {})
     Stats.marchandage().then(setMarchandage).catch(() => {})
   }, [])
@@ -60,22 +69,55 @@ export default function Rapports() {
     return { encaisse, attente, credits: impaye, taux: remb + impaye > 0 ? (remb / (remb + impaye)) * 100 : 0 }
   }, [sales, periode])
 
-  const exportPdf = () => {
-    const doc = new jsPDF(); doc.setFontSize(16); doc.text('SamaCommerce — Chiffres', 14, 18); doc.setFontSize(10)
-    doc.text(`CA encaisse: ${fcfa(metrics.encaisse)}   En attente: ${fcfa(metrics.attente)}`, 14, 28)
-    autoTable(doc, { startY: 36, head: [['Produit', 'Qte', 'Montant']], body: top.map((t) => [t.produit, t.total_quantite, fcfa(Number(t.total_montant))]) })
-    doc.save('chiffres-samacommerce.pdf')
+  const PERIODE_LABEL: Record<Periode, string> = {
+    jour: "Aujourd'hui", semaine: 'Cette semaine', mois: 'Ce mois', tout: 'Depuis le début',
   }
+
+  const exportChiffresPdf = () => exportPdf('chiffres-samacommerce', {
+    title: 'Chiffres',
+    subtitle: `Période : ${PERIODE_LABEL[periode]}`,
+    boutique: boutiqueIdentity(),
+    summary: [
+      { label: 'CA encaissé', value: money(metrics.encaisse), tone: 'green' },
+      { label: 'En attente', value: money(metrics.attente), tone: 'orange' },
+      { label: 'Crédits impayés', value: money(metrics.credits), tone: 'red' },
+      { label: 'Taux de remboursement', value: `${metrics.taux.toFixed(0)} %` },
+    ],
+    columns: ['Produit', 'Quantité', 'Montant'],
+    rows: top.map((t) => [t.produit, String(t.total_quantite), money(Number(t.total_montant))]),
+    foot: ['TOTAL', String(top.reduce((a, t) => a + Number(t.total_quantite), 0)), money(top.reduce((a, t) => a + Number(t.total_montant), 0))],
+    rightAlign: [1, 2],
+    note: 'Classement des produits les plus vendus sur la période retenue.',
+  })
+
+  const exportChiffresExcel = () => exportXlsx('chiffres-samacommerce', {
+    sheet: 'Chiffres',
+    title: '📈 Chiffres de la boutique',
+    subtitle: `${boutiqueIdentity().nom} — ${PERIODE_LABEL[periode]} — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    columns: [
+      { header: 'Produit', width: 32 },
+      { header: 'Quantité vendue', width: 16, type: 'number' },
+      { header: 'Montant', width: 16, type: 'money' },
+    ],
+    rows: top.map((t) => [t.produit, Number(t.total_quantite), Number(t.total_montant)]),
+    totals: ['TOTAL', top.reduce((a, t) => a + Number(t.total_quantite), 0), top.reduce((a, t) => a + Number(t.total_montant), 0)],
+  })
 
   return (
     <>
-      <div className="page-header"><h2>📈 Chiffres</h2><button className="btn-pdf" onClick={exportPdf}>📄 PDF</button></div>
+      <div className="page-header">
+        <h2>📈 Chiffres</h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportChiffresExcel} disabled={top.length === 0}>📊 Excel</button>
+          <button className="btn-pdf" onClick={exportChiffresPdf}>📄 PDF</button>
+        </div>
+      </div>
 
       <div className="stat-2x2">
-        <div className="st st-g"><div className="sv">{fcfa(sumPeriod('jour'))}</div><div className="sl">Aujourd'hui</div></div>
-        <div className="st st-b"><div className="sv">{fcfa(sumPeriod('semaine'))}</div><div className="sl">Cette semaine</div></div>
-        <div className="st st-y"><div className="sv">{fcfa(sumPeriod('mois'))}</div><div className="sl">Ce mois</div></div>
-        <div className="st st-p"><div className="sv">{fcfa(sumPeriod('tout'))}</div><div className="sl">Tout</div></div>
+        <div className="st st-g"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('jour'))}</div><div className="sl">📅 Aujourd'hui</div></div>
+        <div className="st st-b"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('semaine'))}</div><div className="sl">🗓️ Cette semaine</div></div>
+        <div className="st st-y"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('mois'))}</div><div className="sl">📆 Ce mois</div></div>
+        <div className="st st-p"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('tout'))}</div><div className="sl">💰 Tout</div></div>
       </div>
 
       <div className="period-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -97,6 +139,18 @@ export default function Rapports() {
       </div>
       <div className="card"><div className="card-title">🔥 Top produits</div>
         <Bar data={{ labels: top.map((t) => t.produit), datasets: [{ label: 'Qté', data: top.map((t) => Number(t.total_quantite)), backgroundColor: '#3B82F6' }] }} options={{ plugins: { legend: { display: false } } }} />
+        {/* Le graphique répond « combien ». Le podium pictogrammé répond
+            « lesquels » — lisible même sans déchiffrer les étiquettes d'axe. */}
+        <div className="podium">
+          {top.slice(0, 3).map((t, i) => (
+            <div key={t.produit} className={`podium-item p${i + 1}`}>
+              <span className="podium-rank">{['🥇', '🥈', '🥉'][i]}</span>
+              <span className="podium-icon">{productIcon(t.produit)}</span>
+              <span className="podium-name">{t.produit}</span>
+              <span className="podium-qty">{t.total_quantite}</span>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="card"><div className="card-title">💳 Paiements</div>
         <Doughnut data={{ labels: paiements.map((p) => p.payment_method), datasets: [{ data: paiements.map((p) => Number(p.total_montant)), backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#A855F7'] }] }} />

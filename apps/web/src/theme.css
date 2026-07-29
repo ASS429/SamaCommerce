@@ -215,7 +215,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM San
 .search-bar { background: var(--bg); margin-bottom: 12px; }
 
 /* ─── MODALES ─── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(30,27,75,.5); backdrop-filter: blur(5px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 14px; }
+/* padding-bottom : sur iPhone (viewport-fit=cover) la feuille « Plus », alignée
+   en bas, passait sous la barre d'accueil / la barre d'URL de Safari. */
+.modal-overlay { position: fixed; inset: 0; background: rgba(30,27,75,.5); backdrop-filter: blur(5px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
 .modal-box { background: var(--surface); border-radius: 22px; padding: 22px 20px; width: 100%; max-width: 410px; box-shadow: 0 20px 60px rgba(30,27,75,.3); animation: mIn .22s cubic-bezier(.34,1.3,.64,1) both; max-height: 90dvh; overflow-y: auto; }
 @keyframes mIn { from { opacity: 0; transform: scale(.92) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .modal-title { font-family: var(--sora); font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 18px; color: var(--ink); }
@@ -498,13 +500,21 @@ html.dark .skeleton { background: linear-gradient(100deg, #2a2640 30%, #34304a 5
 }
 
 /* ═══ Design 3.5 : AURORA ambiante derrière le dashboard ═══ */
-.dk-content, .app-container { position: relative; }
+/* `isolation: isolate` crée un contexte d'empilement local : l'aurore (z-index
+   négatif) se peint AU-DESSUS du fond du conteneur mais SOUS tout le contenu,
+   sans avoir à toucher aux enfants.
+   Avant, on forçait `.app-container > * { position: relative }` : cette règle
+   écrasait le `position: fixed` des surcouches posées à la racine du conteneur
+   mobile (PlusSheet, Onboarding, Premium, PinLock, panneau de notifications).
+   Résultat sur téléphone : au lieu de se superposer, elles redevenaient de
+   simples blocs empilés APRÈS la barre de navigation — celle-ci remontait au
+   milieu de l'écran et la modale s'affichait en dessous. */
+.dk-content, .app-container { position: relative; isolation: isolate; }
 .dk-content::before, .app-container::before {
-  content: ''; position: absolute; inset: -20% -10% auto -10%; height: 460px; z-index: 0; pointer-events: none;
+  content: ''; position: absolute; inset: -20% -10% auto -10%; height: 460px; z-index: -1; pointer-events: none;
   background: conic-gradient(from 0deg at 50% 50%, rgba(124,58,237,.10), rgba(236,72,153,.09), rgba(59,130,246,.08), rgba(124,58,237,.10));
   filter: blur(70px); opacity: .55; animation: auroraSpin 60s linear infinite;
 }
-.dk-content > *, .app-container > * { position: relative; z-index: 1; }
 @keyframes auroraSpin { to { transform: rotate(360deg); } }
 
 /* ═══ Design 3.5 : DARK MODE ÉCLIPSE (View Transitions API) ═══ */
@@ -594,4 +604,120 @@ html.dark .login-card { border-color: rgba(255,255,255,.12); }
 @media (prefers-reduced-motion: reduce) {
   .ia-radar-sweep, .ia-brain-glow, .ia-urgent-rise, .cloture-line, .cloture-stamp { animation: none !important; opacity: 1 !important; transform: none !important; }
   .cloture-stamp { transform: rotate(-14deg) !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOT 2026-07-29 — IDENTITÉ VISUELLE DES FICHES
+   Principe directeur : tout ce qui compte doit se comprendre SANS LIRE.
+   Une image (photo réelle ou pictogramme), une couleur qui qualifie, un
+   chiffre. Le texte n'arrive qu'en troisième position.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Vignette universelle (photo → pictogramme → initiales) ─── */
+.sc-avatar { flex-shrink: 0; }
+html.dark .sc-avatar { filter: brightness(.92); }
+html.dark .produit-icon-av, html.dark .v-icon-av { filter: brightness(.9); }
+
+/* ─── Sélecteur de photo des formulaires ─── */
+.photo-picker { display: flex; align-items: center; gap: 14px; }
+.photo-picker-btn { position: relative; background: none; border: none; padding: 0; cursor: pointer; border-radius: 18px; line-height: 0; }
+.photo-picker-btn:disabled { opacity: .6; cursor: wait; }
+.photo-picker-btn .sc-avatar { border: 2px dashed var(--brand-border); box-sizing: border-box; }
+.photo-picker-badge { position: absolute; right: -4px; bottom: -4px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--brand); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(124,58,237,.35); }
+.photo-picker-busy { width: 84px; height: 84px; border-radius: 18px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.photo-picker-side { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.photo-picker-del { background: var(--danger-bg) !important; color: var(--danger) !important; }
+
+/* ─── Apparence (auto / clair / sombre) ─── */
+.theme-choice { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.theme-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px;
+  background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; color: var(--muted); }
+.theme-opt.sel { border-color: var(--brand); background: var(--brand-tint); color: var(--brand-dark); }
+.theme-opt-icon { font-size: 24px; line-height: 1; }
+.theme-opt-label { font-family: var(--sora); font-size: 12px; font-weight: 700; }
+
+/* ─── FICHE (client, fournisseur, employé, boutique, commande, crédit…) ─── */
+.fiche { padding: 14px; }
+.fiche-active { border-left: 4px solid var(--brand); }
+.fiche-late { border-left: 4px solid var(--danger); }
+.fiche-head { display: flex; align-items: flex-start; gap: 12px; }
+.fiche-id { flex: 1; min-width: 0; }
+.fiche-name { font-family: var(--sora); font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.25; overflow-wrap: anywhere; }
+.fiche-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.fiche-tools { display: flex; gap: 6px; flex-shrink: 0; }
+.fiche-note { margin-top: 10px; font-size: 12.5px; color: var(--muted); background: var(--bg); border-radius: 12px; padding: 8px 10px; }
+
+/* Chiffres clés : la VALEUR domine, le libellé pictogrammé la qualifie. */
+.fiche-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fst { display: flex; flex-direction: column; gap: 1px; padding: 7px 11px; border-radius: 13px; background: var(--bg); min-width: 84px; }
+.fst b { font-family: var(--sora); font-size: 14px; font-weight: 800; line-height: 1.15; }
+.fst span { font-size: 11px; color: var(--muted); }
+.fst-b { background: var(--blue-tint); } .fst-b b { color: var(--blue); }
+.fst-g { background: var(--success-bg); } .fst-g b { color: var(--green-dark); }
+.fst-r { background: var(--danger-bg); } .fst-r b { color: var(--danger); }
+.fst-p { background: var(--brand-tint); } .fst-p b { color: var(--brand-dark); }
+
+/* Actions : gros boutons tactiles, un pictogramme en tête de chacun. */
+.fiche-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fa-btn { flex: 1 1 auto; min-width: 120px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 12px; border: none; border-radius: 13px; font-family: var(--sora); font-size: 13px; font-weight: 700;
+  cursor: pointer; text-decoration: none; background: var(--bg); color: var(--ink); }
+.fa-btn:active { transform: scale(.97); }
+.fa-call { background: var(--blue-tint); color: var(--blue); }
+.fa-wa { background: #DCFCE7; color: #15803D; }
+.fa-warn { background: var(--warning-bg); color: #9a4a06; }
+.fa-ok { background: var(--success-bg); color: var(--green-dark); }
+.fa-go { background: var(--brand-tint); color: var(--brand-dark); }
+.fa-on { background: var(--success-bg); color: var(--green-dark); cursor: default; }
+.fa-del { flex: 0 0 auto; min-width: 48px; background: var(--danger-bg); color: var(--danger); }
+html.dark .fa-wa { background: #0d3b22; color: #6EE7B7; }
+
+/* ─── Permissions d'un employé ─── */
+.perm-label { font-family: var(--sora); font-size: 12px; font-weight: 700; color: var(--label); margin: 14px 0 8px; }
+.perm-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.perm-chip { display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; }
+.perm-chip.on { background: var(--success-bg); border-color: var(--success-border); color: var(--green-dark); }
+
+/* ─── Aperçu d'un message WhatsApp avant envoi ─── */
+.wa-preview { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 14px;
+  padding: 12px; font-size: 12.5px; line-height: 1.5; color: var(--ink); max-height: 260px; overflow-y: auto; }
+
+/* ─── Catégories : outils, aperçu, palette groupée ─── */
+.cat-tools { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; }
+.cat-tool { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 4px 7px; font-size: 12px; cursor: pointer; }
+.cat-preview { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--brand-tint); margin-bottom: 14px; }
+.cat-preview span { font-size: 34px; line-height: 1; }
+.cat-preview b { font-family: var(--sora); font-size: 15px; color: var(--brand-dark); }
+.emoji-groups { max-height: 300px; overflow-y: auto; margin-bottom: 8px; }
+.emoji-group-label { font-size: 11.5px; font-weight: 700; color: var(--muted); margin: 6px 2px 4px; }
+.emoji-groups .emoji-grid { max-height: none; overflow: visible; margin-bottom: 6px; }
+
+/* ─── Ligne d'article (commande, retour, détail) ─── */
+.cmd-line { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+
+/* ─── Choix illustré (moyen de remboursement…) ─── */
+.pick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.pick-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px;
+  background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer;
+  font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.pick-opt.sel { border-color: var(--brand); background: var(--brand-tint); color: var(--brand-dark); }
+.pick-icon { font-size: 22px; line-height: 1; }
+
+/* ─── Podium des meilleures ventes ─── */
+.podium { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.podium-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 13px; background: var(--bg); }
+.podium-item.p1 { background: var(--warning-bg); }
+.podium-rank { font-size: 18px; }
+.podium-icon { font-size: 20px; }
+.podium-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium-qty { font-family: var(--sora); font-weight: 800; color: var(--brand-dark); }
+
+/* ─── Inventaire en cartes (le tableau à 7 colonnes était illisible) ─── */
+.inv-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fa-btn:active, .theme-opt, .pick-opt { transform: none !important; }
 }

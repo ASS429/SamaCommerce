@@ -11,7 +11,7 @@ class Client extends Model
 {
     use SoftDeletes; // T4 — corbeille + restauration
 
-    protected $fillable = ['user_id', 'boutique_id', 'name', 'phone', 'email', 'address', 'notes'];
+    protected $fillable = ['user_id', 'boutique_id', 'name', 'phone', 'email', 'address', 'notes', 'photo'];
 
     public function user(): BelongsTo
     {

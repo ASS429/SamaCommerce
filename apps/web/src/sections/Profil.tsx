@@ -3,6 +3,7 @@ import { updateProfile, saveUser, getUser, toggle2fa, logoutAllDevices, Activity
 import { toast, promptAsync, confirmAsync } from '../lib/toast'
 import { enableNotifications, disableNotifications, notifEnabled, notifSupported } from '../lib/notifications'
 import { hasPin, setPin, clearPin } from '../lib/pinLock'
+import { getThemePref, setThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
 
 const ACTION_ICON: Record<string, string> = {
   vente: '🛒', remboursement: '💰', 'produit.ajout': '➕', 'produit.suppr': '🗑️',
@@ -13,8 +14,9 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
   const [company, setCompany] = useState(user?.company_name ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [saving, setSaving] = useState(false)
-  const [dark, setDark] = useState(document.documentElement.classList.contains('dark'))
+  const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [activity, setActivity] = useState<Act[]>([])
+  const [actLoading, setActLoading] = useState(true)
   const [twofa, setTwofa] = useState(!!(user as { twofa_enabled?: boolean } | null)?.twofa_enabled)
   const [notif, setNotif] = useState(notifEnabled())
   const [pinOn, setPinOn] = useState(hasPin())
@@ -50,7 +52,7 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
     catch { setTwofa(!next); toast('Erreur', 'error') }
   }
 
-  useEffect(() => { Activity.list().then(setActivity).catch(() => {}) }, [])
+  useEffect(() => { Activity.list().then(setActivity).catch(() => {}).finally(() => setActLoading(false)) }, [])
 
   const save = async () => {
     setSaving(true)
@@ -61,11 +63,7 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
       alert('✅ Profil mis à jour')
     } catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
   }
-  const toggleDark = () => {
-    const next = !dark; setDark(next)
-    document.documentElement.classList.toggle('dark', next)
-    localStorage.setItem('samacommerce_theme', next ? 'dark' : 'light')
-  }
+  const pickTheme = (p: ThemePref, e: React.MouseEvent) => { setTheme(p); setThemePref(p, { x: e.clientX, y: e.clientY }) }
 
   return (
     <>
@@ -88,9 +86,20 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
 
       <div className="card">
         <div className="card-title">⚙️ Préférences</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-          <span style={{ fontWeight: 600 }}>Mode sombre</span>
-          <button className={`badge-soft`} style={{ background: dark ? '#ECFDF5' : '#F3F4F6', color: dark ? 'var(--green)' : 'var(--muted)' }} onClick={toggleDark}>{dark ? 'Activé' : 'Désactivé'}</button>
+        {/* Trois pastilles imagées plutôt qu'un interrupteur « activé/désactivé » :
+            le choix se comprend sans lire. « Auto » = comme le téléphone. */}
+        <div style={{ padding: '6px 0 10px' }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>🌓 Apparence</div>
+          <div className="theme-choice">
+            {(['auto', 'light', 'dark'] as ThemePref[]).map((p) => (
+              <button key={p} className={`theme-opt ${theme === p ? 'sel' : ''}`} onClick={(e) => pickTheme(p, e)}
+                aria-pressed={theme === p} aria-label={`Apparence ${THEME_LABEL[p].label}`}>
+                <span className="theme-opt-icon">{THEME_LABEL[p].icon}</span>
+                <span className="theme-opt-label">{THEME_LABEL[p].label}</span>
+              </button>
+            ))}
+          </div>
+          {theme === 'auto' && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>L'application suit le mode clair/sombre de votre téléphone.</div>}
         </div>
         {notifSupported() && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
@@ -126,7 +135,17 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
 
       <div className="card">
         <div className="card-title">🕓 Activité récente</div>
-        {activity.length === 0
+        {actLoading
+          ? [0, 1, 2].map((i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
+              <div className="skeleton" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+              <div style={{ flex: 1 }}>
+                <div className="skeleton" style={{ height: 12, width: '60%' }} />
+                <div className="skeleton" style={{ height: 10, width: '35%', marginTop: 5 }} />
+              </div>
+            </div>
+          ))
+          : activity.length === 0
           ? <div style={{ fontSize: 13, color: 'var(--muted)', padding: '4px 0' }}>Aucune activité pour le moment</div>
           : activity.slice(0, 12).map((a) => (
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line-soft)' }}>

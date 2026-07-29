@@ -10,6 +10,7 @@ class BoutiqueMember extends Model
     protected $fillable = [
         'owner_id', 'ref_boutique_id', 'member_id', 'email', 'role',
         'status', 'permissions', 'invite_token', 'invite_expires_at', 'accepted_at',
+        'name', 'phone', 'photo',
     ];
 
     protected $casts = [

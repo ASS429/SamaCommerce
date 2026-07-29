@@ -16,7 +16,7 @@ import Onboarding from './components/Onboarding'
 import PinLock from './components/PinLock'
 import Odometer from './components/Odometer'
 import CommandPalette, { type Command } from './components/CommandPalette'
-import { toggleTheme } from './lib/theme'
+import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from './lib/theme'
 import { usePullToRefresh } from './lib/usePullToRefresh'
 import { initOfflineSync, pendingCount, syncPending } from './lib/offlineQueue'
 import { notifyStock } from './lib/notifications'
@@ -95,6 +95,7 @@ export default function App() {
   const [gQuery, setGQuery] = useState('')
   const [gProducts, setGProducts] = useState<Product[]>([])
   const [gClients, setGClients] = useState<Client[]>([])
+  const [themePref, setThemePref] = useState<ThemePref>(getThemePref())
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)')
@@ -188,7 +189,7 @@ export default function App() {
       id: 'go-' + n.view, icon: n.icon, label: n.label, hint: 'Aller à', run: () => go(n.view),
     })),
     { id: 'act-vendre', icon: '💳', label: 'Nouvelle vente', hint: 'Action', run: () => go('vente') },
-    { id: 'act-theme', icon: '🌓', label: 'Basculer le thème clair / sombre', hint: 'Action', run: () => toggleTheme() },
+    { id: 'act-theme', icon: '🌓', label: 'Thème : auto / clair / sombre', hint: 'Action', run: () => setThemePref(cycleTheme()) },
     { id: 'act-logout', icon: '🔓', label: 'Se déconnecter', hint: 'Action', run: doLogout },
   ]
 
@@ -257,7 +258,8 @@ export default function App() {
                 </div>
               )}
             </div>
-            <button className="dk-icon-btn" aria-label="Basculer le thème clair/sombre" onClick={(e) => toggleTheme({ x: e.clientX, y: e.clientY })}>🌓</button>
+            <button className="dk-icon-btn" title={`Thème : ${THEME_LABEL[themePref].label}`} aria-label={`Thème : ${THEME_LABEL[themePref].label} — changer`}
+              onClick={(e) => setThemePref(cycleTheme({ x: e.clientX, y: e.clientY }))}>{THEME_LABEL[themePref].icon}</button>
             <div style={{ position: 'relative' }}>
               <button className="dk-icon-btn" aria-label="Notifications" onClick={() => setShowNotif((s) => !s)}>🔔{alerts.length > 0 && <span style={{ position: 'absolute', top: 8, right: 9, width: 8, height: 8, background: 'var(--accent)', borderRadius: '50%' }} />}</button>
               {showNotif && (

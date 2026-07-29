@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Stats, Members, Caisse, fcfa, type User } from '../lib/api'
 import { t, getLang, setLang, LANGS, type Lang } from '../lib/i18n'
+import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
 
 export type View = 'menu' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
   | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'returns' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia'
@@ -24,7 +25,7 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
 }) {
   const [alertes, setAlertes] = useState<{ produit: string; stock: number }[]>([])
   const [guide, setGuide] = useState(true)
-  const [dark, setDark] = useState(document.documentElement.classList.contains('dark'))
+  const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [showJoin, setShowJoin] = useState(false)
   const [weekly, setWeekly] = useState<{ date: string; total_encaisse: number }[]>([])
@@ -52,12 +53,8 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
     window.location.reload()
   }
 
-  const toggleDark = () => {
-    const next = !dark
-    setDark(next)
-    document.documentElement.classList.toggle('dark', next)
-    localStorage.setItem('samacommerce_theme', next ? 'dark' : 'light')
-  }
+  // Auto → Clair → Sombre. « Auto » suit le réglage du téléphone.
+  const nextTheme = (e: React.MouseEvent) => setTheme(cycleTheme({ x: e.clientX, y: e.clientY }))
 
   return (
     <>
@@ -111,7 +108,8 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
 
       <div className="top-actions">
         <button className="btn-logout" onClick={onLogout}>🔓 Déconnexion</button>
-        <button className="badge-soft" style={{ background: '#EDE9FE', color: 'var(--primary)' }} onClick={toggleDark}>{dark ? '☀️ Clair' : '🌙 Sombre'}</button>
+        <button className="badge-soft" style={{ background: '#EDE9FE', color: 'var(--primary)' }} onClick={nextTheme}
+          title="Thème : automatique (comme le téléphone), clair ou sombre">{THEME_LABEL[theme].icon} {THEME_LABEL[theme].label}</button>
         {installPrompt && <button className="badge-soft" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={install}>📲 Installer</button>}
         <button className="badge-soft" style={{ background: '#EFF6FF', color: 'var(--blue)' }} onClick={cycleLang}>{LANGS.find((l) => l.code === getLang())?.label}</button>
         {user?.plan === 'Free' && <button className="badge-soft" onClick={onUpgrade}>⭐ Passer Premium</button>}

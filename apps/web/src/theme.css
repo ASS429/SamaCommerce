@@ -648,8 +648,31 @@ html.dark .produit-icon-av, html.dark .v-icon-av { filter: brightness(.9); }
   background: var(--brand); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 10px rgba(124,58,237,.35); }
 .photo-picker-busy { width: 84px; height: 84px; border-radius: 18px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 30px; }
-.photo-picker-side { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.photo-picker-side { display: flex; flex-direction: column; gap: 7px; align-items: flex-start; min-width: 0; }
+.photo-picker-side .badge-soft { width: 100%; text-align: left; white-space: normal; }
+.photo-picker-import { background: var(--blue-tint) !important; color: var(--blue) !important; }
 .photo-picker-del { background: var(--danger-bg) !important; color: var(--danger) !important; }
+
+/* ─── Le bloc photo sur téléphone ───
+   Vignette à gauche + trois boutons à droite, cela laissait moins de 180 px
+   de large aux libellés : ils se coupaient en trois lignes dans une colonne
+   étriquée. Sur petit écran, la vignette passe donc au-dessus, centrée, et
+   les boutons prennent toute la largeur — des cibles franches pour le pouce. */
+@media (max-width: 560px) {
+  .photo-field { text-align: center; }
+  .photo-field > label { text-align: center; }
+  .photo-picker { flex-direction: column; align-items: center; gap: 12px; }
+  .photo-picker-side { width: 100%; align-items: stretch; }
+  .photo-picker-side .badge-soft { text-align: center; padding: 12px 14px; }
+
+  /* Les formulaires de création et de modification vivent dans ces modales.
+     Sur un écran de 360 px, 14 px de marge extérieure plus 20 px de marge
+     intérieure de chaque côté ne laissaient que 292 px aux champs. On rend
+     ces 24 px à la saisie, et la boîte est centrée par la grille du calque. */
+  .modal-overlay { padding: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .modal-box { padding: 20px 16px; max-width: 100%; }
+  .modal-actions { gap: 8px; }
+}
 
 /* ─── Apparence (auto / clair / sombre) ─── */
 .theme-choice { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

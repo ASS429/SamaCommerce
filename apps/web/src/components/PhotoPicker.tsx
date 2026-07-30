@@ -1,8 +1,14 @@
 /* Sélecteur de photo des fiches.
  *
- * Un seul geste : on touche la grande vignette, l'appareil photo s'ouvre
- * (capture="environment" sur mobile). Aucun libellé n'est indispensable pour
- * comprendre : la vignette montre soit la photo, soit un gros 📷.
+ * DEUX chemins, pas un seul. L'attribut `capture` d'un `<input type="file">`
+ * n'est pas une préférence : sur téléphone il ouvre DIRECTEMENT l'appareil
+ * photo et supprime l'accès à la galerie. Une seule entrée `capture` rendait
+ * donc impossible de réutiliser une photo déjà prise — celle du fournisseur
+ * reçue par WhatsApp, le logo enregistré, la photo faite hier.
+ *   • la grande vignette (et « Importer ») ouvre le sélecteur du téléphone,
+ *     qui propose lui-même galerie ET appareil photo ;
+ *   • « Prendre une photo » va droit à l'appareil, pour le geste du comptoir.
+ *
  * La photo est facultative — jamais bloquante.
  */
 
@@ -20,10 +26,13 @@ export default function PhotoPicker({ value, onChange, icon, name, label = 'Phot
   label?: string
   size?: number
 }) {
-  const input = useRef<HTMLInputElement>(null)
+  /** Sans `capture` : le téléphone propose galerie ET appareil photo. */
+  const libre = useRef<HTMLInputElement>(null)
+  /** Avec `capture` : ouvre directement l'appareil photo. */
+  const camera = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
 
-  const pick = async (file?: File | null) => {
+  const pick = async (file: File | undefined, input: HTMLInputElement | null) => {
     if (!file) return
     setBusy(true)
     try {
@@ -33,15 +42,15 @@ export default function PhotoPicker({ value, onChange, icon, name, label = 'Phot
       toast(e instanceof PhotoError ? e.message : 'Photo illisible', 'error')
     } finally {
       setBusy(false)
-      if (input.current) input.current.value = '' // permet de reprendre le même fichier
+      if (input) input.value = '' // permet de reprendre le même fichier
     }
   }
 
   return (
-    <div className="form-group">
+    <div className="form-group photo-field">
       <label>{label}</label>
       <div className="photo-picker">
-        <button type="button" className="photo-picker-btn" onClick={() => input.current?.click()} disabled={busy}
+        <button type="button" className="photo-picker-btn" onClick={() => libre.current?.click()} disabled={busy}
           aria-label={value ? 'Changer la photo' : 'Ajouter une photo'}>
           {busy
             ? <span className="photo-picker-busy">⏳</span>
@@ -49,14 +58,19 @@ export default function PhotoPicker({ value, onChange, icon, name, label = 'Phot
           <span className="photo-picker-badge" aria-hidden="true">📷</span>
         </button>
         <div className="photo-picker-side">
-          <button type="button" className="badge-soft" onClick={() => input.current?.click()} disabled={busy}>
-            {value ? '🔄 Changer' : '📷 Prendre une photo'}
+          <button type="button" className="badge-soft" onClick={() => camera.current?.click()} disabled={busy}>
+            📷 Prendre une photo
+          </button>
+          <button type="button" className="badge-soft photo-picker-import" onClick={() => libre.current?.click()} disabled={busy}>
+            🖼️ Choisir dans le téléphone
           </button>
           {value && <button type="button" className="badge-soft photo-picker-del" onClick={() => onChange(null)}>🗑️ Retirer</button>}
         </div>
       </div>
-      <input ref={input} type="file" accept="image/*" capture="environment" hidden
-        onChange={(e) => pick(e.target.files?.[0])} />
+      <input ref={libre} type="file" accept="image/*" hidden data-testid="photo-import"
+        onChange={(e) => pick(e.target.files?.[0], libre.current)} />
+      <input ref={camera} type="file" accept="image/*" capture="environment" hidden data-testid="photo-camera"
+        onChange={(e) => pick(e.target.files?.[0], camera.current)} />
     </div>
   )
 }

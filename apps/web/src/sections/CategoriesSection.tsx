@@ -3,6 +3,7 @@ import { Categories, Products, type Category, type Product } from '../lib/api'
 import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonGrid } from '../components/Skeleton'
 import { productIcon } from '../lib/productIcon'
+import { toneOf } from '../lib/tone'
 
 /* Palette d'icônes ORGANISÉE par famille de commerce : on cherche des yeux, pas
    au clavier. L'ordre suit ce qu'on trouve dans une boutique de quartier
@@ -56,19 +57,23 @@ export default function CategoriesSection() {
         </div>
       )}
 
+      {/* Chaque rayon porte SA couleur, déduite de son nom (lib/tone). Le
+          commerçant retrouve « Boissons » au bleu sans lire l'étiquette, et
+          la teinte ne change pas quand il en ajoute une autre. */}
       {!loading && (
         <div className="categories-grid">
           {filtered.map((c) => (
-            <div key={c.id} className="cat-card">
+            <div key={c.id} className={`cat-card cat-card--tone tile-${toneOf(c.name)}`}>
               <div className="cat-tools">
-                <button className="cat-tool" aria-label="Modifier" onClick={() => { setEditing(c); setShowModal(true) }}>✏️</button>
-                <button className="cat-tool cat-delete" aria-label="Supprimer" onClick={() => remove(c)}>🗑️</button>
+                <button className="cat-tool" aria-label={`Modifier ${c.name}`} onClick={() => { setEditing(c); setShowModal(true) }}>✏️</button>
+                <button className="cat-tool cat-delete" aria-label={`Supprimer ${c.name}`} onClick={() => remove(c)}>🗑️</button>
               </div>
               <span className="cat-emoji">{c.emoji}</span>
               <span className="cat-name">{c.name}</span>
               <span className="cat-badge">📦 {count(c.id)} produit(s)</span>
-              <button className="cat-badge" style={{ cursor: 'pointer', border: 'none', background: c.negociable ? '#ECFDF5' : 'var(--bg)', color: c.negociable ? 'var(--green)' : 'var(--muted)' }}
-                onClick={() => toggleNego(c)} title="Autoriser le marchandage pour cette catégorie">
+              <button className="cat-badge" style={{ cursor: 'pointer', border: 'none' }}
+                onClick={() => toggleNego(c)} aria-pressed={!!c.negociable}
+                title="Autoriser le marchandage pour cette catégorie">
                 {c.negociable ? '💬 Négociable' : '🔒 Prix fixe'}
               </button>
             </div>

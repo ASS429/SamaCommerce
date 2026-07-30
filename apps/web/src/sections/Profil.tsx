@@ -6,6 +6,7 @@ import { hasPin, setPin, clearPin } from '../lib/pinLock'
 import { getThemePref, setThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
 import { TOGGLEABLE, isModuleEnabled, setModuleEnabled, resetModules, autoPrintEnabled, setAutoPrint } from '../lib/modules'
 import PhotoPicker from '../components/PhotoPicker'
+import Avatar from '../components/Avatar'
 
 const ACTION_ICON: Record<string, string> = {
   vente: '🛒', remboursement: '💰', 'produit.ajout': '➕', 'produit.suppr': '🗑️',
@@ -80,10 +81,26 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
     <>
       <div className="page-header"><h2>👤 Paramètres</h2></div>
 
+      {/* Carte d'identité de la boutique : la photo, le nom, le numéro. C'est
+          ce que le commerçant vient vérifier ici en premier, et cela confirme
+          au passage sur quel compte il est connecté. */}
+      <div className="hero-panel">
+        <div className="hero-top">
+          <Avatar photo={user?.photo} icon={user?.photo ? undefined : '🏪'} name={user?.company_name} size={54} radius={16} tint="rgba(255,255,255,.2)" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="hero-value" style={{ fontSize: 20 }}>{user?.company_name || 'Ma boutique'}</div>
+            <div className="hero-sub">{user?.phone || user?.username}</div>
+          </div>
+          <span className="code-box" style={{ minWidth: 0, padding: '0 12px', fontSize: 13 }}>
+            {isEmployee ? '🧑‍💼 Employé' : `👑 ${user?.plan}`}
+          </span>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-title">🏪 Ma boutique</div>
         {isEmployee ? (
-          <div className="alert-row" style={{ background: '#EDE9FE', color: 'var(--primary-dark)', fontWeight: 600 }}>
+          <div className="alert-row" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-border)', color: 'var(--brand-dark)', fontWeight: 600 }}>
             Vous êtes employé de « {user?.company_name} ». Le profil est géré par le propriétaire.
           </div>
         ) : (
@@ -141,42 +158,81 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
           </div>
           {theme === 'auto' && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>L'application suit le mode clair/sombre de votre téléphone.</div>}
         </div>
-        {notifSupported() && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-            <span style={{ fontWeight: 600 }}>🔔 Notifications stock</span>
-            <button className="badge-soft" style={{ background: notif ? '#ECFDF5' : '#F3F4F6', color: notif ? 'var(--green)' : 'var(--muted)' }} onClick={toggleNotif}>{notif ? 'Activées' : 'Désactivées'}</button>
-          </div>
-        )}
-        {!isEmployee && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-            <span style={{ fontWeight: 600 }}>🔐 Double authentification (2FA)</span>
-            <button className="badge-soft" style={{ background: twofa ? '#ECFDF5' : '#F3F4F6', color: twofa ? 'var(--green)' : 'var(--muted)' }} onClick={toggleTwofa}>{twofa ? 'Activée' : 'Désactivée'}</button>
-          </div>
-        )}
-        {/* Peu de boutiques ont une imprimante ticket : l'option est donc
-            désactivée par défaut, et se règle ici une fois pour toutes. */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-          <span style={{ fontWeight: 600 }}>🖨️ Imprimer le reçu automatiquement</span>
-          <button className="badge-soft" style={{ background: autoPrint ? '#ECFDF5' : '#F3F4F6', color: autoPrint ? 'var(--green)' : 'var(--muted)' }}
-            onClick={() => { const next = !autoPrint; setAutoPrintState(next); setAutoPrint(next) }}>{autoPrint ? 'Activée' : 'Désactivée'}</button>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-          <span style={{ fontWeight: 600 }}>🔒 Verrouillage par code (comptoir)</span>
-          <button className="badge-soft" style={{ background: pinOn ? '#ECFDF5' : '#F3F4F6', color: pinOn ? 'var(--green)' : 'var(--muted)' }} onClick={togglePin}>{pinOn ? 'Activé' : 'Désactivé'}</button>
+        {/* Un interrupteur au lieu d'une étiquette « Activées / Désactivées » :
+            l'état se voit à la position et à la couleur, sans lire. Toute la
+            ligne est cliquable — au comptoir, on tape au pouce. */}
+        <div className="set-list">
+          {notifSupported() && (
+            <button className="set-row" role="switch" aria-checked={notif} onClick={toggleNotif}>
+              <span className="set-ico" aria-hidden="true">🔔</span>
+              <span className="set-body">
+                <span className="set-t">Notifications de stock</span>
+                <span className="set-d">Prévenir quand un produit s'épuise</span>
+              </span>
+              <span className={`switch ${notif ? 'on' : ''}`} aria-hidden="true" />
+            </button>
+          )}
+          {!isEmployee && (
+            <button className="set-row" role="switch" aria-checked={twofa} onClick={toggleTwofa}>
+              <span className="set-ico" aria-hidden="true">🔐</span>
+              <span className="set-body">
+                <span className="set-t">Double authentification</span>
+                <span className="set-d">Un code en plus du mot de passe</span>
+              </span>
+              <span className={`switch ${twofa ? 'on' : ''}`} aria-hidden="true" />
+            </button>
+          )}
+          {/* Peu de boutiques ont une imprimante ticket : l'option est donc
+              désactivée par défaut, et se règle ici une fois pour toutes. */}
+          <button className="set-row" role="switch" aria-checked={autoPrint}
+            onClick={() => { const next = !autoPrint; setAutoPrintState(next); setAutoPrint(next) }}>
+            <span className="set-ico" aria-hidden="true">🖨️</span>
+            <span className="set-body">
+              <span className="set-t">Imprimer le reçu tout seul</span>
+              <span className="set-d">À l'encaissement, sans un geste de plus</span>
+            </span>
+            <span className={`switch ${autoPrint ? 'on' : ''}`} aria-hidden="true" />
+          </button>
+          <button className="set-row" role="switch" aria-checked={pinOn} onClick={togglePin}>
+            <span className="set-ico" aria-hidden="true">🔒</span>
+            <span className="set-body">
+              <span className="set-t">Verrouillage par code</span>
+              <span className="set-d">Quatre chiffres pour rouvrir la caisse</span>
+            </span>
+            <span className={`switch ${pinOn ? 'on' : ''}`} aria-hidden="true" />
+          </button>
         </div>
       </div>
+
+      {user?.plan === 'Free' && !isEmployee && (
+        <button className="premium-card" style={{ marginBottom: 12 }} onClick={onUpgrade}>
+          <span className="invite-ico" aria-hidden="true">👑</span>
+          <span style={{ minWidth: 0 }}>
+            <span className="premium-t" style={{ display: 'block' }}>SamaCommerce Premium</span>
+            <span className="premium-s" style={{ display: 'block' }}>IA, multi-boutique, export illimité</span>
+          </span>
+          <span className="premium-go">Activer</span>
+        </button>
+      )}
 
       <div className="card">
         <div className="card-title">🛡️ Sécurité du compte</div>
-        <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 10 }}>Vous avez perdu un téléphone ? Déconnectez toutes les sessions actives.</div>
-        <button className="pay-btn" style={{ background: '#FEF3C7', color: '#92400E', boxShadow: 'none' }} onClick={logoutEverywhere}>📵 Déconnecter tous les appareils</button>
-      </div>
-
-      <div className="card">
-        <div className="card-title">💳 Abonnement</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Plan actuel : <b style={{ color: 'var(--primary)' }}>{user?.plan}</b></span>
-          {user?.plan === 'Free' && !isEmployee && <button className="btn-primary" onClick={onUpgrade}>⭐ Passer Premium</button>}
+        <div className="set-list">
+          <button className="set-row" onClick={logoutEverywhere}>
+            <span className="set-ico" aria-hidden="true" style={{ background: 'var(--warning-bg)' }}>📵</span>
+            <span className="set-body">
+              <span className="set-t">Déconnecter tous les appareils</span>
+              <span className="set-d">Utile si vous avez perdu un téléphone</span>
+            </span>
+            <span className="set-go" aria-hidden="true">›</span>
+          </button>
+          {user?.plan !== 'Free' && (
+            <div className="set-row" style={{ cursor: 'default' }}>
+              <span className="set-ico" aria-hidden="true">💳</span>
+              <span className="set-body"><span className="set-t">Abonnement</span></span>
+              <span className="set-val">👑 {user?.plan}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -207,7 +263,7 @@ export default function Profil({ user, onLogout, onUpgrade }: { user: User | nul
 
       <div className="card">
         <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 10 }}>Connecté : {user?.username}</div>
-        <button className="pay-btn" style={{ background: '#FEE2E2', color: 'var(--red)', boxShadow: 'none' }} onClick={onLogout}>🔓 Se déconnecter</button>
+        <button className="pay-btn" style={{ background: 'var(--danger-bg)', color: 'var(--danger)', boxShadow: 'none' }} onClick={onLogout}>🔓 Se déconnecter</button>
       </div>
     </>
   )

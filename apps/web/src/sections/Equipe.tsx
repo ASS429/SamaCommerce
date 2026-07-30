@@ -48,7 +48,18 @@ export default function Equipe() {
 
   return (
     <>
-      <div className="page-header"><h2>👥 Mon Équipe</h2><button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Inviter</button></div>
+      <div className="page-header"><h2>👥 Mon Équipe</h2></div>
+
+      {/* Inviter est l'action qui fait vivre cet écran : elle prend la place
+          d'un bandeau coloré plutôt que d'un petit bouton dans un coin. */}
+      <button className="tone-row" onClick={() => { setEditing(null); setShowModal(true) }}>
+        <span className="invite-ico" aria-hidden="true">🔑</span>
+        <span style={{ minWidth: 0 }}>
+          <span className="invite-t" style={{ display: 'block' }}>Inviter un vendeur</span>
+          <span className="invite-s" style={{ display: 'block' }}>Le lien se partage par WhatsApp</span>
+        </span>
+        <span className="premium-go">+ Inviter</span>
+      </button>
 
       {loading && <SkeletonList count={2} />}
       {!loading && members.length === 0 && (
@@ -146,11 +157,17 @@ function MemberModal({ member, onClose, onSaved }: { member: Member | null; onCl
         <div className="modal-title">{member ? '✏️ Fiche employé' : '👥 Inviter un membre'}</div>
         {link ? (
           <>
-            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>✅ Invitation créée. Partagez ce lien avec l'employé :</p>
+            <div className="tone-row" style={{ marginBottom: 14 }}>
+              <span className="invite-ico" aria-hidden="true">✅</span>
+              <span style={{ minWidth: 0 }}>
+                <span className="invite-t" style={{ display: 'block' }}>Invitation prête</span>
+                <span className="invite-s" style={{ display: 'block' }}>Envoyez-la à {name || 'votre employé'}</span>
+              </span>
+            </div>
             <div className="wa-preview" style={{ wordBreak: 'break-all' }}>{link}</div>
             <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
-              <button className="fa-btn fa-wa" style={{ flex: 1 }} onClick={sendWhatsapp}>💬 Envoyer par WhatsApp</button>
-              <button className="fa-btn fa-call" style={{ flex: 1 }} onClick={() => { navigator.clipboard?.writeText(link); toast('Lien copié 📋', 'success') }}>📋 Copier</button>
+              <button className="btn-wa" onClick={sendWhatsapp}>💬 Envoyer par WhatsApp</button>
+              <button className="fa-btn fa-call" style={{ flex: '0 0 auto', minWidth: 96 }} onClick={() => { navigator.clipboard?.writeText(link); toast('Lien copié 📋', 'success') }}>📋 Copier</button>
             </div>
             <button className="btn-confirm" style={{ width: '100%' }} onClick={onSaved}>Terminé</button>
           </>

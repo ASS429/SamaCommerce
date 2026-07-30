@@ -39,6 +39,15 @@ export default function Inventaire() {
     vendus: Object.values(vendues).reduce((a, b) => a + b, 0),
   }), [products, rows, vendues])
 
+  /* Le produit qui rapporte le plus PAR VENTE. C'est l'information qu'un
+     commerçant cherche dans un inventaire : sur quoi pousser. Elle était
+     noyée dans une colonne « marge » de plus. */
+  const meilleure = useMemo(() => {
+    const eligibles = rows.filter((r) => Number(r.p.price) > 0 && Number(r.p.price_achat) > 0)
+    if (eligibles.length === 0) return null
+    return eligibles.reduce((best, r) => (r.marge > best.marge ? r : best))
+  }, [rows])
+
   const sousTitre = `${boutiqueIdentity().nom} — ${rows.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`
 
   const exportExcel = () => exportXlsx('inventaire-samacommerce', {
@@ -95,6 +104,19 @@ export default function Inventaire() {
         <div className="st st-p"><div className="sv">{loading ? '—' : totals.produits}</div><div className="sl">🏷️ Produits</div></div>
         <div className="st st-y"><div className="sv">{loading ? '—' : totals.vendus}</div><div className="sl">🛒 Articles vendus</div></div>
       </div>
+
+      {!loading && meilleure && (
+        <div className="tone-row">
+          <span className="invite-ico" aria-hidden="true">🏆</span>
+          <span style={{ minWidth: 0 }}>
+            <span className="invite-t" style={{ display: 'block' }}>Meilleure marge : {meilleure.p.name}</span>
+            <span className="invite-s" style={{ display: 'block' }}>
+              {fcfa(Number(meilleure.p.price_achat))} → {fcfa(Number(meilleure.p.price))} l'unité
+            </span>
+          </span>
+          <span className="code-box" style={{ marginLeft: 'auto', minWidth: 58, fontSize: 16 }}>+{meilleure.marge.toFixed(0)} %</span>
+        </div>
+      )}
 
       <input className="search-bar" placeholder="🔍 Rechercher un produit..." value={search} onChange={(e) => setSearch(e.target.value)} />
 

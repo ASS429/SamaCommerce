@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Livraisons as Api, Commandes, boutiqueIdentity, fcfa } from '../lib/api'
 import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonList } from '../components/Skeleton'
@@ -12,6 +12,14 @@ const STATUS: Record<string, { icon: string; label: string; cls: string }> = {
   en_cours: { icon: '🛵', label: 'En route', cls: 'pill-low' },
   livree: { icon: '✅', label: 'Livrée', cls: 'pill-ok' },
 }
+
+/** Les trois étapes du trajet, dans l'ordre. `ORDER` donne le rang atteint. */
+const STEPS = [
+  { key: 'en_attente', icon: '📦', label: 'Préparée' },
+  { key: 'en_cours', icon: '🛵', label: 'En route' },
+  { key: 'livree', icon: '🏠', label: 'Livrée' },
+] as const
+const ORDER = STEPS.map((s) => s.key) as readonly string[]
 
 export default function Livraisons() {
   const [list, setList] = useState<any[]>([])
@@ -69,6 +77,26 @@ export default function Livraisons() {
               </div>
               <span className={`produit-stock-pill ${st.cls}`}>{st.icon} {st.label}</span>
             </div>
+
+            {/* Le trajet est dessiné : préparée → en route → livrée. Une simple
+                pastille de statut ne dit pas ce qui vient ensuite ; ici on voit
+                d'un coup où en est le fournisseur et ce qu'il reste à faire. */}
+            <div className="dsteps" aria-hidden="true">
+              {STEPS.map((step, i) => {
+                const rang = ORDER.indexOf(l.status)
+                const etat = i < rang ? 'done' : i === rang ? 'now' : ''
+                return (
+                  <Fragment key={step.key}>
+                    {i > 0 && <span className={`dstep-bar ${i <= rang ? 'done' : ''}`} />}
+                    <span className={`dstep ${etat}`}>
+                      <span className="dstep-dot">{i < rang ? '✓' : step.icon}</span>
+                      <span className="dstep-l">{step.label}</span>
+                    </span>
+                  </Fragment>
+                )
+              })}
+            </div>
+            <span className="sr-only">Étape : {st.label}</span>
 
             <div className="fiche-actions">
               {l.status !== 'livree' && (

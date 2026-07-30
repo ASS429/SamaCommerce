@@ -2,16 +2,22 @@ import { useEffect, useState } from 'react'
 import { Stats, Members, Caisse, fcfa, type User } from '../lib/api'
 import { t, getLang, setLang, LANGS, type Lang } from '../lib/i18n'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
+import { toast } from '../lib/toast'
 
 export type View = 'menu' | 'dashboard' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
   | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'returns' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia'
 
-const BUTTONS: { view: View; emoji: string; key: string; sub: string; ai: string; featured?: boolean }[] = [
-  { view: 'vente', emoji: '🛒', key: 'btn.sell', sub: 'Encaisser une nouvelle vente', ai: '', featured: true },
-  { view: 'stock', emoji: '📦', key: 'btn.stock', sub: 'Inventaire & stock', ai: 'ai-green' },
-  { view: 'credits', emoji: '🤝', key: 'btn.credits', sub: 'Dettes clients', ai: 'ai-blue' },
-  { view: 'rapports', emoji: '📊', key: 'btn.reports', sub: 'Ventes & marges', ai: 'ai-orange' },
-  { view: 'categories', emoji: '🗂️', key: 'btn.categories', sub: 'Organiser', ai: 'ai-gray' },
+/* Tuiles d'accueil : une couleur PLEINE par destination.
+   Avant, six cartes blanches se distinguaient par un mot ; il fallait lire
+   pour choisir. Ici la couleur, le pictogramme et la place dans la grille
+   suffisent — le vert en haut à gauche, c'est vendre, toujours. */
+const BUTTONS: { view: View; emoji: string; key: string; sub: string; tone: string }[] = [
+  { view: 'vente', emoji: '🛒', key: 'nav.vente', sub: 'Encaisser vite', tone: 'tile-green' },
+  { view: 'stock', emoji: '📦', key: 'nav.stock', sub: 'Produits & quantités', tone: 'tile-blue' },
+  { view: 'credits', emoji: '🤝', key: 'nav.credits', sub: 'Dettes clients', tone: 'tile-violet' },
+  { view: 'rapports', emoji: '📊', key: 'nav.rapports', sub: 'Ventes & marges', tone: 'tile-orange' },
+  { view: 'categories', emoji: '🗂️', key: 'nav.categories', sub: 'Mes rayons', tone: 'tile-teal' },
+  { view: 'clients', emoji: '👤', key: 'nav.clients', sub: 'Mon carnet', tone: 'tile-pink' },
 ]
 
 export default function Home({ user, can, onNavigate, onLogout, onUpgrade, desktop, stats }: {
@@ -70,7 +76,7 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
           <div className="stat-2x2" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
             <div className="st st-p"><div className="sv">{fcfa(stats?.ca || 0)}</div><div className="sl">Encaissé aujourd'hui</div></div>
             <div className="st st-b"><div className="sv">{stats?.articles || 0}</div><div className="sl">Articles vendus</div></div>
-            <div className="st st-y"><div className="sv">{stats?.stock || 0}</div><div className="sl">Réf. en stock</div></div>
+            <div className="st st-y"><div className="sv">{stats?.stock || 0}</div><div className="sl">Articles en stock</div></div>
             <div className="st st-g"><div className="sv">👑 {user?.plan}</div><div className="sl">Abonnement</div></div>
           </div>
 
@@ -106,15 +112,6 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
         </>
       )}
 
-      <div className="top-actions">
-        <button className="btn-logout" onClick={onLogout}>🔓 Déconnexion</button>
-        <button className="badge-soft" style={{ background: '#EDE9FE', color: 'var(--primary)' }} onClick={nextTheme}
-          title="Thème : automatique (comme le téléphone), clair ou sombre">{THEME_LABEL[theme].icon} {THEME_LABEL[theme].label}</button>
-        {installPrompt && <button className="badge-soft" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={install}>📲 Installer</button>}
-        <button className="badge-soft" style={{ background: '#EFF6FF', color: 'var(--blue)' }} onClick={cycleLang}>{LANGS.find((l) => l.code === getLang())?.label}</button>
-        {user?.plan === 'Free' && <button className="badge-soft" onClick={onUpgrade}>⭐ Passer Premium</button>}
-      </div>
-
       {guide && (
         // Parcours en 3 étapes montré par l'IMAGE : une liste de phrases est
         // illisible pour un commerçant peu alphabétisé, et elle repoussait le
@@ -142,7 +139,10 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
 
       {alertes.length > 0 && (
         <div className="alert-stock">
-          <div className="alert-title">⚠️ Stock presque épuisé</div>
+          <div className="alert-title">
+            ⚠️ Stock presque épuisé
+            <span className="ss-y" style={{ marginLeft: 'auto', background: 'rgba(154,74,6,.12)', borderRadius: 999, padding: '2px 9px', fontSize: 12 }}>{alertes.length}</span>
+          </div>
           {alertes.map((a, i) => (
             <div className="alert-row" key={i}><span>{a.produit}</span><strong>{a.stock} restant(s)</strong></div>
           ))}
@@ -150,30 +150,47 @@ export default function Home({ user, can, onNavigate, onLogout, onUpgrade, deskt
       )}
 
       {user?.is_employee && (
-        <div className="alert-row" style={{ background: '#EDE9FE', color: 'var(--primary-dark)', marginBottom: 12, fontWeight: 600 }}>
+        <div className="alert-row" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-border)', color: 'var(--brand-dark)', marginBottom: 12, fontWeight: 600 }}>
           🧑‍💼 Vous êtes connecté en tant qu'employé{user?.company_name ? ` · ${user.company_name}` : ''}
         </div>
       )}
 
       <div className="section-label">{t('home.quickActions')}</div>
-      <div className="action-grid">
+      <div className="tiles">
         {BUTTONS.filter((b) => can(b.view)).map((b) => (
-          <button key={b.view} className={`action-btn ${b.featured ? 'featured' : ''}`} onClick={() => onNavigate(b.view)}>
-            <div className={`ai ${b.ai}`}>{b.emoji}</div>
-            <div>
-              <div className="at">{t(b.key)}</div>
-              <div className="as">{b.sub}</div>
-            </div>
-            {b.featured && <span style={{ marginLeft: 'auto', fontSize: 20 }}>›</span>}
+          <button key={b.view} className={`tile ${b.tone}`} onClick={() => onNavigate(b.view)}>
+            <span className="tile-icon" aria-hidden="true">{b.emoji}</span>
+            <span className="tile-t">{t(b.key)}</span>
+            <span className="tile-s">{b.view === 'stock' && stats?.stock ? `${stats.stock} en stock` : b.sub}</span>
           </button>
         ))}
       </div>
 
-      {!user?.is_employee && (
-        <button className="badge-soft" style={{ marginTop: 14, background: '#EFF6FF', color: 'var(--blue)' }} onClick={() => setShowJoin(true)}>
-          🤝 Rejoindre une boutique (code d'invitation)
+      {user?.plan === 'Free' && !user?.is_employee && (
+        <button className="premium-card" style={{ marginTop: 14 }} onClick={onUpgrade}>
+          <span className="tile-icon" aria-hidden="true">👑</span>
+          <span>
+            <span className="premium-t" style={{ display: 'block' }}>SamaCommerce Premium</span>
+            <span className="premium-s" style={{ display: 'block' }}>IA, multi-boutique, export illimité</span>
+          </span>
+          <span className="premium-go">Activer</span>
         </button>
       )}
+
+      {/* Réglages d'appareil : utiles, mais ce ne sont pas des actions de vente.
+          Ils passent donc en bas, en discret, sous les six destinations. */}
+      <div className="top-actions" style={{ marginTop: 18, marginBottom: 0 }}>
+        <button className="badge-soft" onClick={nextTheme}
+          title="Thème : automatique (comme le téléphone), clair ou sombre">{THEME_LABEL[theme].icon} {THEME_LABEL[theme].label}</button>
+        <button className="badge-soft" style={{ background: 'var(--blue-tint)', color: 'var(--blue)' }} onClick={cycleLang}>{LANGS.find((l) => l.code === getLang())?.label}</button>
+        {installPrompt && <button className="badge-soft" style={{ background: 'var(--success-bg)', color: 'var(--green-deep)' }} onClick={install}>📲 Installer</button>}
+        {!user?.is_employee && (
+          <button className="badge-soft" style={{ background: 'var(--blue-tint)', color: 'var(--blue)' }} onClick={() => setShowJoin(true)}>
+            🤝 Rejoindre une boutique
+          </button>
+        )}
+        <button className="btn-logout" onClick={onLogout}>🔓 Déconnexion</button>
+      </div>
       {showJoin && <JoinModal onClose={() => setShowJoin(false)} />}
     </>
   )
@@ -183,23 +200,32 @@ function JoinModal({ onClose }: { onClose: () => void }) {
   const [token, setToken] = useState('')
   const [saving, setSaving] = useState(false)
   const join = async () => {
-    if (!token.trim()) return alert('Collez le code d\'invitation')
+    if (!token.trim()) return toast('Collez le code d\'invitation', 'error')
     setSaving(true)
     try {
       const d = await Members.accept(token.trim().replace(/.*invite=/, ''))
-      alert(`✅ ${d.message} — rôle : ${d.role}`)
-      window.location.reload()
+      toast(`${d.message} — rôle : ${d.role}`, 'success')
+      setTimeout(() => window.location.reload(), 900)
     } catch (e: any) {
-      alert(e?.response?.data?.error || 'Code invalide ou expiré')
+      toast(e?.response?.data?.error || 'Code invalide ou expiré', 'error')
     } finally { setSaving(false) }
   }
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">🤝 Rejoindre une boutique</div>
-        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 10 }}>Collez le code (ou lien) d'invitation reçu du propriétaire :</p>
-        <div className="form-group"><input value={token} onChange={(e) => setToken(e.target.value)} placeholder="Code ou lien d'invitation" /></div>
-        <div className="modal-actions"><button className="btn-cancel" onClick={onClose}>Annuler</button><button className="btn-confirm" onClick={join} disabled={saving}>Rejoindre</button></div>
+        <div style={{ textAlign: 'center', marginBottom: 6 }}>
+          <span className="invite-ico" style={{ display: 'inline-flex', background: 'var(--brand-tint)', color: 'var(--brand-dark)' }} aria-hidden="true">🔑</span>
+        </div>
+        <div className="modal-title" style={{ marginBottom: 6 }}>Rejoindre une boutique</div>
+        <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: '0 0 14px' }}>
+          Collez le code que le propriétaire vous a partagé.
+        </p>
+        {/* Champ volontairement grand : le code arrive par WhatsApp, on le colle
+            au pouce et on doit pouvoir vérifier ce qu'on a collé. */}
+        <input className="code-cell" value={token} onChange={(e) => setToken(e.target.value)}
+          placeholder="7K2P…" aria-label="Code d'invitation" autoFocus
+          style={{ width: '100%', height: 62, fontSize: 20, letterSpacing: 1, padding: '0 12px' }} />
+        <div className="modal-actions"><button className="btn-cancel" onClick={onClose}>Annuler</button><button className="btn-confirm" onClick={join} disabled={saving}>{saving ? '…' : 'Rejoindre'}</button></div>
       </div>
     </div>
   )

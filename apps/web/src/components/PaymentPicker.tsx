@@ -24,14 +24,15 @@ export default function PaymentPicker({ title, amount, onPick, onClose }: {
           </div>
         )}
 
-        <div className="pay-list">
+        {/* Même damier que l'encaissement : un seul geste à apprendre, qu'on
+            encaisse une vente ou qu'on enregistre un remboursement. */}
+        <div className="paymode-grid">
           {PAY_METHODS.map((m) => (
-            <button key={m.id} className={`pay-opt${m.tone ? ' pay-opt-' + m.tone : ''}`} onClick={() => onPick(m.id)}>
+            <button key={m.id} className={`paymode${m.tone === 'cash' ? ' paymode-cash' : ''}`} onClick={() => onPick(m.id)}>
               {m.logo
-                ? <img className="pay-logo" src={m.logo} alt="" width={40} height={40} loading="lazy" />
-                : <span className="pay-logo pay-logo-emoji">{m.emoji}</span>}
-              <span className="pay-opt-text"><b>{m.label}</b><small>{m.sub}</small></span>
-              <span className="pay-opt-go">›</span>
+                ? <img src={m.logo} alt="" width={30} height={30} loading="lazy" />
+                : <span className="pm-ico" aria-hidden="true">{m.emoji}</span>}
+              <span className="pm-body"><span className="pm-t">{m.label}</span><span className="pm-s">{m.sub}</span></span>
             </button>
           ))}
         </div>

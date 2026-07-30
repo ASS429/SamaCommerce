@@ -354,29 +354,27 @@ function PayModal({ total, onClose, onPay, onCredit }: { total: number; onClose:
           <span className="pay-amount-value">{fcfa(total)}</span>
         </div>
 
-        <div className="pay-list">
-          <button className="pay-opt pay-opt-cash" onClick={() => onPay('especes')}>
-            <span className="pay-logo pay-logo-emoji">💵</span>
-            <span className="pay-opt-text"><b>Espèces</b><small>Paiement en liquide</small></span>
-            <span className="pay-opt-go">›</span>
+        {/* Damier 2×2 : les quatre moyens tiennent sous le montant, sans faire
+            défiler. Un pouce les atteint tous sans déplacer la main. */}
+        <div className="paymode-grid">
+          <button className="paymode paymode-cash" onClick={() => onPay('especes')}>
+            <span className="pm-ico" aria-hidden="true">💵</span>
+            <span className="pm-body"><span className="pm-t">Espèces</span><span className="pm-s">Liquide</span></span>
           </button>
 
-          <button className="pay-opt" onClick={() => onPay('wave')}>
-            <img className="pay-logo" src="/pay/wave.png" alt="" width={40} height={40} loading="lazy" />
-            <span className="pay-opt-text"><b>Wave</b><small>Paiement mobile</small></span>
-            <span className="pay-opt-go">›</span>
+          <button className="paymode" onClick={() => onPay('wave')}>
+            <img src="/pay/wave.png" alt="" width={30} height={30} loading="lazy" />
+            <span className="pm-body"><span className="pm-t">Wave</span><span className="pm-s">Mobile</span></span>
           </button>
 
-          <button className="pay-opt" onClick={() => onPay('orange')}>
-            <img className="pay-logo" src="/pay/orange-money.png" alt="" width={40} height={40} loading="lazy" />
-            <span className="pay-opt-text"><b>Orange Money</b><small>Paiement mobile</small></span>
-            <span className="pay-opt-go">›</span>
+          <button className="paymode" onClick={() => onPay('orange')}>
+            <img src="/pay/orange-money.png" alt="" width={30} height={30} loading="lazy" />
+            <span className="pm-body"><span className="pm-t">Orange Money</span><span className="pm-s">Mobile</span></span>
           </button>
 
-          <button className="pay-opt pay-opt-credit" onClick={onCredit}>
-            <span className="pay-logo pay-logo-emoji">📝</span>
-            <span className="pay-opt-text"><b>Crédit</b><small>À payer plus tard</small></span>
-            <span className="pay-opt-go">›</span>
+          <button className="paymode paymode-credit" onClick={onCredit}>
+            <span className="pm-ico" aria-hidden="true">📝</span>
+            <span className="pm-body"><span className="pm-t">Crédit</span><span className="pm-s">Plus tard</span></span>
           </button>
         </div>
 

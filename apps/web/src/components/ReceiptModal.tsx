@@ -17,30 +17,32 @@ export default function ReceiptModal({ items, onClose, onWhatsapp }: {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 340 }} onClick={(e) => e.stopPropagation()}>
         <div className="receipt-print">
-          <div style={{ textAlign: 'center', marginBottom: 10 }}>
+          <div className="receipt-head">
             <Logo size={44} style={{ margin: '0 auto 6px', borderRadius: 12 }} />
-            <div className="sora" style={{ fontSize: 18, fontWeight: 800 }}>{boutique}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{date}</div>
+            <div className="receipt-shop">{boutique}</div>
+            <div className="receipt-meta">{date}</div>
           </div>
-          <div style={{ borderTop: '1px dashed var(--line)', borderBottom: '1px dashed var(--line)', padding: '8px 0', margin: '8px 0' }}>
+          <div className="receipt-lines">
             {items.map((l, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '3px 0' }}>
-                <span>{l.name} <span style={{ color: 'var(--muted)' }}>×{l.qty}</span></span>
-                <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fcfa(l.price * l.qty)}</span>
+              <div key={i} className="receipt-line">
+                <span className="rl-name">{l.name} <span style={{ color: 'var(--muted)' }}>×{l.qty}</span></span>
+                <span className="rl-amount">{fcfa(l.price * l.qty)}</span>
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="sora" style={{ fontWeight: 700 }}>TOTAL</span>
-            <span className="sora" style={{ fontWeight: 800, fontSize: 20, color: 'var(--brand)' }}>{fcfa(total)}</span>
+          <div className="receipt-total">
+            <span className="rt-l">TOTAL</span>
+            <span className="rt-v">{fcfa(total)}</span>
           </div>
-          <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)', marginTop: 12 }}>Merci de votre achat ! 🙏</div>
+          <div className="receipt-thanks">Merci de votre achat ! 🙏</div>
         </div>
+        {/* WhatsApp d'abord : c'est par là que le reçu part réellement. Peu de
+            boutiques ont une imprimante. */}
         <div className="modal-actions no-print">
-          <button className="btn-cancel" onClick={onClose}>Fermer</button>
-          <button className="prd-btn prd-btn-edit" style={{ flex: 1 }} onClick={() => window.print()}>🖨️ Imprimer</button>
-          <button className="btn-confirm" style={{ flex: 1 }} onClick={onWhatsapp}>📲 WhatsApp</button>
+          <button className="btn-wa" onClick={onWhatsapp}>💬 WhatsApp</button>
+          <button className="btn-cancel" style={{ flex: '0 0 auto', minWidth: 96 }} onClick={() => window.print()}>🖨️ Imprimer</button>
         </div>
+        <button className="auth-link no-print" onClick={onClose}>Fermer</button>
       </div>
     </div>
   )

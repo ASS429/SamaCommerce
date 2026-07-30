@@ -78,13 +78,21 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM San
 .ts { background: var(--surface); border-radius: 16px; padding: 12px 11px; box-shadow: 0 6px 16px rgba(124,58,237,.08); text-align: left; }
 .ts .v { font-family: var(--sora); font-size: 15px; font-weight: 800; line-height: 1.1; color: var(--ink); }
 .ts .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.ts.g .v { color: var(--green); } .ts.b .v { color: var(--blue); } .ts.o .v { color: var(--warning); }
+.ts.g .v { color: var(--green-deep); } .ts.b .v { color: var(--blue); } .ts.o .v { color: #9a4a06; }
+.ts.r .v { color: var(--danger); }
+html.dark .ts.o .v { color: var(--warning); }
 
 /* ─── SCROLL / SECTION ─── */
 /* min-height:0 est indispensable : sans lui un enfant flex refuse de rétrécir
    et déborde au lieu de défiler. */
 .scroll-content { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 18px 16px calc(var(--nav-h) + 16px); }
-.section-page { animation: fadeUp .22s ease both; }
+/* `backwards` et NON `both` : avec `both`, la dernière image-clé
+   (`transform: translateY(0)`) reste appliquée après l'animation. Un transform,
+   même neutre, fait de l'élément le bloc conteneur de ses descendants en
+   `position: fixed` — les modales se centraient donc dans la HAUTEUR DE LA
+   SECTION (parfois 2000 px) au lieu de l'écran, et s'ouvraient à moitié sous
+   la barre de navigation. `backwards` relâche le transform à la fin. */
+.section-page { animation: fadeUp .22s ease backwards; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ─── Design 3.1 : CHORÉGRAPHIE D'ENTRÉE (cascade orchestrée) ─── */
@@ -169,7 +177,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM San
 .page-header h2 { font-family: var(--sora); font-size: 20px; font-weight: 800; color: var(--ink); margin: 0; letter-spacing: -.3px; }
 /* Sur mobile, l'en-tete de l'application affiche deja le titre de la section :
    le repeter juste en dessous ne fait qu'occuper la hauteur d'ecran utile. */
-@media (max-width: 1023px) { .page-header h2 { display: none; } .page-header:empty { display: none; } }
+/* Le titre disparaissant sur mobile, les boutons d'action restaient seuls et
+   alignés à gauche, comme échoués. On les renvoie à droite, là où le pouce
+   les atteint. */
+@media (max-width: 1023px) {
+  .page-header h2 { display: none; }
+  .page-header:empty { display: none; }
+  .page-header { justify-content: flex-end; margin-bottom: 10px; }
+}
 .btn-primary { background: var(--brand); color: #fff; border: none; padding: 11px 18px; border-radius: 13px; font-family: var(--sora); font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(124,58,237,.25); white-space: nowrap; }
 .btn-primary:active { transform: scale(.97); }
 .btn-pdf { background: var(--danger-bg); color: var(--danger); border: none; padding: 9px 13px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
@@ -342,8 +357,14 @@ html.dark .vente-card .v-icon { filter: brightness(.9); }
 .nav-btn .nl { font-size: 11px; font-weight: 600; }
 .nav-btn.active { color: var(--brand); }
 .nav-btn.active .nl { font-weight: 700; }
-.nav-fab { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--accent)); border: none; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; box-shadow: 0 8px 18px rgba(124,58,237,.4); cursor: pointer; margin-top: -22px; }
+/* Bouton central : c'est LE geste du métier (encaisser). Il est vert comme le
+   bouton « ENCAISSER » de l'écran de vente et comme sa tuile d'accueil — la
+   couleur seule suffit à le retrouver. Son libellé reste visible sous la
+   pastille : un rond sans mot ne dit pas ce qu'il fait. */
+.nav-fab-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.nav-fab { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(160deg, #10B981, #047857); border: none; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; box-shadow: 0 8px 18px rgba(4,120,87,.45); cursor: pointer; margin-top: -22px; }
 .nav-fab:active { transform: scale(.94); }
+.nav-fab-l { font-family: var(--sora); font-size: 10.5px; font-weight: 800; color: var(--green-deep); }
 
 /* ─── PLUS SHEET ─── */
 .sheet-item { display: flex; align-items: center; gap: 14px; padding: 13px; border-radius: 14px; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; margin-bottom: 2px; }
@@ -758,3 +779,314 @@ html.dark .fa-wa { background: #0d3b22; color: #6EE7B7; }
   padding: 0; color: inherit; cursor: pointer; font: inherit; max-width: 100%; }
 .header-shop .header-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .header-shop > span:last-child { font-size: 13px; opacity: .8; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOT 2026-07-30 — SURFACES EN COULEUR (d'après les maquettes)
+   Les écrans étaient uniformément blancs : tout se ressemblait, et le
+   commerçant devait LIRE pour savoir où il était. Ici, chaque destination et
+   chaque résumé porte sa propre couleur pleine — on reconnaît « Vendre » à son
+   vert et « Crédits » à son violet avant d'avoir lu le mot.
+
+   RÈGLE DE LISIBILITÉ (elle explique tous les choix qui suivent) : un dégradé
+   va du ton MOYEN vers le ton SOMBRE, de haut en bas. Le titre, écrit gros et
+   gras, se pose sur le moyen (≥ 3:1 contre du blanc) ; la légende, petite, se
+   pose sur le sombre (≥ 7:1). Du blanc 12 px sur un vert vif tombe à 2,5:1 :
+   illisible sur un téléphone tenu en plein soleil.
+═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tone-green:  linear-gradient(163deg, #059669 0%, #065F46 100%);
+  --tone-blue:   linear-gradient(163deg, #2563EB 0%, #1E3A8A 100%);
+  --tone-violet: linear-gradient(163deg, #7C3AED 0%, #4C1D95 100%);
+  --tone-orange: linear-gradient(163deg, #EA580C 0%, #9A3412 100%);
+  --tone-teal:   linear-gradient(163deg, #0D9488 0%, #115E59 100%);
+  --tone-pink:   linear-gradient(163deg, #DB2777 0%, #9D174D 100%);
+  /* Panneaux de résumé : plus longs, donc trois arrêts pour rester sombres en bas. */
+  --hero-violet: linear-gradient(150deg, #7C3AED 0%, #5B21B6 55%, #3B1180 100%);
+  --hero-teal:   linear-gradient(150deg, #0D9488 0%, #0F766E 55%, #115E59 100%);
+  --hero-green:  linear-gradient(150deg, #059669 0%, #047857 55%, #065F46 100%);
+  --hero-pink:   linear-gradient(150deg, #DB2777 0%, #BE185D 55%, #9D174D 100%);
+  /* Voile SOMBRE pour le petit texte posé sur une couleur, voile CLAIR pour les
+     pictogrammes (une image n'a pas besoin de 4,5:1, un mot de 11 px si). */
+  --scrim-dark: rgba(0,0,0,.24);
+  --scrim-light: rgba(255,255,255,.18);
+  --green-deep: #047857;   /* vert lisible en petit sur fond blanc (5,5:1) */
+  --gold: #B45309;
+  /* Échelle d'empilement nommée : plus de 999 ni de 9999 posés au hasard. */
+  --z-sticky: 10; --z-nav: 40; --z-overlay: 50; --z-panel: 60; --z-toast: 900;
+}
+html.dark {
+  --green-deep: #34D399;
+  --gold: #FBBF24;
+  --scrim-dark: rgba(0,0,0,.3);
+}
+
+/* ─── Tuiles de navigation en couleur pleine (Accueil) ─── */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile { position: relative; overflow: hidden; border: none; border-radius: 20px; padding: 14px 15px 15px;
+  min-height: 108px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  cursor: pointer; text-align: left; color: #fff; font-family: inherit;
+  box-shadow: 0 8px 20px rgba(30,27,75,.16); transition: transform var(--motion-fast) var(--ease-out-expo), box-shadow var(--motion-fast); }
+.tile::after { content: ''; position: absolute; right: -28px; top: -28px; width: 96px; height: 96px;
+  border-radius: 50%; background: rgba(255,255,255,.10); }
+.tile:active { transform: scale(.97); }
+.tile > * { position: relative; }
+.tile-icon { width: 40px; height: 40px; border-radius: 13px; background: var(--scrim-light);
+  display: flex; align-items: center; justify-content: center; font-size: 21px; line-height: 1; }
+.tile-t { font-family: var(--sora); font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin-top: auto; }
+.tile-s { font-size: 12px; color: rgba(255,255,255,.9); margin-top: -4px; }
+.tile-green { background: var(--tone-green); }   .tile-blue { background: var(--tone-blue); }
+.tile-violet { background: var(--tone-violet); } .tile-orange { background: var(--tone-orange); }
+.tile-teal { background: var(--tone-teal); }     .tile-pink { background: var(--tone-pink); }
+@media (min-width: 1024px) and (hover: hover) {
+  .tile:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(30,27,75,.24); }
+}
+
+/* ─── Panneau de résumé en couleur (Crédits, Caisse, Boutique active, Profil) ─── */
+.hero-panel { position: relative; overflow: hidden; border-radius: 22px; padding: 16px 18px 18px;
+  color: #fff; margin-bottom: 14px; box-shadow: 0 10px 26px rgba(30,27,75,.2); background: var(--hero-violet); }
+.hero-panel::after { content: ''; position: absolute; right: -40px; top: -50px; width: 170px; height: 170px;
+  border-radius: 50%; background: rgba(255,255,255,.09); }
+.hero-panel > * { position: relative; }
+.hero-teal { background: var(--hero-teal); } .hero-green { background: var(--hero-green); }
+.hero-pink { background: var(--hero-pink); }
+.hero-top { display: flex; align-items: flex-start; gap: 12px; }
+.hero-top-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+.hero-btn { background: var(--scrim-light); border: none; color: #fff; border-radius: 11px;
+  padding: 8px 12px; font-family: var(--sora); font-size: 12px; font-weight: 700; cursor: pointer; }
+.hero-btn:hover { background: rgba(255,255,255,.3); }
+.hero-btn:disabled { opacity: .5; cursor: not-allowed; }
+.hero-label { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.88); }
+.hero-value { font-family: var(--sora); font-size: 29px; font-weight: 800; letter-spacing: -.7px; line-height: 1.12; margin-top: 1px; }
+.hero-value small { font-size: 14px; font-weight: 700; opacity: .8; margin-left: 3px; }
+.hero-sub { font-size: 12px; color: rgba(255,255,255,.85); margin-top: 3px; }
+.hero-stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; margin-top: 15px; }
+.hero-stat { background: rgba(255,255,255,.15); border-radius: 14px; padding: 9px 10px; min-width: 0; }
+.hero-stat b { display: block; font-family: var(--sora); font-size: 15px; font-weight: 800; line-height: 1.15;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-stat span { font-size: 11px; color: rgba(255,255,255,.88); }
+.hero-cta { display: block; width: 100%; margin-top: 14px; border: none; border-radius: 14px; padding: 13px;
+  background: #fff; color: #4C1D95; font-family: var(--sora); font-size: 14.5px; font-weight: 800; cursor: pointer; }
+.hero-teal .hero-cta, .hero-green .hero-cta { color: #115E59; }
+.hero-cta:active { transform: scale(.985); }
+
+/* ─── Interrupteur segmenté (période, mode d'affichage) ─── */
+.seg { display: flex; gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 15px; margin-bottom: 12px; }
+.seg-btn { flex: 1; min-width: 0; border: none; background: transparent; padding: 10px 6px; border-radius: 11px;
+  font-family: var(--sora); font-size: 13px; font-weight: 700; color: var(--label); cursor: pointer;
+  transition: background var(--motion-fast), color var(--motion-fast); }
+.seg-btn:hover { background: var(--brand-tint); }
+.seg-btn.on { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(124,58,237,.28); }
+.seg-btn.on:hover { background: var(--brand); }
+
+/* ─── Deux grands indicateurs en couleur (Chiffres) ─── */
+.kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.kpi { position: relative; overflow: hidden; border-radius: 18px; padding: 14px; color: #fff;
+  box-shadow: 0 8px 20px rgba(30,27,75,.16); }
+.kpi::after { content: ''; position: absolute; right: -30px; bottom: -34px; width: 100px; height: 100px;
+  border-radius: 50%; background: rgba(255,255,255,.09); }
+.kpi > * { position: relative; }
+.kpi-l { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); }
+.kpi-v { font-family: var(--sora); font-size: 21px; font-weight: 800; letter-spacing: -.5px; margin-top: 5px; line-height: 1.1; }
+.kpi-d { display: inline-block; font-size: 11px; font-weight: 700; margin-top: 7px;
+  background: var(--scrim-dark); border-radius: 999px; padding: 3px 9px; }
+
+/* ─── Classement à barres (top produits, parts de paiement) ─── */
+.bar-list { display: flex; flex-direction: column; gap: 12px; }
+.bar-row { display: flex; flex-direction: column; gap: 5px; }
+.bar-head { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); }
+.bar-head .bh-ico { font-size: 16px; line-height: 1; flex-shrink: 0; }
+.bar-head .bh-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-head .bh-val { font-family: var(--sora); font-weight: 800; color: var(--brand-dark); flex-shrink: 0; }
+.bar-track { height: 8px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--brand-light), var(--brand));
+  transition: width var(--motion-hero) var(--ease-out-expo); }
+.bar-row.b1 .bar-fill { background: linear-gradient(90deg, #A78BFA, #7C3AED); }
+.bar-row.b2 .bar-fill { background: linear-gradient(90deg, #93C5FD, #3B82F6); }
+.bar-row.b3 .bar-fill { background: linear-gradient(90deg, #6EE7B7, #10B981); }
+
+/* ─── Trajet d'une livraison : préparée → en route → livrée ─── */
+.dsteps { display: flex; align-items: flex-start; margin: 14px 0 2px; }
+.dstep { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 74px; flex-shrink: 0; }
+.dstep-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; background: var(--bg); border: 2px solid var(--line); color: var(--muted2); }
+.dstep-l { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; line-height: 1.2; }
+.dstep.done .dstep-dot { background: var(--green); border-color: var(--green); color: #fff; }
+.dstep.now .dstep-dot { background: var(--warning); border-color: var(--warning); color: #fff; box-shadow: 0 0 0 5px rgba(245,158,11,.2); }
+.dstep.done .dstep-l, .dstep.now .dstep-l { color: var(--ink); }
+.dstep-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--line); margin: 14px 2px 0; }
+.dstep-bar.done { background: var(--green); }
+
+/* ─── Bandeau d'information en couleur (code d'invitation, meilleure marge…) ─── */
+.tone-row { display: flex; align-items: center; gap: 12px; width: 100%; border: none; text-align: left;
+  border-radius: 18px; padding: 14px; margin-bottom: 12px; color: #fff; font-family: inherit;
+  background: var(--hero-violet); box-shadow: 0 10px 24px rgba(76,29,149,.28); }
+button.tone-row { cursor: pointer; }
+.tone-row-teal { background: var(--hero-teal); box-shadow: 0 10px 24px rgba(17,94,89,.28); }
+.tone-row-green { background: var(--hero-green); box-shadow: 0 10px 24px rgba(6,95,70,.28); }
+.invite-ico { width: 42px; height: 42px; border-radius: 13px; background: var(--scrim-light);
+  display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
+.invite-t { font-family: var(--sora); font-size: 14.5px; font-weight: 800; }
+.invite-s { font-size: 11.5px; color: rgba(255,255,255,.88); margin-top: 1px; }
+.invite-code { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; }
+.code-box { min-width: 30px; height: 40px; padding: 0 5px; border-radius: 11px; background: var(--scrim-dark);
+  display: flex; align-items: center; justify-content: center; font-family: var(--sora); font-weight: 800; font-size: 18px; }
+.code-input { display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; }
+.code-cell { width: 56px; height: 64px; text-align: center; text-transform: uppercase; outline: none;
+  font-family: var(--sora); font-size: 26px; font-weight: 800; color: var(--brand-dark);
+  background: var(--brand-tint); border: 2px solid var(--brand-border); border-radius: 16px;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast); }
+.code-cell:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(124,58,237,.16); }
+
+/* ─── Lignes de réglage (Paramètres) ─── */
+.set-list { display: flex; flex-direction: column; }
+.set-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 2px;
+  border: none; border-bottom: 1px solid var(--line-soft); background: transparent; text-align: left;
+  font-family: inherit; color: var(--ink); cursor: pointer; }
+.set-row:last-child { border-bottom: none; }
+.set-row:hover { background: var(--bg); }
+.set-ico { width: 38px; height: 38px; border-radius: 12px; background: var(--brand-tint); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
+.set-body { flex: 1; min-width: 0; }
+.set-t { font-family: var(--sora); font-size: 14px; font-weight: 700; }
+.set-d { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.set-val { font-size: 12.5px; font-weight: 700; color: var(--brand-dark); flex-shrink: 0; }
+.set-go { font-size: 18px; color: var(--muted2); flex-shrink: 0; }
+/* Interrupteur : décoratif. C'est la LIGNE entière qui est cliquable (≥ 56 px),
+   pas la pastille — au comptoir on tape avec le pouce. */
+.switch { width: 46px; height: 27px; border-radius: 999px; background: var(--line); position: relative;
+  flex-shrink: 0; transition: background var(--motion-base); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 5px rgba(30,27,75,.3); transition: transform var(--motion-base) var(--ease-spring); }
+.switch.on { background: var(--green); }
+.switch.on::after { transform: translateX(19px); }
+
+/* ─── Carte Premium ─── */
+.premium-card { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%;
+  border: none; text-align: left; border-radius: 18px; padding: 14px; color: #fff; cursor: pointer; font-family: inherit;
+  background: linear-gradient(125deg, #4C1D95 0%, #7C3AED 48%, #9A3412 100%); box-shadow: 0 10px 24px rgba(76,29,149,.3); }
+.premium-card > * { position: relative; }
+.premium-t { font-family: var(--sora); font-size: 14.5px; font-weight: 800; }
+.premium-s { font-size: 11.5px; color: rgba(255,255,255,.9); margin-top: 1px; }
+.premium-go { margin-left: auto; flex-shrink: 0; background: #fff; color: #4C1D95; border-radius: 11px;
+  padding: 9px 14px; font-family: var(--sora); font-weight: 800; font-size: 12.5px; }
+
+/* ─── Scanner de code-barres ─── */
+.scan-modal { background: #12101c; border: 1px solid rgba(255,255,255,.12); max-width: 380px; }
+.scan-modal .modal-title { color: #fff; margin-bottom: 14px; }
+.scan-stage { position: relative; border-radius: 16px; overflow: hidden; background: #000; min-height: 240px; }
+.scan-stage video { display: block; width: 100% !important; height: auto !important; }
+.scan-frame { position: absolute; inset: 16% 12%; pointer-events: none; }
+.scan-frame i { position: absolute; width: 30px; height: 30px; border: 3px solid #34D399; }
+.scan-frame i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 9px 0 0 0; }
+.scan-frame i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 9px 0 0; }
+.scan-frame i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 9px; }
+.scan-frame i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 9px 0; }
+.scan-laser { position: absolute; left: 12%; right: 12%; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #34D399, transparent); animation: scanSweep 2.2s ease-in-out infinite; }
+@keyframes scanSweep { 0%, 100% { top: 20%; } 50% { top: 76%; } }
+.scan-hint { text-align: center; color: rgba(255,255,255,.82); font-size: 12.5px; margin-top: 12px; }
+.scan-close { width: 100%; margin-top: 12px; background: rgba(255,255,255,.12); color: #fff;
+  border: 1px solid rgba(255,255,255,.22); padding: 13px; border-radius: 13px;
+  font-family: var(--sora); font-size: 14px; font-weight: 700; cursor: pointer; }
+
+/* ─── Moyens de paiement en damier 2×2 ─── */
+.paymode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.paymode { display: flex; align-items: center; gap: 9px; min-height: 62px; padding: 11px; cursor: pointer;
+  border: 1.5px solid var(--line); border-radius: 15px; background: var(--surface); text-align: left; font-family: inherit;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast); }
+.paymode:hover { border-color: var(--brand); box-shadow: 0 4px 14px rgba(124,58,237,.14); }
+.paymode:active { transform: scale(.98); }
+.paymode img, .paymode .pm-ico { width: 30px; height: 30px; border-radius: 9px; object-fit: contain; flex-shrink: 0; }
+.pm-ico { display: flex; align-items: center; justify-content: center; font-size: 17px; background: var(--bg); }
+.pm-body { min-width: 0; }
+.pm-t { display: block; font-family: var(--sora); font-size: 13.5px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.pm-s { display: block; font-size: 10.5px; color: var(--muted); }
+.paymode-cash { border-color: var(--success-border); background: var(--success-bg); }
+.paymode-cash .pm-ico { background: rgba(16,185,129,.14); }
+.paymode-credit { border-color: var(--brand-border); background: var(--brand-tint); }
+.paymode-credit .pm-ico { background: rgba(124,58,237,.14); }
+
+/* ─── Grille « toutes les fonctions » (feuille du bouton ＋) ─── */
+.sheet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sheet-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 11px 3px 9px;
+  border: none; background: transparent; border-radius: 15px; cursor: pointer; font-family: inherit; }
+.sheet-tile:hover, .sheet-tile:active { background: var(--bg); }
+.sheet-tile-ico { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center;
+  justify-content: center; font-size: 22px; line-height: 1; }
+.sheet-tile-l { font-family: var(--sora); font-size: 11px; font-weight: 700; color: var(--ink);
+  text-align: center; line-height: 1.2; }
+
+/* ─── Écran de connexion : bandeau coloré + onglets ─── */
+.auth-card { padding: 0; overflow: hidden; }
+.auth-head { position: relative; overflow: hidden; padding: 22px 20px 20px; text-align: center;
+  color: #fff; background: var(--hero-violet); }
+.auth-head::after { content: ''; position: absolute; left: -50px; bottom: -70px; width: 190px; height: 190px;
+  border-radius: 50%; background: rgba(255,255,255,.09); }
+.auth-head > * { position: relative; }
+.auth-brand { font-family: var(--sora); font-size: 21px; font-weight: 800; letter-spacing: -.4px; margin-top: 10px; }
+.auth-tag { font-size: 12.5px; color: rgba(255,255,255,.88); margin-top: 3px; }
+.auth-body { padding: 18px 20px 20px; }
+.auth-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px;
+  font-size: 11.5px; color: var(--muted); text-align: center; }
+.auth-link { width: 100%; margin-top: 12px; background: none; border: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 600; color: var(--brand-dark); }
+.auth-link:hover { text-decoration: underline; }
+
+/* ─── Bande de trois compteurs ─── */
+.stat-strip { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; margin-bottom: 12px; }
+.ss { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 15px; padding: 11px 8px;
+  text-align: center; min-width: 0; }
+.ss b { display: block; font-family: var(--sora); font-size: 16px; font-weight: 800; line-height: 1.15;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss span { font-size: 10.5px; color: var(--muted); }
+.ss-g b { color: var(--green-deep); } .ss-r b { color: var(--danger); }
+.ss-b b { color: var(--blue); } .ss-p b { color: var(--brand-dark); } .ss-y b { color: #9a4a06; }
+html.dark .ss-y b { color: var(--warning); }
+
+/* ─── Catégories en couleur pleine ─── */
+.cat-card--tone { color: #fff; border: none; overflow: hidden; box-shadow: 0 8px 20px rgba(30,27,75,.16); }
+.cat-card--tone .cat-name { color: #fff; font-size: 15px; }
+.cat-card--tone .cat-emoji { background: var(--scrim-light); }
+.cat-card--tone .cat-badge { background: var(--scrim-dark); color: #fff; }
+/* Marchandage autorisé : pastille pleine, pas juste une nuance de voile —
+   sur fond coloré, deux gris translucides ne se distinguent pas. */
+.cat-card--tone .cat-badge[aria-pressed="true"] { background: rgba(255,255,255,.94); color: #065F46; }
+.cat-card--tone .cat-tool { background: var(--scrim-dark); border-color: rgba(255,255,255,.24); color: #fff; }
+
+/* ─── Reçu ─── */
+/* Aucune règle de fond ici : `@media print` plus haut force du noir sur blanc,
+   et une déclaration postérieure la réécrirait — en thème sombre, on
+   imprimerait un ticket gris foncé. */
+.receipt-head { text-align: center; padding-bottom: 12px; }
+.receipt-shop { font-family: var(--sora); font-size: 18px; font-weight: 800; color: var(--ink); }
+.receipt-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.receipt-lines { border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 10px 0; }
+.receipt-line { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 4px 0; }
+.receipt-line .rl-name { flex: 1; min-width: 0; }
+.receipt-line .rl-amount { font-variant-numeric: tabular-nums; font-weight: 600; }
+.receipt-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; }
+.receipt-total .rt-l { font-family: var(--sora); font-weight: 700; font-size: 13.5px; color: var(--muted); }
+.receipt-total .rt-v { font-family: var(--sora); font-weight: 800; font-size: 24px; color: var(--brand-dark); letter-spacing: -.5px; }
+.receipt-thanks { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; }
+
+/* Le bouton WhatsApp garde ses couleurs de marque : c'est ce vert que le
+   commerçant cherche des yeux, pas le mot « WhatsApp ». */
+.btn-wa { flex: 1; background: #15803D; color: #fff; border: none; border-radius: 13px; padding: 13px;
+  font-family: var(--sora); font-size: 14px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn-wa:active { transform: scale(.98); }
+
+/* ─── Densification bureau des nouvelles grilles ─── */
+@media (min-width: 1024px) {
+  .dk-content .tiles { grid-template-columns: repeat(4, 1fr); }
+  .dk-content .kpi-row { grid-template-columns: repeat(4, 1fr); }
+  .dk-content .sheet-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-laser { animation: none; top: 48%; }
+  .tile, .switch, .switch::after, .bar-fill { transition: none !important; }
+  .tile:active, .hero-cta:active, .paymode:active, .btn-wa:active { transform: none; }
+}

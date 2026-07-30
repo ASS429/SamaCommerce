@@ -80,23 +80,41 @@ export default function Caisse() {
   return (
     <>
       {scene && <ClotureScene today={scene} onClose={() => setScene(null)} />}
-      <div className="page-header">
-        <h2>💰 Caisse du jour</h2>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportCaisseExcel} disabled={history.length === 0}>📊 Excel</button>
-          <button className="btn-pdf" onClick={exportCaissePdf}>📄 PDF</button>
+      <div className="page-header"><h2>💰 Caisse du jour</h2></div>
+
+      {/* Le net du jour et le geste de clôture sont réunis : c'est une seule
+          question (« combien j'ai fait, je ferme ? »), elle tient sur un
+          panneau. Auparavant le chiffre et le bouton étaient séparés par
+          quatre encadrés. */}
+      <div className="hero-panel hero-teal">
+        <div className="hero-top">
+          <div style={{ minWidth: 0 }}>
+            <div className="hero-label">🔒 Clôture · {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</div>
+            <div className="hero-value">{fcfa(today.net)}</div>
+            <div className="hero-sub">Net de la journée · {today.nb_ventes} vente(s)</div>
+          </div>
+          <div className="hero-top-actions">
+            <button className="hero-btn" onClick={exportCaisseExcel} disabled={history.length === 0} title="Exporter en Excel">📊</button>
+            <button className="hero-btn" onClick={exportCaissePdf} title="Exporter en PDF">📄</button>
+          </div>
         </div>
+        <div className="hero-stats">
+          <div className="hero-stat"><b>{fcfa(today.especes)}</b><span>💵 espèces</span></div>
+          <div className="hero-stat"><b>{fcfa(today.wave)}</b><span>📱 Wave</span></div>
+          <div className="hero-stat"><b>{fcfa(today.orange)}</b><span>📞 Orange</span></div>
+        </div>
+        <button className="hero-cta" onClick={close} disabled={closing}>
+          {closing ? 'Clôture en cours…' : '🔒 Clôturer la journée'}
+        </button>
       </div>
 
-      <div className="stat-2x2">
-        <div className="st st-g"><div className="sv">{fcfa(today.especes)}</div><div className="sl">💵 Espèces</div></div>
-        <div className="st st-b"><div className="sv">{fcfa(today.wave)}</div><div className="sl">📱 Wave</div></div>
-        <div className="st st-y"><div className="sv">{fcfa(today.orange)}</div><div className="sl">📞 Orange</div></div>
-        <div className="st st-p"><div className="sv">{fcfa(today.credits)}</div><div className="sl">📝 Crédits</div></div>
-      </div>
-
-      <div className="total-bar"><span className="tbl">NET ENCAISSÉ ({today.nb_ventes} ventes)</span><span className="tba">{fcfa(today.net)}</span></div>
-      <button className="btn-encaisser" onClick={close} disabled={closing}>🔒 Clôturer la journée</button>
+      {Number(today.credits) > 0 && (
+        <div className="stat-strip">
+          <div className="ss ss-p"><b>{fcfa(today.credits)}</b><span>📝 vendu à crédit</span></div>
+          <div className="ss ss-g"><b>{fcfa(today.net)}</b><span>💰 encaissé</span></div>
+          <div className="ss ss-b"><b>{today.nb_ventes}</b><span>🧾 ventes</span></div>
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-title">📅 7 derniers jours</div>

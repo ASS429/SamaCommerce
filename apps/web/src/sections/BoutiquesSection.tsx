@@ -42,23 +42,49 @@ export default function BoutiquesSection() {
         <div className="empty-state"><div className="empty-icon">🏬</div><div className="empty-text">Aucune boutique</div><div className="empty-sub">Créez votre première boutique</div></div>
       )}
 
+      {/* La boutique ACTIVE est un panneau violet, les autres restent des
+          fiches blanches : on voit sur quel point de vente on travaille avant
+          d'avoir lu un mot. Se tromper de boutique fausse toute la journée. */}
       {!loading && list.map((b) => {
         const active = b.id === current
         const tel = telLink(b.phone)
+        if (active) {
+          return (
+            <div key={b.id} className="hero-panel">
+              <div className="hero-top">
+                <Avatar photo={b.photo} icon={b.photo ? undefined : (b.emoji || '🏪')} name={b.name} size={50} radius={15} tint="rgba(255,255,255,.2)" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="hero-label">✅ Boutique active{b.is_primary ? ' · principale' : ''}</div>
+                  <div className="hero-value" style={{ fontSize: 21 }}>{b.name}</div>
+                  {b.address && <div className="hero-sub">📍 {b.address}</div>}
+                </div>
+                <div className="hero-top-actions">
+                  <button className="hero-btn" aria-label={`Modifier ${b.name}`} onClick={() => { setEditing(b); setShowModal(true) }}>✏️</button>
+                </div>
+              </div>
+              <div className="hero-stats">
+                <div className="hero-stat"><b>{b.nb_produits || 0}</b><span>📦 produits</span></div>
+                <div className="hero-stat"><b>{b.nb_ventes || 0}</b><span>🛒 ventes</span></div>
+                <div className="hero-stat"><b>{b.nb_membres || 0}</b><span>👥 membres</span></div>
+              </div>
+              {tel && <a className="hero-cta" href={tel} style={{ textAlign: 'center', textDecoration: 'none' }}>📞 {b.phone}</a>}
+            </div>
+          )
+        }
         return (
-          <div key={b.id} className={`card fiche ${active ? 'fiche-active' : ''}`}>
+          <div key={b.id} className="card fiche">
             <div className="fiche-head">
               <Avatar photo={b.photo} icon={b.photo ? undefined : (b.emoji || '🏪')} name={b.name} size={54} />
               <div className="fiche-id">
                 <div className="fiche-name">
-                  {b.name} {b.is_primary && <span className="cat-badge" style={{ background: '#EDE9FE', color: 'var(--primary)' }}>⭐ Principale</span>}
+                  {b.name} {b.is_primary && <span className="cat-badge">⭐ Principale</span>}
                 </div>
                 {b.phone && <div className="fiche-sub">📞 {b.phone}</div>}
                 {b.address && <div className="fiche-sub">📍 {b.address}</div>}
               </div>
               <div className="fiche-tools">
-                <button className="prd-btn prd-btn-edit" aria-label="Modifier" onClick={() => { setEditing(b); setShowModal(true) }}>✏️</button>
-                {!b.is_primary && <button className="prd-btn prd-btn-del" aria-label="Supprimer" onClick={() => remove(b)}>🗑️</button>}
+                <button className="prd-btn prd-btn-edit" aria-label={`Modifier ${b.name}`} onClick={() => { setEditing(b); setShowModal(true) }}>✏️</button>
+                {!b.is_primary && <button className="prd-btn prd-btn-del" aria-label={`Supprimer ${b.name}`} onClick={() => remove(b)}>🗑️</button>}
               </div>
             </div>
 
@@ -70,9 +96,7 @@ export default function BoutiquesSection() {
 
             <div className="fiche-actions">
               {tel && <a className="fa-btn fa-call" href={tel}>📞 Appeler</a>}
-              {active
-                ? <span className="fa-btn fa-on">✅ Boutique active</span>
-                : <button className="fa-btn fa-go" onClick={() => switchTo(b)}>🔄 Activer cette boutique</button>}
+              <button className="fa-btn fa-go" onClick={() => switchTo(b)}>🔄 Activer cette boutique</button>
             </div>
           </div>
         )

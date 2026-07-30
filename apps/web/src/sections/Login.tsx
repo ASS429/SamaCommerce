@@ -60,12 +60,21 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   return (
     <div className="login-screen">
       <HeroBackdrop />
-      <div className="modal-box login-card" style={{ animation: 'none' }}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Logo size={64} style={{ margin: '0 auto 12px', borderRadius: 18, boxShadow: '0 6px 18px rgba(30,27,75,.18)' }} />
-          <div className="modal-title" style={{ marginBottom: 2 }}>Sama<span style={{ color: 'var(--brand)' }}>Commerce</span></div>
-          <div style={{ color: 'var(--muted)', fontSize: 13 }}>Gestion de boutique · FCFA</div>
+      <div className="modal-box login-card auth-card" style={{ animation: 'none' }}>
+        {/* Bandeau de marque : la carte s'ouvre sur le logo et le violet de
+            l'application, pas sur un formulaire. On sait où l'on arrive. */}
+        <div className="auth-head">
+          <Logo size={64} style={{ margin: '0 auto', borderRadius: 18, boxShadow: '0 6px 18px rgba(0,0,0,.25)' }} />
+          <div className="auth-brand">SamaCommerce</div>
+          <div className="auth-tag">Gérez votre boutique, même sans réseau</div>
         </div>
+        <div className="auth-body">
+        {!twofaPending && mode !== 'forgot' && (
+          <div className="auth-tabs seg">
+            <button type="button" className={`seg-btn ${mode === 'login' ? 'on' : ''}`} onClick={() => { setMode('login'); setError('') }}>Connexion</button>
+            <button type="button" className={`seg-btn ${mode === 'register' ? 'on' : ''}`} onClick={() => { setMode('register'); setError('') }}>Inscription</button>
+          </div>
+        )}
         {twofaPending ? (
           <form onSubmit={verify}>
             <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>🔐 Vérification en 2 étapes — saisissez le code à 6 chiffres.</div>
@@ -90,23 +99,25 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           </form>
         ) : (
           <form onSubmit={submit}>
-            <div className="form-group"><label>Email / identifiant</label><input value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" /></div>
-            {mode === 'register' && <div className="form-group"><label>Nom de la boutique</label><input value={company} onChange={(e) => setCompany(e.target.value)} /></div>}
-            <div className="form-group"><label>Mot de passe</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+            {mode === 'register' && <div className="form-group"><label>🏪 Nom de la boutique</label><input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Ex. Boutique Ndiaye" /></div>}
+            <div className="form-group"><label>✉️ Email / identifiant</label><input value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" /></div>
+            <div className="form-group"><label>🔒 Mot de passe</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
             {error && <p style={{ color: 'var(--red)', fontSize: 13, textAlign: 'center', marginBottom: 10 }}>{error}</p>}
-            <button className="btn-confirm" style={{ width: '100%' }} disabled={loading}>{loading ? '…' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}</button>
+            <button className="btn-confirm" style={{ width: '100%' }} disabled={loading}>{loading ? '…' : mode === 'login' ? 'Se connecter' : 'Créer ma boutique'}</button>
           </form>
         )}
         {!twofaPending && mode === 'login' && (
-          <button onClick={() => { setMode('forgot'); setError(''); setCodeSent(false) }} style={{ width: '100%', marginTop: 12, background: 'none', border: 'none', color: 'var(--muted)', fontSize: 12.5, cursor: 'pointer' }}>
+          <button className="auth-link" style={{ color: 'var(--muted)' }} onClick={() => { setMode('forgot'); setError(''); setCodeSent(false) }}>
             Mot de passe oublié ?
           </button>
         )}
-        {!twofaPending && (
-          <button onClick={() => { setMode(mode === 'register' ? 'login' : mode === 'forgot' ? 'login' : 'register'); setError(''); setCodeSent(false) }} style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
-            {mode === 'login' ? "Pas de compte ? S'inscrire" : mode === 'forgot' ? '← Retour à la connexion' : 'Déjà un compte ? Se connecter'}
+        {!twofaPending && mode === 'forgot' && (
+          <button className="auth-link" onClick={() => { setMode('login'); setError(''); setCodeSent(false) }}>
+            ← Retour à la connexion
           </button>
         )}
+        <div className="auth-note">📴 Fonctionne hors ligne : vos ventes partent au retour du réseau</div>
+        </div>
       </div>
     </div>
   )

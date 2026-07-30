@@ -372,17 +372,30 @@ export default function App() {
         </div>
         {view === 'menu' && (
           <div style={{ marginTop: 16, position: 'relative', zIndex: 1 }}>
-            <div className="header-sub">Ventes du jour</div>
+            <div className="header-sub">🔥 Encaissé aujourd'hui</div>
             <Odometer value={stats.ca} className="sora header-ca" />
           </div>
         )}
       </div>
 
-      <div className="today-float">
-        <div className="ts g"><Odometer value={stats.ca} className="v" /><div className="l">CA du jour</div></div>
-        <div className="ts b"><Odometer value={stats.articles} format={(n) => String(n)} className="v" /><div className="l">Articles vendus</div></div>
-        <div className="ts o"><Odometer value={stats.stock} format={(n) => String(n)} className="v" /><div className="l">Réf. en stock</div></div>
-      </div>
+      {/* Ces compteurs n'ont de sens que sur l'accueil : ailleurs ils mangeaient
+          110 px de hauteur utile sur chaque écran, et sur « Chiffres » ils
+          répétaient les chiffres affichés juste en dessous.
+          « En stock » compte des ARTICLES, pas des références — le libellé
+          précédent (« Réf. en stock ») annonçait une autre grandeur que celle
+          réellement calculée. La troisième case mène au stock quand un produit
+          s'épuise : le compteur devient alors une alerte sur laquelle agir. */}
+      {view === 'menu' && (
+        <div className="today-float">
+          <div className="ts g"><Odometer value={stats.ca} className="v" /><div className="l">Encaissé</div></div>
+          <div className="ts b"><Odometer value={stats.articles} format={(n) => String(n)} className="v" /><div className="l">Vendus</div></div>
+          {alerts.length > 0
+            ? <button className="ts r" onClick={() => go('stock')} style={{ border: 'none', cursor: 'pointer', font: 'inherit' }}>
+                <div className="v">{alerts.length}</div><div className="l">À racheter</div>
+              </button>
+            : <div className="ts o"><Odometer value={stats.stock} format={(n) => String(n)} className="v" /><div className="l">En stock</div></div>}
+        </div>
+      )}
 
       <div className="scroll-content" {...handlers}>
         {(pull > 0 || refreshing) && (
@@ -405,13 +418,22 @@ export default function App() {
             ? <NavBtn active={view === shortcut} icon={meta.icon} label={meta.label} onClick={() => setView(shortcut)} />
             : <span className="nav-btn" aria-hidden="true" />
         })()}
-        {/* Bouton central : Vendre, ou la principale section restante. */}
+        {/* Bouton central : Vendre, ou la principale section restante. Le rond
+            porte son libellé — un pictogramme seul dans un cercle ne dit pas
+            ce qu'il déclenche. */}
         {(() => {
           const main = (['vente', 'stock', 'rapports'] as View[]).find((v) => isVisible(user, v))
           const meta = NAV.find((n) => n.view === main)
-          return main
-            ? <button className="nav-fab" aria-label={meta?.label || t('nav.vente')} onClick={() => go(main)} title={meta?.label}>{main === 'vente' ? '💳' : meta?.icon}</button>
-            : <button className="nav-fab" aria-label={t('nav.menu')} onClick={() => setView('menu')}>🏠</button>
+          const label = main ? (meta?.label || t('nav.vente')) : t('nav.menu')
+          return (
+            <span className="nav-fab-wrap">
+              <button className="nav-fab" aria-label={label} title={label}
+                onClick={() => (main ? go(main) : setView('menu'))}>
+                {main ? (main === 'vente' ? '🛒' : meta?.icon) : '🏠'}
+              </button>
+              <span className="nav-fab-l" aria-hidden="true">{label}</span>
+            </span>
+          )
         })()}
         <NavBtn active={view === 'profil'} icon="👤" label={t('nav.profil')} onClick={() => setView('profil')} />
         <NavBtn active={showPlus} icon="＋" label="Plus" onClick={() => setShowPlus(true)} />

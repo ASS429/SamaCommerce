@@ -37,11 +37,19 @@ export default function Credits() {
     setPhone(c?.phone || '')
   }
 
-  const resume = useMemo(() => ({
-    enCours: sales.filter((s) => !s.paid).reduce((a, s) => a + Number(s.total), 0),
-    rembourses: sales.filter((s) => s.paid).reduce((a, s) => a + Number(s.total), 0),
-    nb: sales.filter((s) => !s.paid).length,
-  }), [sales])
+  const resume = useMemo(() => {
+    const impayes = sales.filter((s) => !s.paid)
+    const aujourdhui = new Date(new Date().toDateString())
+    return {
+      enCours: impayes.reduce((a, s) => a + Number(s.total), 0),
+      rembourses: sales.filter((s) => s.paid).reduce((a, s) => a + Number(s.total), 0),
+      nb: impayes.length,
+      // Combien de personnes me doivent de l'argent, et combien ont dépassé la
+      // date : ce sont les deux chiffres qui décident d'une relance.
+      clients: new Set(impayes.map((s) => s.client_id ?? s.client_name ?? s.id)).size,
+      retard: impayes.filter((s) => !!s.due_date && new Date(s.due_date) < aujourdhui).length,
+    }
+  }, [sales])
 
   const montant = useMemo(() => {
     const p = products.find((x) => String(x.id) === productId)
@@ -137,18 +145,27 @@ export default function Credits() {
           onClose={() => setRepaying(null)}
         />
       )}
-      <div className="page-header">
-        <h2>📝 Crédits</h2>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportCreditsExcel} disabled={sales.length === 0}>📊 Excel</button>
-          <button className="btn-pdf" onClick={exportCreditsPdf} disabled={sales.length === 0}>📄 PDF</button>
-        </div>
-      </div>
+      <div className="page-header"><h2>📝 Crédits</h2></div>
 
-      <div className="cred-tiles">
-        <div className="ct"><div className="cv" style={{ color: 'var(--red)' }}>{fcfa(resume.enCours)}</div><div className="cl">En cours</div></div>
-        <div className="ct"><div className="cv" style={{ color: 'var(--green)' }}>{fcfa(resume.rembourses)}</div><div className="cl">Remboursé</div></div>
-        <div className="ct"><div className="cv" style={{ color: 'var(--orange)' }}>{resume.nb}</div><div className="cl">Impayés</div></div>
+      {/* Le montant qu'on me doit est LA réponse attendue en ouvrant l'écran :
+          il est seul, en grand, sur fond violet. Le reste (nombre de clients,
+          retards) le qualifie en dessous. */}
+      <div className="hero-panel">
+        <div className="hero-top">
+          <div style={{ minWidth: 0 }}>
+            <div className="hero-label">💸 Total dû par mes clients</div>
+            <div className="hero-value">{fcfa(resume.enCours)}</div>
+          </div>
+          <div className="hero-top-actions">
+            <button className="hero-btn" onClick={exportCreditsExcel} disabled={sales.length === 0} title="Exporter en Excel">📊</button>
+            <button className="hero-btn" onClick={exportCreditsPdf} disabled={sales.length === 0} title="Exporter en PDF">📄</button>
+          </div>
+        </div>
+        <div className="hero-stats">
+          <div className="hero-stat"><b>{resume.clients}</b><span>👤 clients</span></div>
+          <div className="hero-stat"><b>{resume.retard}</b><span>⏰ en retard</span></div>
+          <div className="hero-stat"><b>{fcfa(resume.rembourses)}</b><span>✅ remboursé</span></div>
+        </div>
       </div>
 
       <form className="card" onSubmit={submit}>

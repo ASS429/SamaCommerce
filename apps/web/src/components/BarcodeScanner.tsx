@@ -23,12 +23,20 @@ export default function BarcodeScanner({ onScan, onClose }: { onScan: (code: str
     if (s && s.isScanning) s.stop().then(() => s.clear()).catch(() => {})
   }
 
+  /* Viseur : quatre coins et un balayage vert sur fond noir. Sans repère
+     visuel, on ne sait pas où présenter l'étiquette et l'on croit la caméra
+     cassée. Les coins montrent la zone utile, le trait montre que ça lit. */
   return (
     <div className="modal-overlay" onClick={() => { stop(); onClose() }}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 360 }}>
+      <div className="modal-box scan-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">📷 Scanner un code-barres</div>
-        <div id="barcode-reader" style={{ width: '100%', borderRadius: 12, overflow: 'hidden' }} />
-        <button className="btn-cancel" style={{ width: '100%', marginTop: 14 }} onClick={() => { stop(); onClose() }}>Fermer</button>
+        <div className="scan-stage">
+          <div id="barcode-reader" />
+          <div className="scan-frame" aria-hidden="true"><i /><i /><i /><i /></div>
+          <div className="scan-laser" aria-hidden="true" />
+        </div>
+        <p className="scan-hint">Visez le code-barres — le produit est reconnu tout seul.</p>
+        <button className="scan-close" onClick={() => { stop(); onClose() }}>Fermer</button>
       </div>
     </div>
   )

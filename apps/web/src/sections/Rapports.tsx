@@ -5,10 +5,17 @@ import { Sales, Stats, boutiqueIdentity, fcfa, type Sale } from '../lib/api'
 import { exportPdf, money } from '../lib/pdf'
 import { exportXlsx } from '../lib/xlsx'
 import { productIcon } from '../lib/productIcon'
+import { payLabel } from '../lib/payments'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend)
 
+/** Couleurs de l'anneau des paiements, reprises telles quelles par la légende. */
+const PAY_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#A855F7', '#EC4899']
+
 type Periode = 'jour' | 'semaine' | 'mois' | 'tout'
+
+/** Libellés courts de l'interrupteur segmenté (quatre cases sur 320 px). */
+const PERIODE_COURT: Record<Periode, string> = { jour: 'Jour', semaine: 'Semaine', mois: 'Mois', tout: 'Tout' }
 
 export default function Rapports() {
   const [sales, setSales] = useState<Sale[]>([])
@@ -113,47 +120,95 @@ export default function Rapports() {
         </div>
       </div>
 
-      <div className="stat-2x2">
-        <div className="st st-g"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('jour'))}</div><div className="sl">📅 Aujourd'hui</div></div>
-        <div className="st st-b"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('semaine'))}</div><div className="sl">🗓️ Cette semaine</div></div>
-        <div className="st st-y"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('mois'))}</div><div className="sl">📆 Ce mois</div></div>
-        <div className="st st-p"><div className="sv">{loading ? <span className="skeleton" style={{ display: 'block', height: 20 }} /> : fcfa(sumPeriod('tout'))}</div><div className="sl">💰 Tout</div></div>
+      {/* La période se choisit d'un doigt. La liste déroulante précédente
+          cachait le choix courant derrière un menu système, et le tableau des
+          quatre périodes répétait ce que la sélection affiche déjà. */}
+      <div className="seg">
+        {(['jour', 'semaine', 'mois', 'tout'] as Periode[]).map((p) => (
+          <button key={p} className={`seg-btn ${periode === p ? 'on' : ''}`} onClick={() => setPeriode(p)} aria-pressed={periode === p}>
+            {PERIODE_COURT[p]}
+          </button>
+        ))}
       </div>
 
-      <div className="period-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Période :</label>
-        <select value={periode} onChange={(e) => setPeriode(e.target.value as Periode)} style={{ flex: 1, padding: '8px 12px', border: '1.5px solid #E5E7EB', borderRadius: 11 }}>
-          <option value="jour">Aujourd'hui</option><option value="semaine">Cette semaine</option><option value="mois">Ce mois</option><option value="tout">Tout</option>
-        </select>
+      <div className="kpi-row">
+        <div className="kpi" style={{ background: 'var(--hero-green)' }}>
+          <div className="kpi-l">💰 Encaissé</div>
+          <div className="kpi-v">{loading ? <span className="pulse">…</span> : fcfa(metrics.encaisse)}</div>
+          <div className="kpi-d">{PERIODE_LABEL[periode]}</div>
+        </div>
+        {marchandage && marchandage.nb > 0 ? (
+          <div className="kpi" style={{ background: 'var(--hero-violet)' }}>
+            <div className="kpi-l">💎 Marge réelle</div>
+            <div className="kpi-v">{fcfa(marchandage.marge)}</div>
+            <div className="kpi-d">≈ {marchandage.taux_marge} % du prix</div>
+          </div>
+        ) : (
+          <div className="kpi" style={{ background: 'var(--hero-violet)' }}>
+            <div className="kpi-l">📊 Crédits remboursés</div>
+            <div className="kpi-v">{loading ? <span className="pulse">…</span> : `${metrics.taux.toFixed(0)} %`}</div>
+            <div className="kpi-d">{fcfa(metrics.credits)} restent dus</div>
+          </div>
+        )}
       </div>
 
       <div className="metric-2x2">
-        <div className="mc"><div className="ml">💰 CA encaissé</div><div className="mv" style={{ color: 'var(--green)' }}>{fcfa(metrics.encaisse)}</div></div>
         <div className="mc"><div className="ml">⏳ En attente</div><div className="mv" style={{ color: 'var(--orange)' }}>{fcfa(metrics.attente)}</div></div>
         <div className="mc"><div className="ml">💳 Crédits en cours</div><div className="mv" style={{ color: 'var(--red)' }}>{fcfa(metrics.credits)}</div></div>
-        <div className="mc"><div className="ml">📊 Recouvrement</div><div className="mv" style={{ color: 'var(--blue)' }}>{metrics.taux.toFixed(0)} %</div></div>
+        <div className="mc"><div className="ml">📅 Aujourd'hui</div><div className="mv" style={{ color: 'var(--green)' }}>{fcfa(sumPeriod('jour'))}</div></div>
+        <div className="mc"><div className="ml">💰 Depuis le début</div><div className="mv" style={{ color: 'var(--blue)' }}>{fcfa(sumPeriod('tout'))}</div></div>
       </div>
 
       <div className="card"><div className="card-title">📊 Ventes par jour</div>
         <Line data={{ labels: parJour.map((r) => r.date), datasets: [{ label: 'Montant', data: parJour.map((r) => Number(r.total_montant)), borderColor: '#7C3AED', backgroundColor: 'rgba(124,58,237,.15)', tension: 0.3, fill: true }] }} options={{ plugins: { legend: { display: false } } }} />
       </div>
+      {/* Un histogramme dont on ne peut pas lire les étiquettes d'axe sur un
+          téléphone ne dit rien. Des barres horizontales portent le nom, le
+          pictogramme et la quantité sur la même ligne. */}
       <div className="card"><div className="card-title">🔥 Top produits</div>
-        <Bar data={{ labels: top.map((t) => t.produit), datasets: [{ label: 'Qté', data: top.map((t) => Number(t.total_quantite)), backgroundColor: '#3B82F6' }] }} options={{ plugins: { legend: { display: false } } }} />
-        {/* Le graphique répond « combien ». Le podium pictogrammé répond
-            « lesquels » — lisible même sans déchiffrer les étiquettes d'axe. */}
-        <div className="podium">
-          {top.slice(0, 3).map((t, i) => (
-            <div key={t.produit} className={`podium-item p${i + 1}`}>
-              <span className="podium-rank">{['🥇', '🥈', '🥉'][i]}</span>
-              <span className="podium-icon">{productIcon(t.produit)}</span>
-              <span className="podium-name">{t.produit}</span>
-              <span className="podium-qty">{t.total_quantite}</span>
-            </div>
-          ))}
-        </div>
+        {top.length === 0 ? <div className="empty-sub">Pas encore de ventes</div> : (
+          <div className="bar-list">
+            {top.slice(0, 6).map((t, i) => {
+              const max = Math.max(1, ...top.map((x) => Number(x.total_quantite)))
+              return (
+                <div key={t.produit} className={`bar-row b${Math.min(i + 1, 3)}`}>
+                  <div className="bar-head">
+                    <span className="bh-ico" aria-hidden="true">{['🥇', '🥈', '🥉'][i] || productIcon(t.produit)}</span>
+                    <span className="bh-name">{t.produit}</span>
+                    <span className="bh-val">{t.total_quantite}</span>
+                  </div>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(Number(t.total_quantite) / max) * 100}%` }} /></div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
       <div className="card"><div className="card-title">💳 Paiements</div>
-        <Doughnut data={{ labels: paiements.map((p) => p.payment_method), datasets: [{ data: paiements.map((p) => Number(p.total_montant)), backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#A855F7'] }] }} />
+        {paiements.length === 0 ? <div className="empty-sub">Pas encore de ventes</div> : (
+          <>
+            <div style={{ maxWidth: 260, margin: '0 auto' }}>
+              <Doughnut data={{
+                labels: paiements.map((p) => payLabel(p.payment_method)),
+                datasets: [{ data: paiements.map((p) => Number(p.total_montant)), backgroundColor: PAY_COLORS, borderWidth: 0 }],
+              }} options={{ plugins: { legend: { display: false } }, cutout: '62%' }} />
+            </div>
+            {/* Légende écrite : les parts d'un anneau se comparent mal à l'œil,
+                et la couleur seule ne dit pas laquelle est laquelle. */}
+            <div className="bar-list" style={{ marginTop: 14 }}>
+              {(() => {
+                const somme = paiements.reduce((a, p) => a + Number(p.total_montant), 0) || 1
+                return paiements.map((p, i) => (
+                  <div key={p.payment_method} className="bar-head">
+                    <span className="bh-ico" aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 4, background: PAY_COLORS[i % PAY_COLORS.length] }} />
+                    <span className="bh-name">{payLabel(p.payment_method)}</span>
+                    <span className="bh-val">{Math.round((Number(p.total_montant) / somme) * 100)} %</span>
+                  </div>
+                ))
+              })()}
+            </div>
+          </>
+        )}
       </div>
 
       {marchandage && marchandage.nb > 0 && (

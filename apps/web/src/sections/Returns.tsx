@@ -32,11 +32,10 @@ export default function Returns() {
 
       {/* Les compteurs restent visibles pendant le chargement : un cadre vide
           donne l'impression que l'application a planté. */}
-      <div className="stat-2x2">
-        <div className="st st-p"><div className="sv">{stats ? stats.nb_retours : '—'}</div><div className="sl">↩️ Retours total</div></div>
-        <div className="st st-y"><div className="sv">{stats ? fcfa(stats.total_rembourse) : '—'}</div><div className="sl">💰 Remboursé</div></div>
-        <div className="st st-b"><div className="sv">{stats ? stats.retours_jour : '—'}</div><div className="sl">📅 Aujourd'hui</div></div>
-        <div className="st st-g"><div className="sv">{stats ? fcfa(stats.rembourse_jour) : '—'}</div><div className="sl">💵 Remb. jour</div></div>
+      <div className="stat-strip">
+        <div className="ss ss-p"><b>{stats ? stats.nb_retours : '—'}</b><span>↩️ retours</span></div>
+        <div className="ss ss-r"><b>{stats ? fcfa(stats.total_rembourse) : '—'}</b><span>💰 remboursé</span></div>
+        <div className="ss ss-b"><b>{stats ? fcfa(stats.rembourse_jour) : '—'}</b><span>📅 aujourd'hui{stats ? ` (${stats.retours_jour})` : ''}</span></div>
       </div>
 
       <div className="section-label">📜 Historique des retours</div>

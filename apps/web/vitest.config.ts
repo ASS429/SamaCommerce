@@ -8,7 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // `build/` contient le code qui tourne au BUILD (empreintes CSP) : il est
+    // testé au même titre que le reste, sinon une régression n'apparaît qu'en
+    // production.
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'build/**/*.{test,spec}.ts'],
     css: false,
   },
 })

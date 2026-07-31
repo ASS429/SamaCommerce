@@ -112,7 +112,14 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    /*
+    | L'application s'adresse à des commerçants sénégalais : sa langue par
+    | défaut est le français. Les messages de validation traduits vivaient déjà
+    | dans lang/fr/, mais cette clé valait 'en' et n'était surchargée nulle part
+    | — un commerçant qui choisissait un mot de passe trop faible lisait donc
+    | « The given password has appeared in a data leak ».
+    */
+    'locale' => env('APP_LOCALE', 'fr'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

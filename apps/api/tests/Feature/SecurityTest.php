@@ -31,6 +31,32 @@ class SecurityTest extends TestCase
             ->assertStatus(422); // pas de chiffre
     }
 
+    /**
+     * Les refus de saisie doivent être en FRANÇAIS.
+     *
+     * Les traductions vivaient dans lang/fr/ depuis longtemps, mais
+     * `config('app.locale')` valait 'en' et n'était surchargée nulle part : un
+     * commerçant qui choisissait un mot de passe trop faible lisait
+     * « The given password has appeared in a data leak ». Ce test verrouille
+     * l'activation, pas seulement l'existence des fichiers de langue.
+     */
+    public function test_validation_messages_are_in_french(): void
+    {
+        $this->assertSame('fr', config('app.locale'));
+
+        $court = $this->postJson('/api/auth/register', ['username' => 'a@b.sn', 'password' => 'abc'])
+            ->assertStatus(422)->json('errors.password.0');
+        $this->assertStringContainsString('mot de passe', mb_strtolower((string) $court));
+
+        $sansChiffre = $this->postJson('/api/auth/register', ['username' => 'a@b.sn', 'password' => 'abcdefghij'])
+            ->assertStatus(422)->json('errors.password.0');
+        $this->assertStringContainsString('chiffre', mb_strtolower((string) $sansChiffre));
+
+        $manquant = $this->postJson('/api/auth/register', ['username' => 'a@b.sn'])
+            ->assertStatus(422)->json('errors.password.0');
+        $this->assertStringContainsString('obligatoire', mb_strtolower((string) $manquant));
+    }
+
     /** S3 — message d'échec générique (pas d'énumération de comptes). */
     public function test_login_error_is_generic(): void
     {

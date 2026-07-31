@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
-import { getToken, getUser, saveUser, me, logout, Products, Sales, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
+import { getToken, getUser, saveUser, me, logout, Members, Products, Sales, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
+import { clearInvite, pendingInvite } from './lib/invite'
+import { toast } from './lib/toast'
 import Login from './sections/Login'
 import Home, { type View } from './sections/Home'
 import Stock from './sections/Stock'
@@ -142,6 +144,43 @@ export default function App() {
   useEffect(() => {
     if (!authed) return
     me().then((full) => { saveUser(full); setUser(full); hydrateFromServer(full.preferences) }).catch(() => {})
+  }, [authed])
+
+  /* Invitation reçue par lien : l'acceptation exige d'être connecté (elle
+     rattache la boutique à un compte). On la rejoue donc ici, dès que le compte
+     existe — que l'employé vienne de le créer ou qu'il se soit connecté à un
+     compte déjà ouvert. Il n'a rien à coller nulle part.
+
+     Le garde-fou `useRef` est nécessaire : en développement React monte les
+     effets deux fois, et le second appel consommerait un jeton déjà utilisé —
+     l'employé verrait « invitation invalide » alors qu'il vient d'entrer.
+
+     Rechargement à la fin : rejoindre une boutique change le locataire de
+     TOUTES les données (produits, ventes, caisse) déjà chargées sous l'ancien
+     compte. C'est le même geste que le changement de boutique, qui recharge
+     lui aussi — et cela évite une course entre les deux lectures de /auth/me. */
+  const inviteTraitee = useRef(false)
+  useEffect(() => {
+    if (!authed || inviteTraitee.current) return
+    const token = pendingInvite()
+    if (!token) return
+    inviteTraitee.current = true
+    Members.accept(token)
+      .then((d) => {
+        clearInvite()
+        toast(`Vous avez rejoint ${d?.boutique?.company_name || 'la boutique'} 🎉`, 'success')
+        setTimeout(() => window.location.reload(), 1200)
+      })
+      .catch((e) => {
+        // Réponse du serveur = jeton mort (déjà utilisé, expiré) : on l'oublie,
+        // sinon l'erreur reviendrait à chaque connexion.
+        if (e?.response) {
+          clearInvite()
+          toast(e.response.data?.error || 'Invitation invalide ou expirée', 'error')
+        } else {
+          inviteTraitee.current = false // panne réseau : on réessaiera
+        }
+      })
   }, [authed])
 
   // Réseau (indicateur hors-ligne)

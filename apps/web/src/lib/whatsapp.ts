@@ -153,8 +153,10 @@ export function inviteMessage(b: Boutique, opts: { lien: string; role: string })
     '',
     '1️⃣ Ouvre ce lien :',
     opts.lien,
-    '2️⃣ Crée ton compte',
-    '3️⃣ C\'est prêt ✅',
+    '2️⃣ Choisis un mot de passe',
+    '3️⃣ Tu entres dans la boutique ✅',
+    '',
+    '⏳ Le lien est valable 3 jours.',
     signature(b),
   ].join('\n')
 }

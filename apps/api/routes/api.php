@@ -41,6 +41,11 @@ Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])-
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 Route::post('/auth/verify-2fa', [AuthController::class, 'verify2fa'])->middleware('throttle:10,1');
 
+// Aperçu d'une invitation : forcément PUBLIC, l'invité n'a pas encore de
+// compte. Le jeton (48 caractères aléatoires) est le seul secret ; le débit est
+// bridé pour qu'on ne puisse pas en essayer au hasard.
+Route::get('/members/invite/{token}', [MemberController::class, 'preview'])->middleware('throttle:20,1');
+
 // --- Routes protégées (token Sanctum + résolution employé/propriétaire) ---
 // S8 — limiteur global par utilisateur (60 req/min) en plus des throttles ciblés.
 Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function () {

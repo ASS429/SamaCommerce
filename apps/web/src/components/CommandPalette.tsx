@@ -5,6 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 export type Command = { id: string; label: string; icon: string; hint?: string; run: () => void }
 
+/* Replie les accents et la casse. Sans cela, « equipe » ne trouvait pas
+   « Équipe » et « reappro » ne trouvait pas « Réappro IA » : sur un clavier de
+   téléphone, personne ne va chercher les accents. Même normalisation que pour
+   les pictogrammes de produits (lib/productIcon). */
+const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
 export default function CommandPalette({ commands }: { commands: Command[] }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -27,8 +33,8 @@ export default function CommandPalette({ commands }: { commands: Command[] }) {
   }, [open])
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    return s ? commands.filter((c) => c.label.toLowerCase().includes(s)) : commands
+    const s = fold(q.trim())
+    return s ? commands.filter((c) => fold(c.label).includes(s)) : commands
   }, [q, commands])
 
   if (!open) return null

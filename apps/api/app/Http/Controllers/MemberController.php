@@ -76,8 +76,64 @@ class MemberController extends Controller
             'message' => 'Invitation créée',
             'member' => $member,
             'invite_token' => $token,
-            'invite_link' => rtrim((string) $request->headers->get('origin'), '/') . "/?invite={$token}",
+            'invite_link' => $this->inviteLink($request, $token),
         ], 201);
+    }
+
+    /**
+     * Adresse complète à envoyer par WhatsApp.
+     *
+     * Elle était déduite du seul en-tête `Origin`. Quand cet en-tête manque —
+     * une application native (le client mobile), un script, un webhook — le lien
+     * dégénérait en `/?invite=…` : une adresse relative, donc rien de cliquable
+     * dans WhatsApp, et l'employé restait à la porte. On part donc d'une origine
+     * CONFIGURÉE, et l'en-tête ne sert plus que de repli commode en développement.
+     */
+    private function inviteLink(Request $request, string $token): string
+    {
+        $candidats = [
+            config('app.frontend_url'),
+            collect(config('cors.allowed_origins'))->first(fn ($o) => $o !== '*'),
+            $request->headers->get('origin'),
+            config('app.url'),
+        ];
+
+        foreach ($candidats as $base) {
+            $base = rtrim((string) $base, '/');
+            if ($base !== '' && str_starts_with($base, 'http')) {
+                return "{$base}/?invite={$token}";
+            }
+        }
+
+        return "/?invite={$token}";
+    }
+
+    /**
+     * Aperçu PUBLIC d'une invitation.
+     *
+     * L'invité n'a pas encore de compte : il ne peut donc rien lire derrière
+     * `auth:sanctum`. Sans cet aperçu, l'écran de connexion ne pouvait afficher
+     * qu'un lien opaque — or nos utilisateurs lisent peu : voir le nom de la
+     * boutique qui les invite est ce qui rend l'invitation compréhensible.
+     * Le jeton (48 caractères aléatoires) EST le secret ; on n'expose rien
+     * d'autre que ce que l'invitation contient déjà.
+     */
+    public function preview(string $token)
+    {
+        $invite = BoutiqueMember::where('invite_token', $token)->where('status', 'pending')->first();
+        if (! $invite) {
+            return response()->json(['error' => 'Invitation invalide ou déjà utilisée'], 404);
+        }
+        if ($invite->invite_expires_at && $invite->invite_expires_at->isPast()) {
+            return response()->json(['error' => 'Cette invitation a expiré.'], 410);
+        }
+
+        return response()->json([
+            'boutique' => $invite->owner()->first(['company_name'])?->company_name,
+            'role' => $invite->role,
+            'email' => $invite->email,
+            'name' => $invite->name,
+        ]);
     }
 
     public function accept(Request $request)

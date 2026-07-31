@@ -315,6 +315,11 @@ export const Members = {
   invite: (payload: { email: string; role: string; permissions?: Record<string, boolean>; name?: string | null; phone?: string | null; photo?: string | null }) =>
     api.post('/members/invite', payload).then((r) => r.data),
   accept: (invite_token: string) => api.post('/members/accept', { invite_token }).then((r) => r.data),
+  /** Aperçu public d'une invitation (avant même que l'invité ait un compte). */
+  preview: (token: string) =>
+    api.get<{ boutique: string | null; role: string; email: string; name: string | null }>(
+      `/members/invite/${encodeURIComponent(token)}`,
+    ).then((r) => r.data),
   update: (id: number, payload: { permissions?: Record<string, boolean>; role?: string; name?: string | null; phone?: string | null; photo?: string | null }) =>
     api.patch(`/members/${id}`, payload).then((r) => r.data),
   remove: (id: number) => api.delete(`/members/${id}`),

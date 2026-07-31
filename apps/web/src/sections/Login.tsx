@@ -1,19 +1,41 @@
-import { useState } from 'react'
-import { login, register, forgotPassword, resetPassword, verify2fa, type User } from '../lib/api'
+import { useEffect, useState } from 'react'
+import { login, register, forgotPassword, resetPassword, verify2fa, Members, type User } from '../lib/api'
 import { toast } from '../lib/toast'
+import { pendingInvite } from '../lib/invite'
 import HeroBackdrop from '../components/HeroBackdrop'
 import Logo from '../components/Logo'
+
+type Invitation = { boutique: string | null; role: string; email: string; name: string | null }
 
 export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login')
   const [username, setUsername] = useState('demo@samacommerce.sn')
   const [password, setPassword] = useState('password')
+  const [invite, setInvite] = useState<Invitation | null>(null)
   const [company, setCompany] = useState('')
   const [code, setCode] = useState('')
   const [codeSent, setCodeSent] = useState(false)
   const [twofaPending, setTwofaPending] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  /* Un employé qui arrive par un lien d'invitation doit voir QUI l'invite, pas
+     un formulaire nu. On bascule d'office sur « Inscription » (il n'a en
+     général pas de compte) et on préremplit l'email saisi par le patron — les
+     identifiants de démonstration seraient ici une fausse piste. */
+  useEffect(() => {
+    const token = pendingInvite()
+    if (!token) return
+    Members.preview(token)
+      .then((d) => {
+        setInvite(d)
+        setMode('register')
+        if (d.email) setUsername(d.email)
+        setPassword('')
+        if (d.name) setCompany(d.name)
+      })
+      .catch(() => { /* jeton mort : l'écran reste une connexion ordinaire */ })
+  }, [])
 
   const apiErr = (err: any, fallback: string) =>
     setError(err?.response?.data?.error || (err?.response?.data?.errors ? Object.values(err.response.data.errors)[0] as string : fallback))
@@ -69,6 +91,19 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           <div className="auth-tag">Gérez votre boutique, même sans réseau</div>
         </div>
         <div className="auth-body">
+        {/* Invitation : le nom de la boutique en premier. C'est lui qui dit à
+            l'employé qu'il est au bon endroit — pas le jeton du lien. */}
+        {invite && !twofaPending && (
+          <div className="tone-row" style={{ marginBottom: 14 }}>
+            <span className="invite-ico" aria-hidden="true">🤝</span>
+            <span style={{ minWidth: 0 }}>
+              <span className="invite-t" style={{ display: 'block' }}>{invite.boutique || 'Une boutique'} vous invite</span>
+              <span className="invite-s" style={{ display: 'block' }}>
+                {invite.role === 'gerant' ? '👔 Gérant' : '🧑‍💼 Vendeur'} · créez votre code d'accès pour entrer
+              </span>
+            </span>
+          </div>
+        )}
         {!twofaPending && mode !== 'forgot' && (
           <div className="auth-tabs seg">
             <button type="button" className={`seg-btn ${mode === 'login' ? 'on' : ''}`} onClick={() => { setMode('login'); setError('') }}>Connexion</button>
@@ -99,11 +134,21 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           </form>
         ) : (
           <form onSubmit={submit}>
-            {mode === 'register' && <div className="form-group"><label>🏪 Nom de la boutique</label><input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Ex. Boutique Ndiaye" /></div>}
+            {/* Un invité ne crée pas une boutique, il rejoint celle du patron :
+                ce champ nomme SON compte, d'où le libellé qui change. */}
+            {mode === 'register' && (
+              <div className="form-group">
+                <label>{invite ? '👤 Votre nom' : '🏪 Nom de la boutique'}</label>
+                <input value={company} onChange={(e) => setCompany(e.target.value)}
+                  placeholder={invite ? 'Ex. Awa Ndiaye' : 'Ex. Boutique Ndiaye'} />
+              </div>
+            )}
             <div className="form-group"><label>✉️ Email / identifiant</label><input value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" /></div>
             <div className="form-group"><label>🔒 Mot de passe</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
             {error && <p style={{ color: 'var(--red)', fontSize: 13, textAlign: 'center', marginBottom: 10 }}>{error}</p>}
-            <button className="btn-confirm" style={{ width: '100%' }} disabled={loading}>{loading ? '…' : mode === 'login' ? 'Se connecter' : 'Créer ma boutique'}</button>
+            <button className="btn-confirm" style={{ width: '100%' }} disabled={loading}>
+              {loading ? '…' : mode === 'login' ? 'Se connecter' : invite ? '🤝 Rejoindre la boutique' : 'Créer ma boutique'}
+            </button>
           </form>
         )}
         {!twofaPending && mode === 'login' && (

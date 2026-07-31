@@ -3,6 +3,7 @@ import { Stats, Members, Caisse, fcfa, type User } from '../lib/api'
 import { t, getLang, setLang, LANGS, type Lang } from '../lib/i18n'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from '../lib/theme'
 import { toast } from '../lib/toast'
+import { extractInviteToken } from '../lib/invite'
 
 export type View = 'menu' | 'dashboard' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
   | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'returns' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia'
@@ -203,7 +204,7 @@ function JoinModal({ onClose }: { onClose: () => void }) {
     if (!token.trim()) return toast('Collez le code d\'invitation', 'error')
     setSaving(true)
     try {
-      const d = await Members.accept(token.trim().replace(/.*invite=/, ''))
+      const d = await Members.accept(extractInviteToken(token))
       toast(`${d.message} — rôle : ${d.role}`, 'success')
       setTimeout(() => window.location.reload(), 900)
     } catch (e: any) {

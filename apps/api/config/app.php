@@ -81,6 +81,14 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Adresse publique de l'application web. Elle sert à fabriquer les liens
+    | qu'on envoie aux gens (invitation d'un employé, par exemple) : ces liens
+    | doivent être absolus et cliquables depuis WhatsApp, y compris quand la
+    | requête ne porte pas d'en-tête `Origin` (client mobile, script, webhook).
+    */
+    'frontend_url' => env('FRONTEND_URL'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

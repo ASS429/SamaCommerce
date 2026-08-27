@@ -39,6 +39,20 @@ class IaClient
             $url = 'https://'.$url;
         }
 
+        /* Nom de service Render nu (« samacommerce-ia ») au lieu de l'hote
+         * complet : c'est ce que produit `fromService ... property: host` dans
+         * le tableau de bord, et c'est un nom qui ne resout PAS depuis
+         * l'exterieur. On complete le domaine plutot que d'echouer en silence.
+         *
+         * Regle volontairement etroite : uniquement si l'hote n'a ni point ni
+         * port, et n'est pas localhost. Un `http://ia:8001` de compose ou un
+         * `http://localhost:8001` de dev restent donc intacts. */
+        $hote = parse_url($url, PHP_URL_HOST) ?: '';
+        $port = parse_url($url, PHP_URL_PORT);
+        if ($hote !== '' && $port === null && ! str_contains($hote, '.') && $hote !== 'localhost') {
+            $url = str_replace('://'.$hote, '://'.$hote.'.onrender.com', $url);
+        }
+
         return rtrim($url, '/');
     }
 

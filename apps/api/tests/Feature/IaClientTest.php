@@ -54,4 +54,25 @@ class IaClientTest extends TestCase
 
         $this->assertNull((new IaClient)->forecast(['product_id' => 1]));
     }
+
+    public function test_complete_un_nom_de_service_render_nu(): void
+    {
+        // Ce que Render met reellement dans la variable quand on la lie a un
+        // autre service : le NOM, pas l'hote. Sans ce rattrapage, la resolution
+        // DNS echoue en 2 ms et l'IA reste eteinte sans erreur visible.
+        config(['services.ia.url' => 'samacommerce-ia']);
+        Http::fake(['https://samacommerce-ia.onrender.com/forecast' => Http::response(['method' => 'model'])]);
+
+        $this->assertSame('model', (new IaClient)->forecast(['product_id' => 1])['method']);
+    }
+
+    public function test_laisse_intacte_une_adresse_de_developpement(): void
+    {
+        // La regle ne doit pas transformer un service local en adresse Render.
+        config(['services.ia.url' => 'http://localhost:8001']);
+        Http::fake(['http://localhost:8001/forecast' => Http::response(['method' => 'model'])]);
+
+        (new IaClient)->forecast(['product_id' => 1]);
+        Http::assertSent(fn ($r) => $r->url() === 'http://localhost:8001/forecast');
+    }
 }

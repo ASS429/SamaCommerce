@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Client HTTP du micro-service IA (FastAPI). Si le service est injoignable,
@@ -53,10 +54,37 @@ class IaClient
             // froid de Render (~50 s) — on ne fait pas patienter le commercant
             // au comptoir, l'heuristique PHP prend le relais.
             $res = Http::timeout(4)->acceptJson()->post($base.$path, $payload);
-
-            return $res->successful() ? $res->json() : null;
-        } catch (\Throwable) {
-            return null;
+            if ($res->successful()) {
+                return $res->json();
+            }
+            self::signaler($path, 'reponse '.$res->status());
+        } catch (\Throwable $e) {
+            self::signaler($path, $e->getMessage());
         }
+
+        return null;
+    }
+
+    /**
+     * Journalise UNE SEULE FOIS par requete HTTP.
+     *
+     * Le repli heuristique rend cette panne invisible : sans trace, une IA
+     * mal configuree (URL sans schema, service endormi, modele absent) peut
+     * rester desactivee des mois sans que personne s'en apercoive. C'est
+     * exactement ce qui s'est produit avec `fromService`, qui injectait le NOM
+     * du service au lieu de son hote.
+     *
+     * `debug` et non `error` : une IA muette n'est pas une panne applicative,
+     * l'heuristique fait le travail. On veut une trace, pas une alerte.
+     */
+    private static array $dejaSignale = [];
+
+    private static function signaler(string $path, string $raison): void
+    {
+        if (isset(self::$dejaSignale[$path])) {
+            return;
+        }
+        self::$dejaSignale[$path] = true;
+        Log::debug("[ia] {$path} indisponible ({$raison}) — repli heuristique");
     }
 }

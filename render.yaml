@@ -73,10 +73,11 @@ services:
       #   Si le service est retire, vider la variable suffit : l'API retombe sur
       #   ses heuristiques PHP sans rien casser. ─
       - key: IA_SERVICE_URL
-        fromService:
-          type: web
-          name: samacommerce-ia
-          property: host
+        # Adresse ECRITE EN CLAIR, et non `fromService` : Render y a injecte le
+        # NOM du service (« samacommerce-ia ») et non son hote complet, ce qui
+        # donnait une resolution DNS immediatement en echec — et une IA
+        # silencieusement desactivee, le repli heuristique masquant la panne.
+        value: https://samacommerce-ia.onrender.com
 
   # ─── Web React (site statique) ───
   # NB : un site statique Render n'a PAS de champ `plan` (toujours gratuit).

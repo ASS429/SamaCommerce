@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
-import { Categories, Clients, Products, Sales, Ia, boutiqueIdentity, fcfa, getUser, displayInfo, type Category, type CreditScore, type Product } from '../lib/api'
+import { Clients, Products, Sales, Ia, boutiqueIdentity, fcfa, getUser, displayInfo, type Category, type CreditScore, type Product } from '../lib/api'
 import { autoPrintEnabled } from '../lib/modules'
 import ScoreRing from '../components/ScoreRing'
 // Le scanner (html5-qrcode, ~370 Ko) n'est chargé qu'à l'ouverture de la caméra.
@@ -21,11 +21,16 @@ import {
   type CartLine, lFactor, lCount, lTotal, lRefTotal, lCogs, lLabel, lPerDisplay, qtyStr, cartTotal,
 } from '../lib/cart'
 import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { describeError } from '../lib/loadError'
+import { useProduits, useCategories, useRafraichirCatalogue, LISTE_VIDE } from '../lib/queries'
 
 export default function Vente() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  /* Catalogue partage avec Stock (lib/queries) : l'aller-retour Vendre <->
+     Stock, la boucle la plus frequente du comptoir, ne recharge plus rien. */
+  const produits = useProduits()
+  const cats = useCategories()
+  const products = produits.data ?? LISTE_VIDE
+  const categories = cats.data ?? LISTE_VIDE
   const [activeCat, setActiveCat] = useState<number | 'tous'>('tous')
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
@@ -35,19 +40,16 @@ export default function Vente() {
   const [lastMethod, setLastMethod] = useState<string | null>(null)
   const [showReceipt, setShowReceipt] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
+  const loading = produits.isPending
+  const error = describeError(produits.error ?? cats.error)
   const [client, setClient] = useState<SaleClient | null>(null)
   const [showClient, setShowClient] = useState(false)
   const [clients, setClients] = useState<{ id: number; name: string; phone: string | null }[]>([])
   const [scanning, setScanning] = useState(false)
 
-  const load = () => {
-    reset()
-    watch(Products.list().then(setProducts)).finally(() => setLoading(false))
-    watch(Categories.list().then(setCategories))
-  }
-  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
+  /* Rappele apres CHAQUE vente : un stock perime au comptoir ferait vendre
+     un article qui n'existe plus. */
+  const load = useRafraichirCatalogue()
   // Fichier clients allégé : sert à rattacher la vente à un habitué.
   useEffect(() => { Clients.forSale().then(setClients).catch(() => {}) }, [])
 

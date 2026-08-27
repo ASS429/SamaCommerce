@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Products, Sales, boutiqueIdentity, fcfa, type Product, type Sale } from '../lib/api'
+import { Sales, boutiqueIdentity, fcfa, type Sale } from '../lib/api'
 import { exportXlsx } from '../lib/xlsx'
 import { exportPdf, money } from '../lib/pdf'
 import { SkeletonList } from '../components/Skeleton'
@@ -7,9 +7,11 @@ import { productIcon, productTint } from '../lib/productIcon'
 import Avatar from '../components/Avatar'
 import LoadError from '../components/LoadError'
 import { useLoadError } from '../lib/loadError'
+import { useProduits, LISTE_VIDE } from '../lib/queries'
 
 export default function Inventaire() {
-  const [products, setProducts] = useState<Product[]>([])
+  // Catalogue partage : deja en memoire si l'on vient de Stock ou de Vendre.
+  const products = useProduits().data ?? LISTE_VIDE
   const [sales, setSales] = useState<Sale[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -18,7 +20,6 @@ export default function Inventaire() {
   const load = () => {
     reset()
     Promise.all([
-      watch(Products.list().then(setProducts)),
       watch(Sales.list().then(setSales)),
     ]).finally(() => setLoading(false))
   }

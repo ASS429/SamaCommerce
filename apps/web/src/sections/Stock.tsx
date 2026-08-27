@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
-import { Categories, Products, boutiqueIdentity, fcfa, DISPLAY_UNIT, type Category, type Product } from '../lib/api'
+import { Products, boutiqueIdentity, fcfa, DISPLAY_UNIT, type Category, type Product } from '../lib/api'
 // Design 3.7 — html5-qrcode chargé en lazy (uniquement à l'ouverture du scanner).
 const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'))
 import { confirmAsync } from '../lib/toast'
@@ -11,26 +11,30 @@ import PhotoPicker from '../components/PhotoPicker'
 import { exportXlsx } from '../lib/xlsx'
 import { exportPdf, money } from '../lib/pdf'
 import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { describeError } from '../lib/loadError'
+import { useProduits, useCategories, useRafraichirCatalogue, CLES, LISTE_VIDE } from '../lib/queries'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function Stock() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  /* Produits et categories viennent du cache partage (lib/queries) : revenir
+     de Vendre ne les retelecharge plus. Voir le staleTime la-bas. */
+  const produits = useProduits()
+  const cats = useCategories()
+  const queryClient = useQueryClient()
+  const products = produits.data ?? LISTE_VIDE
+  const categories = cats.data ?? LISTE_VIDE
   const [filter, setFilter] = useState<number | 'tous'>('tous')
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [scanning, setScanning] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
+  const loading = produits.isPending
+  // Une erreur sur l'une OU l'autre liste : la premiere rencontree suffit a
+  // expliquer l'ecran, et elle passe par le meme habillage que partout.
+  const error = describeError(produits.error ?? cats.error)
   const [sort, setSort] = useState<string>(() => localStorage.getItem('sc_stock_sort') || 'recent')
 
-  const load = () => {
-    reset()
-    watch(Products.list().then(setProducts)).finally(() => setLoading(false))
-    watch(Categories.list().then(setCategories))
-  }
-  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const load = useRafraichirCatalogue()
   useEffect(() => { localStorage.setItem('sc_stock_sort', sort) }, [sort])
 
   const catName = (id: number | null) => categories.find((c) => c.id === id)?.name
@@ -50,7 +54,10 @@ export default function Stock() {
   const adjustStock = async (p: Product, delta: number) => {
     haptic.tap()
     const next = Math.max(0, p.stock + delta)
-    setProducts((ps) => ps.map((x) => x.id === p.id ? { ...x, stock: next } : x))
+    // Retour immediat : on corrige le cache partage, pas un etat local — sinon
+    // Vendre continuerait d'afficher l'ancien stock.
+    queryClient.setQueryData<Product[]>(CLES.produits, (ps) =>
+      (ps ?? []).map((x) => x.id === p.id ? { ...x, stock: next } : x))
     await Products.update(p.id, { stock: next })
   }
 

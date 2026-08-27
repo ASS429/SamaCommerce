@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Products, Sales, Clients, Ia, boutiqueIdentity, dateFr, fcfa, type Product, type Sale, type CreditScore } from '../lib/api'
+import { Sales, Clients, Ia, boutiqueIdentity, dateFr, fcfa, type Sale, type CreditScore } from '../lib/api'
 import { SkeletonList } from '../components/Skeleton'
 import ScoreRing from '../components/ScoreRing'
 import PaymentPicker from '../components/PaymentPicker'
@@ -9,12 +9,13 @@ import { productIcon, productTint } from '../lib/productIcon'
 import { creditReminderMessage, openWhatsapp, telLink } from '../lib/whatsapp'
 import LoadError from '../components/LoadError'
 import { useLoadError } from '../lib/loadError'
+import { useProduits, LISTE_VIDE } from '../lib/queries'
 
 const RISK = { green: { c: 'var(--green)', bg: '#ECFDF5', t: 'Risque faible' }, amber: { c: 'var(--warning)', bg: '#FFF7ED', t: 'Risque moyen' }, red: { c: 'var(--danger)', bg: '#FEF2F2', t: 'Risque élevé' } }
 
 export default function Credits() {
   const [sales, setSales] = useState<Sale[]>([])
-  const [products, setProducts] = useState<Product[]>([])
+  const products = useProduits().data ?? LISTE_VIDE
   const [client, setClient] = useState(''); const [phone, setPhone] = useState('')
   const [productId, setProductId] = useState(''); const [qty, setQty] = useState('1'); const [due, setDue] = useState('')
   const [saving, setSaving] = useState(false)
@@ -25,7 +26,6 @@ export default function Credits() {
   const load = () => {
     reset()
     watch(Sales.list().then((s) => setSales(s.filter((x) => x.payment_method === 'credit')))).finally(() => setLoading(false))
-    watch(Products.list().then(setProducts))
   }
   useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
 

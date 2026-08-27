@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
-import { getToken, getUser, saveUser, me, logout, SESSION_EXPIRED_EVENT, Members, Products, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
+import { getToken, getUser, saveUser, me, logout, SESSION_EXPIRED_EVENT, Members, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Client } from './lib/api'
 import { clearInvite, pendingInvite } from './lib/invite'
 import { toast } from './lib/toast'
 import Login from './sections/Login'
@@ -20,6 +20,7 @@ import PinLock from './components/PinLock'
 import Odometer from './components/Odometer'
 import CommandPalette, { type Command } from './components/CommandPalette'
 import { cycleTheme, getThemePref, THEME_LABEL, type ThemePref } from './lib/theme'
+import { useProduits, LISTE_VIDE } from './lib/queries'
 import { isModuleEnabled, MODULES_EVENT, hydrateFromServer, pushPreferences, clearLocalPreferences } from './lib/modules'
 import Avatar from './components/Avatar'
 import { usePullToRefresh } from './lib/usePullToRefresh'
@@ -110,7 +111,9 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0)
   const notifiedRef = useRef(false)
   const [gQuery, setGQuery] = useState('')
-  const [gProducts, setGProducts] = useState<Product[]>([])
+  /* Recherche globale : meme cache que Stock et Vendre. Avant, cette liste
+     etait retelechargee a CHAQUE changement d'ecran, en plus des ventes. */
+  const gProducts = useProduits().data ?? LISTE_VIDE
   const [gClients, setGClients] = useState<Client[]>([])
   const [themePref, setThemePref] = useState<ThemePref>(getThemePref())
   // Redessine la navigation quand l'utilisateur active/masque une section.
@@ -215,12 +218,18 @@ export default function App() {
     return stop
   }, [authed, user?.role])
 
-  // Boutiques (sélecteur) + alertes stock (cloche)
+  /* Boutiques : la liste ne change pas d'un écran à l'autre, et changer de
+     boutique recharge la page. Une seule lecture par session suffit — avant,
+     elle repartait à CHAQUE navigation. */
   useEffect(() => {
     if (!authed || user?.role === 'admin') return
     Boutiques.list().then(setBoutiques).catch(() => {})
+  }, [authed, user?.role])
+
+  // Alertes de stock (cloche) + fichier clients de la recherche globale.
+  useEffect(() => {
+    if (!authed || user?.role === 'admin') return
     Stats.stockFaible(5).then((a) => { setAlerts(a); if (!notifiedRef.current) { notifiedRef.current = true; notifyStock(a) } }).catch(() => {})
-    Products.list().then(setGProducts).catch(() => {})
     ClientsApi.list().then(setGClients).catch(() => {})
   }, [authed, view, user?.role])
 

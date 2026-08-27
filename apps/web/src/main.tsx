@@ -7,6 +7,8 @@ import { toast } from './lib/toast'
 import { applyStoredTheme, watchSystemTheme } from './lib/theme'
 import { installErrorReporter } from './lib/errorReporter'
 import ErrorBoundary from './components/ErrorBoundary'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { creerQueryClient } from './lib/queries'
 import { captureInviteFromUrl } from './lib/invite'
 
 // Branché AVANT tout le reste : une erreur survenue au tout premier affichage
@@ -32,10 +34,15 @@ window.alert = (msg?: unknown) => {
   toast(s, type)
 }
 
+// Cache partage des listes de reference (produits, categories) : voir lib/queries.ts
+const queryClient = creerQueryClient()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

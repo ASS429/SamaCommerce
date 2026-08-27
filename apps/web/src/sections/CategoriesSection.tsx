@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
-import { Categories, Products, type Category, type Product } from '../lib/api'
+import { useState } from 'react'
+import { Categories, type Category } from '../lib/api'
 import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonGrid } from '../components/Skeleton'
 import { productIcon } from '../lib/productIcon'
 import { toneOf } from '../lib/tone'
 import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { describeError } from '../lib/loadError'
+import { useProduits, useCategories, useRafraichirCatalogue, CLES, LISTE_VIDE } from '../lib/queries'
+import { useQueryClient } from '@tanstack/react-query'
 
 /* Palette d'icônes ORGANISÉE par famille de commerce : on cherche des yeux, pas
    au clavier. L'ordre suit ce qu'on trouve dans une boutique de quartier
@@ -21,24 +23,27 @@ const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
 ]
 
 export default function CategoriesSection() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [products, setProducts] = useState<Product[]>([])
+  const queryClient = useQueryClient()
+  const cats = useCategories()
+  const produits = useProduits()   // sert uniquement au comptage par categorie
+  const categories = cats.data ?? LISTE_VIDE
+  const products = produits.data ?? LISTE_VIDE
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
+  const loading = cats.isPending
+  // Seule l'erreur sur les CATEGORIES compte : sans le comptage des produits
+  // l'ecran reste utilisable, il affiche juste « 0 produit ».
+  const error = describeError(cats.error)
 
-  const load = () => {
-    reset()
-    watch(Categories.list().then(setCategories)).finally(() => setLoading(false))
-    Products.list().then(setProducts).catch(() => {}) // sert au comptage : secondaire
-  }
-  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const load = useRafraichirCatalogue()
 
   const count = (id: number) => products.filter((p) => p.category_id === id).length
   const toggleNego = async (c: Category) => {
-    setCategories((list) => list.map((x) => x.id === c.id ? { ...x, negociable: !c.negociable } : x))
+    // Bascule immediate dans le cache partage : le POS lit la meme liste et
+    // doit voir tout de suite si l'article devient negociable.
+    queryClient.setQueryData<Category[]>(CLES.categories, (list) =>
+      (list ?? []).map((x) => x.id === c.id ? { ...x, negociable: !c.negociable } : x))
     try { await Categories.update(c.id, { negociable: !c.negociable }) } catch { toast('Modification non enregistrée', 'error'); load() }
   }
   const remove = async (c: Category) => {

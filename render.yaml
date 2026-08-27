@@ -68,12 +68,36 @@ services:
       # Facultatif : a defaut, on retombe sur CORS_ALLOWED_ORIGINS.
       - key: FRONTEND_URL
         sync: false          # ex: https://samacommerce-web.onrender.com
-      # ─ IA (vide = repli heuristique PHP) ─
+      # ─ IA : adresse fournie automatiquement par Render depuis le service ci-dessous.
+      #   Render renvoie l'hote SANS schema ; IaClient prefixe https:// de lui-meme.
+      #   Si le service est retire, vider la variable suffit : l'API retombe sur
+      #   ses heuristiques PHP sans rien casser. ─
       - key: IA_SERVICE_URL
-        value: ""
+        fromService:
+          type: web
+          name: samacommerce-ia
+          property: host
 
   # ─── Web React (site statique) ───
   # NB : un site statique Render n'a PAS de champ `plan` (toujours gratuit).
+  # ─── Micro-service IA (Modules A & B) ────────────────────────────────────
+  # Previsions de reappro et scoring de credit. L'API Laravel l'appelle avec un
+  # court delai d'attente et RETOMBE sur ses heuristiques PHP s'il ne repond
+  # pas : le service peut donc etre absent, lent ou endormi sans jamais casser
+  # l'application. Sur le plan gratuit il s'endort apres 15 min d'inactivite,
+  # et le premier appel suivant repart en heuristique — c'est assume.
+  - type: web
+    name: samacommerce-ia
+    runtime: docker
+    rootDir: services/ia
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /docs
+    envVars:
+      - key: PORT
+        value: "8001"
+
   - type: web
     name: samacommerce-web
     runtime: static

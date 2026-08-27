@@ -1151,3 +1151,17 @@ html.dark .ss-y b { color: var(--warning); }
 /* Hors ligne : bleu plutôt qu'ambre — ce n'est pas une panne, et les ventes
    continuent d'être enregistrées localement. */
 .load-error.tone-offline { background: var(--blue-tint); border-color: var(--blue); }
+
+/* ═══ ÉCRAN DE PLANTAGE (ErrorBoundary) ═══
+   Dernier recours : React n'a pas pu rendre l'application. Sans cet écran,
+   l'utilisateur voit du BLANC et n'a aucune idée de quoi faire. On garde les
+   mêmes codes que les états d'erreur de section — gros pictogramme, une phrase,
+   un seul bouton — pour que ce soit compris sans lire. */
+.crash-screen {
+  min-height: 100dvh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  gap: 8px; padding: 32px 24px; background: var(--bg); color: var(--ink);
+}
+.crash-icon { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+.crash-title { font-family: var(--sora); font-size: 19px; font-weight: 800; }
+.crash-hint { font-size: 14px; color: var(--muted); max-width: 300px; line-height: 1.5; margin-bottom: 8px; }

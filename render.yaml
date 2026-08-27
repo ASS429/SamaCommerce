@@ -51,6 +51,12 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       # ─ Sécurité ─
+      # Remontee d'erreurs. VIDE = totalement inerte : ni appel reseau, ni
+      # surcout. Renseigner le DSN d'un projet Sentry (offre gratuite) pour
+      # recevoir les alertes par mail. Couvre les erreurs de l'API ET celles du
+      # navigateur, relayees par POST /api/client-errors.
+      - key: SENTRY_LARAVEL_DSN
+        sync: false
       - key: SANCTUM_EXPIRATION
         # 30 jours. Une semaine déconnectait un commerçant qui ferme quelques
         # jours (fêtes, Magal, déplacement) : il retrouvait une session morte.

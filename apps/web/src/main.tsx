@@ -5,7 +5,13 @@ import './theme.css'
 import App from './App.tsx'
 import { toast } from './lib/toast'
 import { applyStoredTheme, watchSystemTheme } from './lib/theme'
+import { installErrorReporter } from './lib/errorReporter'
+import ErrorBoundary from './components/ErrorBoundary'
 import { captureInviteFromUrl } from './lib/invite'
+
+// Branché AVANT tout le reste : une erreur survenue au tout premier affichage
+// est justement celle qu'on ne verrait jamais autrement.
+installErrorReporter()
 
 // Thème : préférence enregistrée, sinon celle du téléphone (mode auto par
 // défaut). Le watcher suit ensuite le passage jour/nuit du système en direct.
@@ -28,6 +34,8 @@ window.alert = (msg?: unknown) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

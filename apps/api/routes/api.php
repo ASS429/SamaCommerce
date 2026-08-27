@@ -46,6 +46,12 @@ Route::post('/auth/verify-2fa', [AuthController::class, 'verify2fa'])->middlewar
 // bridé pour qu'on ne puisse pas en essayer au hasard.
 Route::get('/members/invite/{token}', [MemberController::class, 'preview'])->middleware('throttle:20,1');
 
+// Erreurs JavaScript remontees par les navigateurs des utilisateurs.
+// PUBLIQUE a dessein : beaucoup de plantages arrivent avant la connexion.
+// Debit bride, charge plafonnee par la validation, aucune reponse renvoyee.
+Route::post('/client-errors', [\App\Http\Controllers\ClientErrorController::class, 'store'])
+    ->middleware('throttle:20,1');
+
 // --- Routes protégées (token Sanctum + résolution employé/propriétaire) ---
 // S8 — limiteur global par utilisateur (60 req/min) en plus des throttles ciblés.
 Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function () {

@@ -1,0 +1,148 @@
+# Sauvegarde quotidienne de la base de production.
+#
+# POURQUOI ICI ET PAS SUR RENDER. Le plan gratuit de Render n'a ni tâche
+# planifiée ni shell, et le service s'endort après 15 min d'inactivité : un
+# planificateur logé dans le conteneur ne se réveillerait jamais. GitHub Actions
+# tourne, lui, indépendamment de l'état de l'application.
+#
+# ⚠️ LE DÉPÔT EST PUBLIC : les artefacts de workflow sont téléchargeables par
+# n'importe qui. Le dump est donc CHIFFRÉ avant publication, et le job échoue
+# volontairement si la phrase secrète manque — mieux vaut pas de sauvegarde
+# qu'une sauvegarde en clair contenant les ventes et les numéros de téléphone
+# des clients.
+#
+# Secrets à créer dans Settings → Secrets and variables → Actions :
+#   SUPABASE_DB_URL    chaîne « Session pooler » (postgresql://…:5432/postgres)
+#   BACKUP_PASSPHRASE  phrase longue et unique — SANS ELLE, AUCUNE RESTAURATION
+#
+# Restauration : voir docs/RESTAURATION_BASE.md
+name: Sauvegarde base
+
+on:
+  schedule:
+    # 02h17 UTC ≈ 02h17 à Dakar (UTC+0) — hors des heures de vente.
+    # Heure « décalée » volontairement : les minutes rondes sont saturées chez
+    # GitHub et les jobs y sont retardés, voire sautés.
+    - cron: '17 2 * * *'
+  workflow_dispatch: # déclenchement manuel (test / sauvegarde avant migration)
+
+# Une seule sauvegarde à la fois.
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  dump:
+    name: Dump chiffré de la base
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier la présence des secrets
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          manquants=""
+          [ -z "$DB_URL" ] && manquants="$manquants SUPABASE_DB_URL"
+          [ -z "$PASSPHRASE" ] && manquants="$manquants BACKUP_PASSPHRASE"
+          if [ -n "$manquants" ]; then
+            echo "::error::Secret(s) manquant(s) :$manquants"
+            echo "Sans phrase secrète, le dump serait publié EN CLAIR sur un dépôt public."
+            exit 1
+          fi
+          # Une phrase courte se casse hors ligne : la sauvegarde est publique.
+          if [ ${#PASSPHRASE} -lt 20 ]; then
+            echo "::error::BACKUP_PASSPHRASE trop courte (${#PASSPHRASE} caractères, minimum 20)."
+            exit 1
+          fi
+
+      - name: Installer pg_dump 17
+        # Le client d'Ubuntu est plus ancien que le serveur Supabase : pg_dump
+        # refuse alors de tourner (« server version mismatch »). On prend donc
+        # le client officiel PostgreSQL.
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -sS -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: Dump de la base
+        env:
+          # PGSSLMODE : Supabase refuse les connexions non chiffrées.
+          PGSSLMODE: require
+        run: |
+          horodatage=$(date -u +'%Y-%m-%d_%Hh%M')
+          echo "HORODATAGE=$horodatage" >> "$GITHUB_ENV"
+          # --no-owner / --no-privileges : le dump se restaure dans une base
+          # neuve sans avoir à recréer les rôles Supabase.
+          pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
+            --format=plain --no-owner --no-privileges \
+            --exclude-schema='supabase_*' --exclude-schema='auth' --exclude-schema='storage' \
+            > "samacommerce_$horodatage.sql"
+
+      - name: Vérifier que le dump est exploitable
+        # Un fichier vide produit sans erreur est PIRE que pas de sauvegarde :
+        # on le découvrirait le jour de la restauration. On contrôle donc la
+        # taille ET la présence des tables métier avant de publier.
+        run: |
+          fichier="samacommerce_${HORODATAGE}.sql"
+          taille=$(stat -c%s "$fichier")
+          echo "Taille du dump : $taille octets"
+          if [ "$taille" -lt 10240 ]; then
+            echo "::error::Dump suspect (< 10 Ko) — sauvegarde refusée."
+            exit 1
+          fi
+          for table in users products sales clients boutiques; do
+            if ! grep -q "CREATE TABLE public.$table" "$fichier"; then
+              echo "::error::Table « $table » absente du dump — sauvegarde refusée."
+              exit 1
+            fi
+          done
+          echo "✅ Tables métier présentes."
+
+      - name: Chiffrer
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          fichier="samacommerce_${HORODATAGE}.sql"
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase "$PASSPHRASE" --output "$fichier.gpg" "$fichier"
+          rm -f "$fichier"   # aucune trace en clair sur le runner
+          ls -lh "$fichier.gpg"
+
+      - name: Vérifier que le chiffré se déchiffre
+        # Sans ce contrôle, on découvrirait le jour du sinistre que l'archive
+        # est inutilisable. On déchiffre et on relit une table métier.
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          fichier="samacommerce_${HORODATAGE}.sql"
+          gpg --batch --yes --decrypt --passphrase "$PASSPHRASE" \
+            --output /tmp/controle.sql "$fichier.gpg"
+          grep -q "CREATE TABLE public.sales" /tmp/controle.sql
+          echo "✅ Archive déchiffrable et complète."
+          rm -f /tmp/controle.sql
+
+      - name: Publier l'archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-${{ env.HORODATAGE }}
+          path: samacommerce_${{ env.HORODATAGE }}.sql.gpg
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Résumé
+        run: |
+          {
+            echo "### 💾 Sauvegarde du ${HORODATAGE}"
+            echo ""
+            echo "Archive chiffrée (AES256) publiée pour **90 jours**."
+            echo "Restauration : \`docs/RESTAURATION_BASE.md\`"
+          } >> "$GITHUB_STEP_SUMMARY"

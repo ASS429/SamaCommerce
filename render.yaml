@@ -52,7 +52,10 @@ services:
         value: database
       # ─ Sécurité ─
       - key: SANCTUM_EXPIRATION
-        value: "10080"       # 7 jours
+        # 30 jours. Une semaine déconnectait un commerçant qui ferme quelques
+        # jours (fêtes, Magal, déplacement) : il retrouvait une session morte.
+        # Le jeton reste révocable à tout moment (« Déconnecter tous les appareils »).
+        value: "43200"       # 30 jours
       - key: CORS_ALLOWED_ORIGINS
         sync: false          # ex: https://samacommerce-web.onrender.com
       # Base des liens envoyés aux gens (invitation d'un employe par WhatsApp).

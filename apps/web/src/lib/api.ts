@@ -113,6 +113,42 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+/* Chemins d'AUTHENTIFICATION : un 401 y veut dire « identifiants refusés », pas
+   « session expirée ». Les exclure évite de transformer une faute de frappe sur
+   le mot de passe en message de déconnexion. */
+const AUTH_PATHS = ['/auth/login', '/auth/verify-2fa', '/auth/register', '/auth/forgot-password', '/auth/reset-password']
+
+/** Émis quand le serveur REFUSE le jeton : l'app doit revenir à la connexion. */
+export const SESSION_EXPIRED_EVENT = 'samacommerce:session-expired'
+
+/*
+ * Jeton périmé = retour à l'écran de connexion.
+ *
+ * Sans cet intercepteur, un jeton expiré laissait l'application « connectée » :
+ * `authed` vaut !!getToken(), donc un jeton MORT suffisait à afficher l'interface
+ * complète. Chaque appel repartait en 401, les sections chargent en
+ * `.then(setX)` sans `.catch`, et l'état restait un tableau vide — TOUS les
+ * écrans s'affichaient vides, sans un seul message. Un commerçant revenant après
+ * une longue absence croyait sa base de données perdue.
+ *
+ * Deux garde-fous : on ne réagit qu'à un VRAI 401 du serveur (une panne réseau
+ * n'a pas de `response` — hors ligne, on ne déconnecte surtout pas, la file
+ * d'attente doit pouvoir rejouer les ventes au retour du réseau), et jamais sur
+ * les chemins d'authentification eux-mêmes.
+ */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status
+    const url: string = error?.config?.url || ''
+    if (status === 401 && getToken() && !AUTH_PATHS.some((p) => url.startsWith(p))) {
+      logout() // purge le jeton mort ; la file hors-ligne (IndexedDB) est conservée
+      window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT))
+    }
+    return Promise.reject(error)
+  },
+)
+
 // --- Auth ---
 export type LoginResult = { user: User } | { twofa_required: true; dev_code?: string | null }
 export async function login(username: string, password: string): Promise<LoginResult> {

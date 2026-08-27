@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
-import { getToken, getUser, saveUser, me, logout, Members, Products, Sales, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
+import { getToken, getUser, saveUser, me, logout, SESSION_EXPIRED_EVENT, Members, Products, Sales, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
 import { clearInvite, pendingInvite } from './lib/invite'
 import { toast } from './lib/toast'
 import Login from './sections/Login'
@@ -139,6 +139,19 @@ export default function App() {
     Products.list().then((ps) => setStats((p) => ({ ...p, stock: ps.reduce((a, x) => a + x.stock, 0) }))).catch(() => {})
   }
   useEffect(() => { if (authed && user?.role !== 'admin') refreshStats() }, [authed, view, user?.role])
+  /* Le serveur a refusé notre jeton (session expirée, ou révoquée depuis un
+     autre appareil) : on repart proprement sur l'écran de connexion.
+     Sans ça, l'application restait « connectée » avec un jeton mort et TOUS les
+     écrans s'affichaient vides — l'utilisateur croyait ses données perdues. */
+  useEffect(() => {
+    const onExpired = () => {
+      setAuthed(false); setUser(null); setView('menu')
+      toast('Session expirée — reconnectez-vous', 'info')
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
+  }, [])
+
   // /auth/me rapporte aussi les réglages d'écran du compte : c'est ce qui fait
   // qu'un second téléphone retrouve les mêmes sections activées.
   useEffect(() => {

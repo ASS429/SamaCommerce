@@ -177,6 +177,12 @@ Route::middleware(['auth:sanctum', 'tenant', 'throttle:api'])->group(function ()
     });
 
     // Statistiques (mêmes endpoints que l'app d'origine)
+    /* Chiffres de l'en-tête d'accueil, agrégés en base (voir StatsController).
+       HORS du groupe « stats » : celui-ci exige perm:rapports, alors que ces
+       trois chiffres s'affichent à tout vendeur. Le contrôleur masque de
+       lui-même les champs auxquels l'employé n'a pas droit. */
+    Route::get('/stats/resume-jour', [StatsController::class, 'resumeJour'])->middleware('perm:stock|vente');
+
     Route::prefix('stats')->middleware('perm:rapports')->group(function () {
         Route::get('/ventes-par-categorie', [StatsController::class, 'ventesParCategorie']);
         Route::get('/ventes-par-jour', [StatsController::class, 'ventesParJour']);

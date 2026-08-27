@@ -282,7 +282,14 @@ export const Ia = {
     api.post<CreditScore>('/ia/credit-score', payload).then((r) => r.data),
 }
 
+/** Les 3 chiffres de l'en-tete d'accueil, agreges par le serveur. */
+export type ResumeJour = { date: string; ca: number | null; articles: number | null; stock: number | null }
+
 export const Stats = {
+  /* Remplace le telechargement de TOUT l'historique des ventes (~450 octets par
+     vente, a chaque changement d'ecran) par une reponse de taille constante.
+     Les champs valent `null` quand l'employe n'a pas le droit de les voir. */
+  resumeJour: (): Promise<ResumeJour> => api.get('/stats/resume-jour').then((r) => r.data),
   stockFaible: (seuil = 5) => api.get(`/stats/stock-faible?seuil=${seuil}`).then((r) => r.data),
   ventesParJour: () => api.get('/stats/ventes-par-jour').then((r) => r.data),
   paiements: () => api.get('/stats/paiements').then((r) => r.data),

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
-import { getToken, getUser, saveUser, me, logout, SESSION_EXPIRED_EVENT, Members, Products, Sales, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
+import { getToken, getUser, saveUser, me, logout, SESSION_EXPIRED_EVENT, Members, Products, Boutiques, Stats, Clients as ClientsApi, fcfa, type User, type Boutique, type Product, type Client } from './lib/api'
 import { clearInvite, pendingInvite } from './lib/invite'
 import { toast } from './lib/toast'
 import Login from './sections/Login'
@@ -129,14 +129,15 @@ export default function App() {
     return () => window.removeEventListener(MODULES_EVENT, onModules)
   }, [])
 
+  /* Un seul appel, de taille CONSTANTE : le serveur agrege. Avant, chaque
+     changement d'ecran retelechargeait tout l'historique des ventes pour
+     recalculer trois nombres en JavaScript (34 Ko pour 75 ventes, et ca
+     grossissait sans fin). Les champs `null` = l'employe n'y a pas droit. */
   const refreshStats = () => {
     if (!getToken()) return
-    const today = new Date().toISOString().slice(0, 10)
-    Sales.list().then((sales) => {
-      const day = sales.filter((s) => (s.created_at || '').slice(0, 10) === today)
-      setStats((p) => ({ ...p, ca: day.filter((s) => s.paid).reduce((a, s) => a + Number(s.total), 0), articles: day.reduce((a, s) => a + s.quantity, 0) }))
-    }).catch(() => {})
-    Products.list().then((ps) => setStats((p) => ({ ...p, stock: ps.reduce((a, x) => a + x.stock, 0) }))).catch(() => {})
+    Stats.resumeJour()
+      .then((r) => setStats({ ca: r.ca ?? 0, articles: r.articles ?? 0, stock: r.stock ?? 0 }))
+      .catch(() => {})
   }
   useEffect(() => { if (authed && user?.role !== 'admin') refreshStats() }, [authed, view, user?.role])
   /* Le serveur a refusé notre jeton (session expirée, ou révoquée depuis un

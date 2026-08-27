@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -181,5 +183,69 @@ class StatsController extends Controller
             ->orderByDesc('total')
             ->limit(10)
             ->get());
+    }
+
+    /**
+     * Les trois chiffres de l'en-tête d'accueil, agrégés EN BASE.
+     *
+     * POURQUOI. Le front téléchargeait TOUT l'historique des ventes puis
+     * filtrait en JavaScript, à chaque changement d'écran. Mesuré en
+     * production : 34 Ko pour 75 ventes, soit ~450 octets par vente. À 20
+     * ventes par jour, la même navigation coûterait 3,3 Mo au bout d'un an —
+     * sur de la data mobile sénégalaise, facturée à l'utilisateur.
+     * Ici, la réponse pèse quelques dizaines d'octets et ne grossit jamais.
+     *
+     * DROITS. L'endpoint n'élargit RIEN : un employé qui n'a pas « vente » ne
+     * peut pas lister les ventes aujourd'hui, il ne doit donc pas découvrir la
+     * recette du jour par ce biais. Les champs auxquels il n'a pas droit sont
+     * renvoyés à `null` — et non à 0, qui se confondrait avec « aucune vente ».
+     */
+    public function resumeJour(Request $request)
+    {
+        $user = $request->user();
+        // Dakar est à UTC+0 : la date UTC est bien la journée du commerçant.
+        // (Le front comparait déjà `created_at` en UTC — même découpage.)
+        $aujourdhui = now()->toDateString();
+
+        $peutVoirVentes = $this->autorise($request, 'vente');
+        $peutVoirStock = $this->autorise($request, 'stock') || $peutVoirVentes;
+
+        $ca = null;
+        $articles = null;
+        if ($peutVoirVentes) {
+            // Eloquent et NON DB::table : le scope global de boutique ne
+            // s'applique qu'aux modèles (piège documenté dans BoutiqueScope).
+            $ligne = Sale::query()
+                ->where('user_id', $user->id)
+                ->whereDate('created_at', $aujourdhui)
+                ->selectRaw('COALESCE(SUM(CASE WHEN paid THEN total ELSE 0 END), 0) as ca')
+                ->selectRaw('COALESCE(SUM(quantity), 0) as articles')
+                ->first();
+
+            $ca = (int) $ligne->ca;
+            $articles = (int) $ligne->articles;
+        }
+
+        $stock = null;
+        if ($peutVoirStock) {
+            $stock = (int) Product::query()->where('user_id', $user->id)->sum('stock');
+        }
+
+        return response()->json([
+            'date' => $aujourdhui,
+            'ca' => $ca,
+            'articles' => $articles,
+            'stock' => $stock,
+        ]);
+    }
+
+    /** Le propriétaire a tout ; l'employé, seulement ses permissions. */
+    private function autorise(Request $request, string $permission): bool
+    {
+        if (! $request->attributes->get('is_employee', false)) {
+            return true;
+        }
+
+        return ! empty(($request->attributes->get('permissions') ?? [])[$permission]);
     }
 }

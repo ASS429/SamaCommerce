@@ -20,6 +20,8 @@ import { openWhatsapp, receiptMessage } from '../lib/whatsapp'
 import {
   type CartLine, lFactor, lCount, lTotal, lRefTotal, lCogs, lLabel, lPerDisplay, qtyStr, cartTotal,
 } from '../lib/cart'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Vente() {
   const [products, setProducts] = useState<Product[]>([])
@@ -34,13 +36,18 @@ export default function Vente() {
   const [showReceipt, setShowReceipt] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const [client, setClient] = useState<SaleClient | null>(null)
   const [showClient, setShowClient] = useState(false)
   const [clients, setClients] = useState<{ id: number; name: string; phone: string | null }[]>([])
   const [scanning, setScanning] = useState(false)
 
-  const load = () => { Products.list().then(setProducts).finally(() => setLoading(false)); Categories.list().then(setCategories) }
-  useEffect(load, [])
+  const load = () => {
+    reset()
+    watch(Products.list().then(setProducts)).finally(() => setLoading(false))
+    watch(Categories.list().then(setCategories))
+  }
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
   // Fichier clients allégé : sert à rattacher la vente à un habitué.
   useEffect(() => { Clients.forSale().then(setClients).catch(() => {}) }, [])
 
@@ -166,6 +173,8 @@ export default function Vente() {
           </div>
           {loading
             ? <SkeletonGrid count={6} />
+            : error
+              ? <LoadError error={error} onRetry={load} />
             : visible.length === 0
               ? <div className="empty-state"><div className="empty-icon">🔍</div><div className="empty-sub">Aucun produit trouvé</div></div>
               : (

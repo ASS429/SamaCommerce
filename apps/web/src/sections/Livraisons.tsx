@@ -4,6 +4,8 @@ import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import { deliveryMessage, openWhatsapp } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 /* Une livraison, c'est un trajet : ⏳ pas encore parti → 🛵 en route → ✅ arrivé.
    Trois images qui racontent l'étape, la couleur confirme (orange → vert). */
@@ -26,12 +28,14 @@ export default function Livraisons() {
   const [commandes, setCommandes] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
   const load = () => {
-    Api.list().then(setList).finally(() => setLoading(false))
-    Commandes.list().then(setCommandes).catch(() => {})
+    reset()
+    watch(Api.list().then(setList)).finally(() => setLoading(false))
+    Commandes.list().then(setCommandes).catch(() => {}) // alimente le formulaire : secondaire
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Suivi ET réception étaient dissociés : on pouvait marquer « Livrée » sans
      que le stock bouge. Désormais, si la livraison porte une commande encore
@@ -55,7 +59,8 @@ export default function Livraisons() {
       <div className="page-header"><h2>🛵 Livraisons</h2><button className="btn-primary" onClick={() => setShowModal(true)}>+ Suivre</button></div>
 
       {loading && <SkeletonList count={3} />}
-      {!loading && list.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && list.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">🛵</div>
           <div className="empty-text">Aucune livraison</div>

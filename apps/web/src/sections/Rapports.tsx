@@ -6,6 +6,8 @@ import { exportPdf, money } from '../lib/pdf'
 import { exportXlsx } from '../lib/xlsx'
 import { productIcon } from '../lib/productIcon'
 import { payLabel } from '../lib/payments'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend)
 
@@ -28,6 +30,7 @@ export default function Rapports() {
   const [marchandage, setMarchandage] = useState<any>(null)
   const [periode, setPeriode] = useState<Periode>('tout')
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const [hist, setHist] = useState<Sale[]>([])
   const [histPage, setHistPage] = useState(0)
   const [histLast, setHistLast] = useState(1)
@@ -50,18 +53,20 @@ export default function Rapports() {
     obs.observe(el); return () => obs.disconnect()
   }, [loadMore])
 
-  useEffect(() => {
+  const load = () => {
+    reset()
     // `loading` sert à afficher des cadres qui « respirent » plutôt que des
     // 0 F trompeurs : voir un chiffre d'affaires à zéro fait paniquer.
     Promise.all([
-      Sales.list().then(setSales).catch(() => {}),
-      Stats.ventesParJour().then(setParJour).catch(() => {}),
-      Stats.paiements().then(setPaiements).catch(() => {}),
-      Stats.topProduits().then(setTop).catch(() => {}),
+      watch(Sales.list().then(setSales)),
+      watch(Stats.ventesParJour().then(setParJour)),
+      watch(Stats.paiements().then(setPaiements)),
+      watch(Stats.topProduits().then(setTop)),
     ]).finally(() => setLoading(false))
     Stats.margeCategorie().then(setMarge).catch(() => {}); Stats.rotationStock().then(setRotation).catch(() => {}); Stats.meilleursClients().then(setClients).catch(() => {})
     Stats.marchandage().then(setMarchandage).catch(() => {})
-  }, [])
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const startOf = (p: Periode) => { const d = new Date(); if (p === 'jour') d.setHours(0,0,0,0); else if (p === 'semaine') d.setDate(d.getDate()-7); else if (p === 'mois') d.setMonth(d.getMonth()-1); else return new Date(0); return d }
   const sumPeriod = (p: Periode) => sales.filter((s) => new Date(s.created_at) >= startOf(p) && s.paid).reduce((a, s) => a + Number(s.total), 0)
@@ -112,6 +117,7 @@ export default function Rapports() {
 
   return (
     <>
+      {error && <LoadError error={error} onRetry={load} compact />}
       <div className="page-header">
         <h2>📈 Chiffres</h2>
         <div style={{ display: 'flex', gap: 6 }}>

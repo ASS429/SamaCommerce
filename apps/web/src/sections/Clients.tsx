@@ -6,6 +6,8 @@ import SwipeRow from '../components/SwipeRow'
 import Avatar from '../components/Avatar'
 import PhotoPicker from '../components/PhotoPicker'
 import { creditReminderMessage, openWhatsapp, telLink } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Clients() {
   const [clients, setClients] = useState<Client[]>([])
@@ -13,9 +15,10 @@ export default function Clients() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
-  const load = () => ClientsApi.list().then(setClients).finally(() => setLoading(false))
-  useEffect(() => { load() }, [])
+  const load = () => { reset(); watch(ClientsApi.list().then(setClients)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (c: Client) => { if (await confirmAsync(`Supprimer « ${c.name} » ?`)) { await ClientsApi.remove(c.id); load() } }
   const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || (c.phone || '').includes(search))
@@ -31,7 +34,8 @@ export default function Clients() {
       <input className="search-bar" placeholder="🔍 Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {loading && <SkeletonList count={4} />}
-      {!loading && filtered.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && filtered.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">👤</div>
           <div className="empty-text">{clients.length === 0 ? 'Aucun client' : 'Aucun résultat'}</div>

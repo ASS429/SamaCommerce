@@ -3,6 +3,8 @@ import { Returns as Api, Sales, fcfa, type Sale } from '../lib/api'
 import { toast } from '../lib/toast'
 import { SkeletonList } from '../components/Skeleton'
 import { productIcon, productTint } from '../lib/productIcon'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 /* Motif du remboursement : quatre images plutôt qu'une liste déroulante. */
 const REFUND: { value: string; icon: string; label: string }[] = [
@@ -18,13 +20,15 @@ export default function Returns() {
   const [sales, setSales] = useState<Sale[]>([])
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
   const load = () => {
-    Api.list().then(setList).finally(() => setLoading(false))
+    reset()
+    watch(Api.list().then(setList)).finally(() => setLoading(false))
     Api.stats().then(setStats).catch(() => {})
     Sales.list().then((s) => setSales(s.filter((x) => x.quantity > 0 && x.payment_method !== 'retour'))).catch(() => {})
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -41,7 +45,8 @@ export default function Returns() {
       <div className="section-label">📜 Historique des retours</div>
 
       {loading && <SkeletonList count={3} />}
-      {!loading && list.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && list.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">↩️</div>
           <div className="empty-text">Aucun retour</div>

@@ -1113,3 +1113,41 @@ html.dark .ss-y b { color: var(--warning); }
   .tile, .switch, .switch::after, .bar-fill { transition: none !important; }
   .tile:active, .hero-cta:active, .paymode:active, .btn-wa:active { transform: none; }
 }
+
+/* ═══ ÉCHEC DE CHARGEMENT ═══
+   Volontairement PROCHE de .empty-state (même silhouette centrée) mais dans un
+   registre ambre : l'utilisateur doit sentir qu'il ne s'agit pas d'une boutique
+   vide, sans que ça ressemble à une panne grave. Le bouton « Réessayer » est
+   large : au marché, on tape avec le pouce. */
+.load-error {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 6px; padding: 30px 20px; margin-bottom: 12px;
+  background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 18px;
+}
+.load-error-icon {
+  width: 56px; height: 56px; border-radius: 50%; background: var(--surface);
+  display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 6px;
+}
+.load-error-title { font-family: var(--sora); font-size: 15px; font-weight: 700; color: var(--ink); }
+.load-error-hint { font-size: 13px; color: var(--muted); max-width: 320px; line-height: 1.45; }
+.load-error-retry {
+  margin-top: 12px; padding: 11px 22px; border: none; border-radius: 13px; cursor: pointer;
+  font-family: var(--sora); font-size: 14px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+  box-shadow: 0 6px 16px rgba(124,58,237,.25);
+}
+.load-error-retry:active { transform: scale(.97); }
+
+/* Variante bandeau : des données SONT affichées dessous, on ne mange pas
+   l'écran avec une erreur pleine hauteur. */
+.load-error--compact {
+  flex-direction: row; align-items: center; text-align: left;
+  gap: 10px; padding: 11px 14px; margin-bottom: 10px;
+}
+.load-error--compact .load-error-icon { width: auto; height: auto; background: none; font-size: 20px; margin: 0; }
+.load-error--compact .load-error-title { flex: 1; min-width: 0; font-size: 13.5px; }
+.load-error--compact .load-error-retry { margin: 0; padding: 7px 12px; font-size: 12.5px; box-shadow: none; flex-shrink: 0; }
+
+/* Hors ligne : bleu plutôt qu'ambre — ce n'est pas une panne, et les ventes
+   continuent d'être enregistrées localement. */
+.load-error.tone-offline { background: var(--blue-tint); border-color: var(--blue); }

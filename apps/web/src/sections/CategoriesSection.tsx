@@ -4,6 +4,8 @@ import { confirmAsync, toast } from '../lib/toast'
 import { SkeletonGrid } from '../components/Skeleton'
 import { productIcon } from '../lib/productIcon'
 import { toneOf } from '../lib/tone'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 /* Palette d'icônes ORGANISÉE par famille de commerce : on cherche des yeux, pas
    au clavier. L'ordre suit ce qu'on trouve dans une boutique de quartier
@@ -25,12 +27,14 @@ export default function CategoriesSection() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
   const load = () => {
-    Categories.list().then(setCategories).finally(() => setLoading(false))
-    Products.list().then(setProducts).catch(() => {})
+    reset()
+    watch(Categories.list().then(setCategories)).finally(() => setLoading(false))
+    Products.list().then(setProducts).catch(() => {}) // sert au comptage : secondaire
   }
-  useEffect(load, [])
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const count = (id: number) => products.filter((p) => p.category_id === id).length
   const toggleNego = async (c: Category) => {
@@ -49,7 +53,8 @@ export default function CategoriesSection() {
       <input className="search-bar" placeholder="🔍 Rechercher une catégorie..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {loading && <SkeletonGrid count={6} />}
-      {!loading && filtered.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && filtered.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">🏷️</div>
           <div className="empty-text">{categories.length === 0 ? 'Aucune catégorie' : 'Aucun résultat'}</div>

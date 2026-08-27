@@ -3,13 +3,17 @@ import { Ia, type ReapproItem } from '../lib/api'
 import { SkeletonList } from '../components/Skeleton'
 import { productIcon, productTint } from '../lib/productIcon'
 import type { View } from './Home'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function IaReappro({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const [items, setItems] = useState<ReapproItem[]>([])
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(true) // Design 3.4 — balayage radar à l'ouverture
+  const { error, watch, reset } = useLoadError()
 
-  useEffect(() => { Ia.reappro().then(setItems).catch(() => {}).finally(() => setLoading(false)) }, [])
+  const load = () => { reset(); watch(Ia.reappro().then(setItems)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const t = setTimeout(() => setScanning(false), reduced ? 0 : 1500)
@@ -55,7 +59,8 @@ export default function IaReappro({ onNavigate }: { onNavigate?: (v: View) => vo
       </div>
 
       {loading && !scanning && <SkeletonList count={5} />}
-      {!loading && !scanning && items.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-sub">Pas encore de données de vente à analyser</div></div>}
+      {!loading && !scanning && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !scanning && !error && items.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-sub">Pas encore de données de vente à analyser</div></div>}
 
       {!loading && !scanning && sorted.map((it) => {
         const u = urgence(it.days_until_stockout)

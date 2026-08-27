@@ -5,19 +5,24 @@ import { exportPdf, money } from '../lib/pdf'
 import { SkeletonList } from '../components/Skeleton'
 import { productIcon, productTint } from '../lib/productIcon'
 import Avatar from '../components/Avatar'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Inventaire() {
   const [products, setProducts] = useState<Product[]>([])
   const [sales, setSales] = useState<Sale[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
-  useEffect(() => {
+  const load = () => {
+    reset()
     Promise.all([
-      Products.list().then(setProducts).catch(() => {}),
-      Sales.list().then(setSales).catch(() => {}),
+      watch(Products.list().then(setProducts)),
+      watch(Sales.list().then(setSales)),
     ]).finally(() => setLoading(false))
-  }, [])
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const vendues = useMemo(() => {
     const m: Record<number, number> = {}
@@ -121,7 +126,8 @@ export default function Inventaire() {
       <input className="search-bar" placeholder="🔍 Rechercher un produit..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {loading && <SkeletonList count={5} />}
-      {!loading && rows.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && rows.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <div className="empty-text">{products.length === 0 ? 'Rien à inventorier' : 'Aucun résultat'}</div>

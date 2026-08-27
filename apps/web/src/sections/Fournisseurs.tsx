@@ -5,6 +5,8 @@ import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import PhotoPicker from '../components/PhotoPicker'
 import { telLink } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Fournisseurs() {
   const [list, setList] = useState<Fournisseur[]>([])
@@ -13,13 +15,15 @@ export default function Fournisseurs() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Fournisseur | null>(null)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const [preview, setPreview] = useState<{ f: Fournisseur; message: string; url: string } | null>(null)
 
   const load = () => {
-    Api.list().then(setList).finally(() => setLoading(false))
-    Commandes.list().then(setCommandes).catch(() => {})
+    reset()
+    watch(Api.list().then(setList)).finally(() => setLoading(false))
+    Commandes.list().then(setCommandes).catch(() => {}) // secondaire : ne bloque pas la liste
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (f: Fournisseur) => { if (await confirmAsync(`Supprimer « ${f.name} » ?`)) { await Api.remove(f.id); load() } }
 
@@ -45,7 +49,8 @@ export default function Fournisseurs() {
       <input className="search-bar" placeholder="🔍 Rechercher un fournisseur..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {loading && <SkeletonList count={3} />}
-      {!loading && filtered.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && filtered.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">🚚</div>
           <div className="empty-text">{list.length === 0 ? 'Aucun fournisseur' : 'Aucun résultat'}</div>

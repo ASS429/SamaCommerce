@@ -5,6 +5,8 @@ import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import PhotoPicker from '../components/PhotoPicker'
 import { telLink } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 /* Enseignes proposées : on couvre les commerces les plus fréquents au Sénégal
    (boutique de quartier, alimentation générale, pharmacie, quincaillerie…).
@@ -16,10 +18,11 @@ export default function BoutiquesSection() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Boutique | null>(null)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const current = getUser()?.current_boutique_id
 
-  const load = () => Api.list().then(setList).finally(() => setLoading(false))
-  useEffect(() => { load() }, [])
+  const load = () => { reset(); watch(Api.list().then(setList)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const switchTo = async (b: Boutique) => {
     await Api.switch(b.id)
@@ -38,7 +41,8 @@ export default function BoutiquesSection() {
       <div className="page-header"><h2>🏬 Mes Boutiques</h2><button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Boutique</button></div>
 
       {loading && <SkeletonList count={2} />}
-      {!loading && list.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && list.length === 0 && (
         <div className="empty-state"><div className="empty-icon">🏬</div><div className="empty-text">Aucune boutique</div><div className="empty-sub">Créez votre première boutique</div></div>
       )}
 

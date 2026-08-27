@@ -5,6 +5,8 @@ import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import { productIcon, productTint } from '../lib/productIcon'
 import { openWhatsapp, orderMessage } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 const STATUT: Record<string, { icon: string; label: string; cls: string }> = {
   en_attente: { icon: '⏳', label: 'En attente', cls: 'pill-low' },
@@ -15,10 +17,11 @@ export default function Commandes() {
   const [list, setList] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const [detail, setDetail] = useState<any | null>(null)
 
-  const load = () => Api.list().then(setList).finally(() => setLoading(false))
-  useEffect(() => { load() }, [])
+  const load = () => { reset(); watch(Api.list().then(setList)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const recevoir = async (c: any) => {
     if (!await confirmAsync('Marquer cette commande comme reçue ? Le stock sera mis à jour.')) return
@@ -52,7 +55,8 @@ export default function Commandes() {
       <div className="page-header"><h2>📋 Commandes</h2><button className="btn-primary" onClick={() => setShowModal(true)}>+ Nouvelle</button></div>
 
       {loading && <SkeletonList count={3} />}
-      {!loading && list.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && list.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <div className="empty-text">Aucune commande</div>

@@ -14,14 +14,18 @@ import { Boutiques as Api, getUser, fcfa, type BoutiqueLine, type BoutiquesDashb
 import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import type { View } from './Home'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function BoutiquesDashboard({ onNavigate }: { onNavigate?: (v: View) => void }) {
   const [data, setData] = useState<Data | null>(null)
   const [loading, setLoading] = useState(true)
   const [switching, setSwitching] = useState<number | null>(null)
+  const { error, watch, reset } = useLoadError()
   const active = getUser()?.current_boutique_id
 
-  useEffect(() => { Api.dashboard().then(setData).catch(() => {}).finally(() => setLoading(false)) }, [])
+  const load = () => { reset(); watch(Api.dashboard().then(setData)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const activer = async (b: BoutiqueLine) => {
     setSwitching(b.id)
@@ -56,7 +60,8 @@ export default function BoutiquesDashboard({ onNavigate }: { onNavigate?: (v: Vi
       <div className="section-label">🏬 Détail par boutique</div>
 
       {loading && <SkeletonList count={2} />}
-      {!loading && !data && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && !data && (
         <div className="empty-state">
           <div className="empty-icon">📊</div>
           <div className="empty-text">Tableau de bord indisponible</div>

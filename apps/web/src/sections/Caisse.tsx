@@ -6,6 +6,8 @@ import { boutiqueIdentity } from '../lib/api'
 import { exportPdf, money } from '../lib/pdf'
 import { exportXlsx } from '../lib/xlsx'
 import { SkeletonList } from '../components/Skeleton'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Caisse() {
   const [today, setToday] = useState<any>(null)
@@ -13,9 +15,15 @@ export default function Caisse() {
   const [weekly, setWeekly] = useState<any[]>([])
   const [closing, setClosing] = useState(false)
   const [scene, setScene] = useState<any>(null) // Design 3.4 — séquence de clôture
+  const { error, watch, reset } = useLoadError()
 
-  const load = () => { Api.today().then(setToday); Api.history().then(setHistory); Api.weekly().then(setWeekly) }
-  useEffect(() => { load() }, [])
+  const load = () => {
+    reset()
+    watch(Api.today().then(setToday))
+    watch(Api.history().then(setHistory))
+    watch(Api.weekly().then(setWeekly))
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Somme d'une colonne de l'historique (ligne de totaux des exports). */
   const sumHist = (key: string) => history.reduce((a, h) => a + Number(h[key] || 0), 0)
@@ -68,10 +76,13 @@ export default function Caisse() {
     return (
       <>
         <div className="page-header"><h2>💰 Caisse du jour</h2></div>
+        {error && <LoadError error={error} onRetry={load} />}
+        {!error && (<>
         <div className="stat-2x2">
           {[0, 1, 2, 3].map((i) => <div className="st" key={i}><div className="skeleton" style={{ height: 22, width: '70%' }} /><div className="skeleton" style={{ height: 11, width: '50%', marginTop: 6 }} /></div>)}
         </div>
         <SkeletonList count={3} />
+        </>)}
       </>
     )
   }

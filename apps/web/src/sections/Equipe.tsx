@@ -5,6 +5,8 @@ import { SkeletonList } from '../components/Skeleton'
 import Avatar from '../components/Avatar'
 import PhotoPicker from '../components/PhotoPicker'
 import { inviteMessage, openWhatsapp, telLink } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 /* Chaque permission porte un pictogramme identique à celui de la section
    correspondante : le patron retrouve visuellement « ce que l'employé a le
@@ -35,9 +37,10 @@ export default function Equipe() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Member | null>(null)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
 
-  const load = () => Api.list().then(setMembers).finally(() => setLoading(false))
-  useEffect(() => { load() }, [])
+  const load = () => { reset(); watch(Api.list().then(setMembers)).finally(() => setLoading(false)) }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (m: Member) => { if (await confirmAsync(`Retirer ${displayName(m)} de l'équipe ?`)) { await Api.remove(m.id); load() } }
   const togglePerm = async (m: Member, key: string) => {
@@ -62,7 +65,8 @@ export default function Equipe() {
       </button>
 
       {loading && <SkeletonList count={2} />}
-      {!loading && members.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && members.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">👥</div>
           <div className="empty-text">Aucun membre</div>

@@ -7,6 +7,8 @@ import { exportPdf, money } from '../lib/pdf'
 import { exportXlsx } from '../lib/xlsx'
 import { productIcon, productTint } from '../lib/productIcon'
 import { creditReminderMessage, openWhatsapp, telLink } from '../lib/whatsapp'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 const RISK = { green: { c: 'var(--green)', bg: '#ECFDF5', t: 'Risque faible' }, amber: { c: 'var(--warning)', bg: '#FFF7ED', t: 'Risque moyen' }, red: { c: 'var(--danger)', bg: '#FEF2F2', t: 'Risque élevé' } }
 
@@ -18,9 +20,14 @@ export default function Credits() {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [score, setScore] = useState<CreditScore | null>(null)
+  const { error, watch, reset } = useLoadError()
 
-  const load = () => { Sales.list().then((s) => setSales(s.filter((x) => x.payment_method === 'credit'))).finally(() => setLoading(false)); Products.list().then(setProducts) }
-  useEffect(load, [])
+  const load = () => {
+    reset()
+    watch(Sales.list().then((s) => setSales(s.filter((x) => x.payment_method === 'credit')))).finally(() => setLoading(false))
+    watch(Products.list().then(setProducts))
+  }
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Un crédit se fait TOUJOURS à quelqu'un d'identifié : soit un client déjà
      enregistré, soit un nouveau dont la fiche est créée à l'enregistrement.
@@ -209,7 +216,8 @@ export default function Credits() {
       <div className="section-label">📜 Historique des crédits</div>
 
       {loading && <SkeletonList count={4} />}
-      {!loading && sales.length === 0 && (
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && sales.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">📝</div>
           <div className="empty-text">Aucun crédit</div>

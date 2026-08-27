@@ -10,6 +10,8 @@ import Avatar from '../components/Avatar'
 import PhotoPicker from '../components/PhotoPicker'
 import { exportXlsx } from '../lib/xlsx'
 import { exportPdf, money } from '../lib/pdf'
+import LoadError from '../components/LoadError'
+import { useLoadError } from '../lib/loadError'
 
 export default function Stock() {
   const [products, setProducts] = useState<Product[]>([])
@@ -20,10 +22,15 @@ export default function Stock() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [scanning, setScanning] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { error, watch, reset } = useLoadError()
   const [sort, setSort] = useState<string>(() => localStorage.getItem('sc_stock_sort') || 'recent')
 
-  const load = () => { Products.list().then(setProducts).finally(() => setLoading(false)); Categories.list().then(setCategories) }
-  useEffect(load, [])
+  const load = () => {
+    reset()
+    watch(Products.list().then(setProducts)).finally(() => setLoading(false))
+    watch(Categories.list().then(setCategories))
+  }
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { localStorage.setItem('sc_stock_sort', sort) }, [sort])
 
   const catName = (id: number | null) => categories.find((c) => c.id === id)?.name
@@ -127,7 +134,8 @@ export default function Stock() {
       </div>
 
       {loading && <SkeletonList count={5} />}
-      {!loading && filtered.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-text">Aucun produit</div><div className="empty-sub">Ajoutez votre premier produit</div></div>}
+      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && !error && filtered.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-text">Aucun produit</div><div className="empty-sub">Ajoutez votre premier produit</div></div>}
 
       {!loading && filtered.map((p) => {
         const [dl, dfac] = DISPLAY_UNIT[p.unite_base || 'piece'] || DISPLAY_UNIT.piece

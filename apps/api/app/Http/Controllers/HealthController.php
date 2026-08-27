@@ -17,8 +17,12 @@ class HealthController extends Controller
         $db = $this->check(fn () => DB::connection()->getPdo() !== null);
 
         $ia = $this->check(function () {
-            $url = rtrim((string) config('services.ia.url'), '/');
-            if ($url === '') {
+            // Meme normalisation que les appels metier (IaClient) : Render
+            // fournit l'hote SANS schema quand la variable vient d'un autre
+            // service. Relire la config brute ici ferait mentir le diagnostic —
+            // l'IA repondrait, mais /health la declarerait morte.
+            $url = (new \App\Services\IaClient)->baseUrl();
+            if ($url === null) {
                 return false;
             }
 

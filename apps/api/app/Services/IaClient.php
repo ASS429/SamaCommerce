@@ -28,7 +28,7 @@ class IaClient
      * partirait vers une URL invalide et l'IA resterait silencieusement
      * desactivee — le pire des cas, puisque le repli heuristique masque la panne.
      */
-    private function baseUrl(): ?string
+    public function baseUrl(): ?string
     {
         $url = trim((string) config('services.ia.url'));
         if ($url === '') {

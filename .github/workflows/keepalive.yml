@@ -1,0 +1,45 @@
+# Maintien en éveil de l'API pendant les heures d'ouverture.
+#
+# POURQUOI. Le plan gratuit de Render endort un service après 15 min sans
+# trafic. Le réveil prend 30 à 50 s (mesuré : 32,6 s pour le service IA, 44,5 s
+# pour un chargement complet). Un commerçant sur données mobiles n'attend pas :
+# son navigateur abandonne et l'application affiche « Le serveur ne répond
+# pas » — alors que tout fonctionne, il fallait juste patienter.
+#
+# QUOTA. Render offre 750 heures d'instance par mois, partagées entre services.
+# Garder l'API éveillée 14 h/jour ≈ 420 h/mois, ce qui laisse de la marge pour
+# le service IA (réveillé à la demande, avec repli heuristique en attendant).
+# Garder les DEUX éveillés 24 h/24 depasserait le quota (1440 h).
+#
+# Les minutes GitHub Actions sont illimitées sur un dépôt public.
+name: Garder l'API eveillee
+
+on:
+  schedule:
+    # Toutes les 10 min, de 07h00 à 20h59 UTC (= heure de Dakar, UTC+0).
+    - cron: '*/10 7-20 * * *'
+  workflow_dispatch:
+
+# Pas d'empilement si une exécution traîne.
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Reveiller l'API
+        # Deux appels espaces : le cron de GitHub peut etre retarde de plusieurs
+        # minutes, et un seul ping toutes les 10 min laisserait parfois passer
+        # les 15 min fatidiques.
+        run: |
+          reveil() {
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
+              https://samacommerce-api.onrender.com/api/health || echo 000)
+            echo "$(date -u +%H:%M:%S) health -> $code"
+          }
+          reveil
+          sleep 300
+          reveil

@@ -31,6 +31,17 @@ export type LoadErrorInfo = {
  * message alarmant juste avant que l'écran ne change de toute façon.
  */
 export function describeError(e: unknown): LoadErrorInfo | null {
+  /* PAS D'ERREUR = PAS DE MESSAGE.
+   *
+   * Ce garde-fou manquait, et le defaut etait invisible tant que la fonction
+   * n'etait appelee que depuis un `.catch` (il y avait donc toujours une
+   * erreur). Depuis le passage a react-query on lui passe `query.error`, qui
+   * vaut `null` quand tout va bien : sans ce test, `status` etait `undefined`,
+   * la branche « aucune reponse du serveur » se declenchait, et le bandeau
+   * « Le serveur ne repond pas » s'affichait EN PERMANENCE par-dessus des
+   * donnees parfaitement chargees. */
+  if (e === null || e === undefined) return null
+
   const status = (e as { response?: { status?: number } })?.response?.status
 
   // Aucune réponse du serveur : panne réseau, serveur endormi, DNS…

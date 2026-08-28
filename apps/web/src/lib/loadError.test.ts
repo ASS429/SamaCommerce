@@ -13,6 +13,15 @@ const httpError = (status: number) => ({ response: { status } })
 afterEach(() => vi.unstubAllGlobals())
 
 describe('describeError', () => {
+  it("ne dit RIEN quand il n'y a pas d'erreur", () => {
+    /* Le defaut qui a fait croire a une panne en production : react-query passe
+       `query.error`, qui vaut null quand tout va bien. Sans ce cas, la branche
+       « aucune reponse » se declenchait et le bandeau « Le serveur ne repond
+       pas » restait affiche par-dessus des donnees correctes. */
+    expect(describeError(null)).toBeNull()
+    expect(describeError(undefined)).toBeNull()
+  })
+
   it('reste MUET sur un 401 : la session expirée est gérée globalement', () => {
     // Afficher une erreur ferait clignoter un message alarmant juste avant que
     // l'app ne bascule d'elle-même sur l'écran de connexion.

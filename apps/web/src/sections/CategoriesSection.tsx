@@ -32,8 +32,14 @@ export default function CategoriesSection() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const loading = cats.isPending
-  // Seule l'erreur sur les CATEGORIES compte : sans le comptage des produits
-  // l'ecran reste utilisable, il affiche juste « 0 produit ».
+  /* react-query CONSERVE les dernieres donnees valides quand un simple
+     RAFRAICHISSEMENT echoue. Une requete ratee (API endormie une fois) laissait
+     donc l'erreur enregistree, et le grand bandeau s'affichait par-dessus une
+     liste pourtant correcte — l'utilisateur croyait a une panne alors que ses
+     produits etaient sous ses yeux.
+     Regle : on n'alerte QUE si l'on n'a RIEN a montrer. Si des donnees sont
+     affichees, l'echec devient un bandeau discret avec « Reessayer ». */
+  const aDesDonnees = cats.data !== undefined
   const error = describeError(cats.error)
 
   const load = useRafraichirCatalogue()
@@ -58,7 +64,7 @@ export default function CategoriesSection() {
       <input className="search-bar" placeholder="🔍 Rechercher une catégorie..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
       {loading && <SkeletonGrid count={6} />}
-      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && error && <LoadError error={error} onRetry={load} compact={aDesDonnees} />}
       {!loading && !error && filtered.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">🏷️</div>

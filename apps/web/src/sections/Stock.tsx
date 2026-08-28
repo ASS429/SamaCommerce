@@ -29,8 +29,14 @@ export default function Stock() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [scanning, setScanning] = useState(false)
   const loading = produits.isPending
-  // Une erreur sur l'une OU l'autre liste : la premiere rencontree suffit a
-  // expliquer l'ecran, et elle passe par le meme habillage que partout.
+  /* react-query CONSERVE les dernieres donnees valides quand un simple
+     RAFRAICHISSEMENT echoue. Une requete ratee (API endormie une fois) laissait
+     donc l'erreur enregistree, et le grand bandeau s'affichait par-dessus une
+     liste pourtant correcte — l'utilisateur croyait a une panne alors que ses
+     produits etaient sous ses yeux.
+     Regle : on n'alerte QUE si l'on n'a RIEN a montrer. Si des donnees sont
+     affichees, l'echec devient un bandeau discret avec « Reessayer ». */
+  const aDesDonnees = produits.data !== undefined
   const error = describeError(produits.error ?? cats.error)
   const [sort, setSort] = useState<string>(() => localStorage.getItem('sc_stock_sort') || 'recent')
 
@@ -141,7 +147,7 @@ export default function Stock() {
       </div>
 
       {loading && <SkeletonList count={5} />}
-      {!loading && error && <LoadError error={error} onRetry={load} />}
+      {!loading && error && <LoadError error={error} onRetry={load} compact={aDesDonnees} />}
       {!loading && !error && filtered.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-text">Aucun produit</div><div className="empty-sub">Ajoutez votre premier produit</div></div>}
 
       {!loading && filtered.map((p) => {

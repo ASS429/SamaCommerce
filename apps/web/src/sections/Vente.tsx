@@ -41,6 +41,11 @@ export default function Vente() {
   const [showReceipt, setShowReceipt] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const loading = produits.isPending
+  /* Meme piege que dans Stock, en PIRE ici : l'erreur REMPLACAIT la grille,
+     donc un rafraichissement rate rendait le catalogue invisible au comptoir
+     alors qu'il etait charge. react-query garde les dernieres donnees valides —
+     on les affiche, et l'echec se signale par un bandeau discret au-dessus. */
+  const aDesDonnees = produits.data !== undefined
   const error = describeError(produits.error ?? cats.error)
   const [client, setClient] = useState<SaleClient | null>(null)
   const [showClient, setShowClient] = useState(false)
@@ -169,13 +174,14 @@ export default function Vente() {
             {/* Scanner : ajoute directement l'article au panier. */}
             <button className="btn-primary" style={{ padding: '0 14px' }} aria-label="Scanner un code-barres" onClick={() => setScanning(true)}>📷</button>
           </div>
+          {error && aDesDonnees && <LoadError error={error} onRetry={load} compact />}
           <div className="chips">
             <button className={`chip ${activeCat === 'tous' ? 'active' : ''}`} onClick={() => setActiveCat('tous')}>Tous</button>
             {categories.map((c) => <button key={c.id} className={`chip ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>{c.emoji} {c.name}</button>)}
           </div>
           {loading
             ? <SkeletonGrid count={6} />
-            : error
+            : error && !aDesDonnees
               ? <LoadError error={error} onRetry={load} />
             : visible.length === 0
               ? <div className="empty-state"><div className="empty-icon">🔍</div><div className="empty-sub">Aucun produit trouvé</div></div>

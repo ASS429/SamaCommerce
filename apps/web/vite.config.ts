@@ -22,6 +22,22 @@ const cspProd: Plugin = {
         const u = process.env.VITE_API_URL || ''
         apiOrigin = u ? new URL(u).origin : ''
       } catch { apiOrigin = '' }
+
+      /* GARDE-FOU. Sans origine d'API, la CSP produite est `connect-src 'self'`
+       * et le navigateur bloque TOUS les appels : l'application se deploie,
+       * s'affiche... et chaque ecran annonce « Le serveur ne repond pas ».
+       * Panne deja vecue deux fois, invisible au build. On echoue donc
+       * bruyamment plutot que de livrer un site mort.
+       *
+       * Uniquement sur Render (variable RENDER posee par la plateforme) : en
+       * local et en CI, l'application passe par le proxy Vite et n'a pas
+       * besoin de cette variable. */
+      if (!apiOrigin && process.env.RENDER) {
+        throw new Error(
+          "VITE_API_URL est vide : la CSP bloquerait tous les appels vers API. "
+          + "Definissez-la dans le service web Render avant de deployer.",
+        )
+      }
       const connectSrc = ["'self'", apiOrigin].filter(Boolean).join(' ')
       const scriptSrc = ["'self'", ...inlineScriptHashes(html)].join(' ')
 

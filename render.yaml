@@ -131,8 +131,14 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
+      # Adresse ECRITE EN CLAIR, et non `sync: false` : cette variable est lue
+      # AU MOMENT DU BUILD pour composer la CSP (connect-src). Si elle manque,
+      # le site se deploie avec `connect-src 'self'` — le navigateur bloque
+      # alors TOUS les appels a l'API et chaque ecran affiche « Le serveur ne
+      # repond pas ». C'est arrive : une resynchronisation du blueprint a
+      # efface la valeur saisie a la main.
       - key: VITE_API_URL
-        sync: false          # ex: https://samacommerce-api.onrender.com/api
+        value: https://samacommerce-api.onrender.com/api
     # SPA : toutes les routes retombent sur index.html
     routes:
       - type: rewrite

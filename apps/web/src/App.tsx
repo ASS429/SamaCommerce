@@ -113,7 +113,7 @@ export default function App() {
   const [gQuery, setGQuery] = useState('')
   /* Recherche globale : meme cache que Stock et Vendre. Avant, cette liste
      etait retelechargee a CHAQUE changement d'ecran, en plus des ventes. */
-  const gProducts = useProduits().data ?? LISTE_VIDE
+  const gProducts = useProduits(authed).data ?? LISTE_VIDE
   const [gClients, setGClients] = useState<Client[]>([])
   const [themePref, setThemePref] = useState<ThemePref>(getThemePref())
   // Redessine la navigation quand l'utilisateur active/masque une section.

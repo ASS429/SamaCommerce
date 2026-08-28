@@ -44,12 +44,16 @@ export function creerQueryClient(): QueryClient {
   })
 }
 
-export function useProduits() {
-  return useQuery<Product[]>({ queryKey: CLES.produits, queryFn: Products.list })
+/* `actif` : les hooks React s'executent AVANT le retour anticipe vers l'ecran
+ * de connexion. Sans ce garde, l'application interroge l'API alors que personne
+ * n'est connecte — deux 401 inutiles a chaque affichage du login, visibles dans
+ * la console, et une course avec l'intercepteur de session expiree. */
+export function useProduits(actif = true) {
+  return useQuery<Product[]>({ queryKey: CLES.produits, queryFn: Products.list, enabled: actif })
 }
 
-export function useCategories() {
-  return useQuery<Category[]>({ queryKey: CLES.categories, queryFn: Categories.list })
+export function useCategories(actif = true) {
+  return useQuery<Category[]>({ queryKey: CLES.categories, queryFn: Categories.list, enabled: actif })
 }
 
 /**

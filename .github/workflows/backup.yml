@@ -59,9 +59,13 @@ jobs:
           fi
 
       - name: Installer pg_dump 17
-        # Le client d'Ubuntu est plus ancien que le serveur Supabase : pg_dump
-        # refuse alors de tourner (« server version mismatch »). On prend donc
-        # le client officiel PostgreSQL.
+        # Le client fourni par Ubuntu est plus ancien que le serveur Supabase :
+        # pg_dump refuse alors de tourner (« server version mismatch »).
+        #
+        # PIÈGE : installer postgresql-client-17 ne suffit PAS. Sur Debian et
+        # Ubuntu, `pg_dump` est un script d'aiguillage (pg_wrapper) qui choisit
+        # la version PAR DÉFAUT du système — restée 16. Il faut donc appeler le
+        # binaire versionné explicitement, d'où PG_DUMP ci-dessous.
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -sS -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
@@ -71,7 +75,15 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
-          pg_dump --version
+
+          PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump
+          if [ ! -x "$PG_DUMP" ]; then
+            echo "::error::pg_dump 17 introuvable après installation"
+            exit 1
+          fi
+          echo "PG_DUMP=$PG_DUMP" >> "$GITHUB_ENV"
+          echo "Aiguilleur : $(pg_dump --version)"
+          echo "Utilise    : $($PG_DUMP --version)"
 
       - name: Dump de la base
         env:
@@ -82,7 +94,7 @@ jobs:
           echo "HORODATAGE=$horodatage" >> "$GITHUB_ENV"
           # --no-owner / --no-privileges : le dump se restaure dans une base
           # neuve sans avoir à recréer les rôles Supabase.
-          pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
+          "$PG_DUMP" "${{ secrets.SUPABASE_DB_URL }}" \
             --format=plain --no-owner --no-privileges \
             --exclude-schema='supabase_*' --exclude-schema='auth' --exclude-schema='storage' \
             > "samacommerce_$horodatage.sql"

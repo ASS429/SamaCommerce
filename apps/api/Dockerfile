@@ -10,7 +10,7 @@ FROM php:8.4-apache
 # Resend (Render bloque les ports SMTP sortants). Sans magasin de certificats,
 # chaque envoi echouerait sur « unable to get local issuer certificate ».
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git unzip libpq-dev libzip-dev libicu-dev         ca-certificates \
+        git unzip libpq-dev libzip-dev libicu-dev ca-certificates \
     && docker-php-ext-install pdo pdo_pgsql zip intl bcmath opcache \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*

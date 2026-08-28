@@ -36,10 +36,14 @@ class DemoSeeder extends Seeder
         $user->update(['current_boutique_id' => $boutique->id]);
         $this->boutiqueId = $boutique->id;
 
-        // Admin
+        // Admin — mot de passe ALEATOIRE, jamais une valeur en dur.
+        // La commande `admin:secure` (lancee au demarrage) y applique ensuite
+        // ADMIN_PASSWORD. Un identifiant ecrit ici finirait dans un depot
+        // public, comme ce fut le cas avec « password ».
         User::updateOrCreate(
             ['username' => 'admin@samacommerce.sn'],
-            ['password' => Hash::make('password'), 'company_name' => 'Admin', 'role' => 'admin', 'plan' => 'Premium'],
+            ['password' => Hash::make(\Illuminate\Support\Str::random(48)),
+                'company_name' => 'Admin', 'role' => 'admin', 'plan' => 'Premium'],
         );
 
         // Employé de démo (vendeur/caissier) — déjà accepté, permissions vente + caisse

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rules\Password;
@@ -372,12 +373,56 @@ class AuthController extends Controller
             ['token' => Hash::make($code), 'created_at' => Carbon::now()],
         );
 
+        $envoye = $this->envoyerCodeParEmail($user, $code);
+
         return response()->json([
-            'message' => 'Code de réinitialisation généré.',
+            'message' => $envoye
+                ? 'Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.'
+                : "Code généré, mais l'e-mail n'a pas pu partir. Contactez la boutique.",
+            'envoye' => $envoye,
             // S7 — le code n'est exposé QUE en local+debug (logique inversée : un
             // .env de prod mal réglé ne fuite plus de codes).
             'dev_code' => (app()->environment('local') && config('app.debug')) ? $code : null,
         ]);
+    }
+
+    /**
+     * Envoie le code de réinitialisation.
+     *
+     * Jusqu'ici le code était généré... et n'allait NULLE PART : aucun mailer
+     * n'était configuré. L'utilisateur lisait « un code a été envoyé », ne
+     * recevait rien, et se retrouvait enfermé dehors avec son stock et ses
+     * ventes à l'intérieur. Pour un commerçant, c'était irréparable.
+     *
+     * L'échec d'envoi ne fait pas échouer la requête : le code EXISTE en base,
+     * le propriétaire peut donc encore dépanner. Mais on le journalise, car un
+     * envoi muet est exactement le défaut qu'on vient de corriger.
+     */
+    private function envoyerCodeParEmail(User $user, string $code): bool
+    {
+        // Un identifiant qui n'est pas une adresse (compte créé à la main) :
+        // rien à envoyer, inutile de faire semblant.
+        if (! filter_var($user->username, FILTER_VALIDATE_EMAIL)) {
+            Log::warning('[mdp-oublie] identifiant non-email, envoi impossible');
+
+            return false;
+        }
+
+        $nom = $user->company_name ?: 'Bonjour';
+
+        try {
+            Mail::to($user->username)->send(
+                new \App\Mail\CodeReinitialisation($code, $nom)
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            // On ne renvoie JAMAIS le détail au client : il indiquerait si le
+            // compte existe, et exposerait la configuration du serveur.
+            Log::error('[mdp-oublie] envoi impossible : '.$e->getMessage());
+
+            return false;
+        }
     }
 
     /** Réinitialise le mot de passe avec le code reçu (valable 30 min). */

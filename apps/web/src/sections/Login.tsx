@@ -9,8 +9,13 @@ type Invitation = { boutique: string | null; role: string; email: string; name: 
 
 export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login')
-  const [username, setUsername] = useState('demo@samacommerce.sn')
-  const [password, setPassword] = useState('password')
+  /* Champs VIDES au depart. Ils etaient pre-remplis avec le compte de
+     demonstration : un commercant arrivait donc sur un formulaire portant
+     l'identifiant de quelqu'un d'autre, et pouvait valider sans regarder — il
+     atterrissait alors dans une boutique fictive en croyant voir la sienne.
+     On entre desormais en demonstration PARCE QU'ON L'A CHOISI (bouton). */
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [invite, setInvite] = useState<Invitation | null>(null)
   const [company, setCompany] = useState('')
   const [code, setCode] = useState('')
@@ -39,6 +44,18 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
 
   const apiErr = (err: any, fallback: string) =>
     setError(err?.response?.data?.error || (err?.response?.data?.errors ? Object.values(err.response.data.errors)[0] as string : fallback))
+
+  /* Identifiants de la boutique-vitrine. Ils sont publics par nature : ce
+     compte ne contient que des donnees fictives, et le cloisonnement par
+     tenant empeche d'y voir quoi que ce soit d'un vrai commercant. */
+  const DEMO = { username: 'demo@samacommerce.sn', password: 'password' }
+
+  const essayerDemo = () => {
+    setMode('login')
+    setError('')
+    setUsername(DEMO.username)
+    setPassword(DEMO.password)
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError('')
@@ -150,6 +167,18 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
               {loading ? '…' : mode === 'login' ? 'Se connecter' : invite ? '🤝 Rejoindre la boutique' : 'Créer ma boutique'}
             </button>
           </form>
+        )}
+        {/* Essayer avant de s'inscrire : on remplit les champs sous les yeux de
+            l'utilisateur plutot que de le connecter d'office, pour qu'il voie
+            QUEL compte il ouvre — et qu'il puisse revenir en arriere. */}
+        {!twofaPending && mode !== 'forgot' && !invite && (
+          <button type="button" className="demo-btn" onClick={essayerDemo} disabled={loading}>
+            <span className="demo-btn-ico" aria-hidden="true">👀</span>
+            <span className="demo-btn-txt">
+              <b>Essayer sans compte</b>
+              <small>Boutique de démonstration, rien n'est réel</small>
+            </span>
+          </button>
         )}
         {!twofaPending && mode === 'login' && (
           <button className="auth-link" style={{ color: 'var(--muted)' }} onClick={() => { setMode('forgot'); setError(''); setCodeSent(false) }}>

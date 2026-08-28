@@ -55,6 +55,37 @@ services:
       # surcout. Renseigner le DSN d'un projet Sentry (offre gratuite) pour
       # recevoir les alertes par mail. Couvre les erreurs de l'API ET celles du
       # navigateur, relayees par POST /api/client-errors.
+      # Mot de passe du panneau d'administration. VIDE = compte NEUTRALISE
+      # (personne ne peut se connecter) : en cas d'oubli, on ferme plutot que
+      # d'ouvrir. 12 caracteres minimum.
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # ─ Envoi des e-mails (reinitialisation de mot de passe) via Resend ─
+      # Sans MAIL_PASSWORD, le code de reinitialisation n'est envoye nulle part
+      # et l'utilisateur reste enferme dehors.
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.resend.com
+      # 465 + smtps : le port 587 avec « tls » est refuse par Symfony Mailer
+      # (« scheme not supported »). Verifie en envoyant un vrai message.
+      - key: MAIL_PORT
+        value: "465"
+      - key: MAIL_USERNAME
+        value: resend
+      - key: MAIL_PASSWORD
+        sync: false          # cle API Resend (re_...)
+      - key: MAIL_SCHEME
+        value: smtps
+      # Tant qu'aucun domaine n'est verifie chez Resend, SEULE l'adresse
+      # onboarding@resend.dev est autorisee — et Resend ne livre alors qu'a
+      # l'adresse du titulaire du compte. Verifier un domaine pour ecrire a tous.
+      - key: MAIL_FROM_ADDRESS
+        value: onboarding@resend.dev
+      - key: MAIL_FROM_NAME
+        value: SamaCommerce
+
       - key: SENTRY_LARAVEL_DSN
         sync: false
       - key: SANCTUM_EXPIRATION

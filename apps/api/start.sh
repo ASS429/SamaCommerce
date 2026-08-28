@@ -20,6 +20,11 @@ php artisan migrate --force
 # Shell. Ignoré ensuite (ne duplique jamais). Non bloquant.
 php artisan db:seed-if-empty || true
 
+# Verrouille le compte administrateur : applique ADMIN_PASSWORD, ou NEUTRALISE
+# le compte si la variable est absente. Les identifiants de demonstration
+# figurent dans un depot public — laisser « password » ouvrirait l'admin a tous.
+php artisan admin:secure || true
+
 # Cache config pour la performance (non bloquant : un échec ne doit jamais
 # empêcher le démarrage). On N'utilise PAS route:cache (incompatible closures).
 php artisan config:cache || true

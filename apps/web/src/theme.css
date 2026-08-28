@@ -1165,3 +1165,25 @@ html.dark .ss-y b { color: var(--warning); }
 .crash-icon { font-size: 56px; line-height: 1; margin-bottom: 8px; }
 .crash-title { font-family: var(--sora); font-size: 19px; font-weight: 800; }
 .crash-hint { font-size: 14px; color: var(--muted); max-width: 300px; line-height: 1.5; margin-bottom: 8px; }
+
+/* ═══ BOUTON « ESSAYER SANS COMPTE » (écran de connexion) ═══
+   Volontairement distinct des boutons d'action : contour clair sur le fond
+   violet du login, pour qu'on le remarque sans qu'il concurrence « Se
+   connecter ». Le pictogramme porte le sens (👀 = regarder), le sous-titre
+   prévient que rien n'est réel — un commerçant ne doit pas croire qu'il vient
+   d'ouvrir sa vraie boutique. */
+.demo-btn {
+  width: 100%; margin: 12px 0 4px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.28);
+  border-radius: 14px; color: #fff;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: background .15s, transform .1s;
+}
+.demo-btn:hover { background: rgba(255,255,255,.17); }
+.demo-btn:active { transform: scale(.985); }
+.demo-btn:disabled { opacity: .5; cursor: default; }
+.demo-btn-ico { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.demo-btn-txt { display: flex; flex-direction: column; min-width: 0; }
+.demo-btn-txt b { font-family: var(--sora); font-size: 14px; font-weight: 700; }
+.demo-btn-txt small { font-size: 11.5px; color: rgba(255,255,255,.72); margin-top: 1px; }

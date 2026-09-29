@@ -9,10 +9,10 @@
 # QUOTA. Render offre 750 heures d'instance par mois, partagées entre services.
 # Garder l'API éveillée 14 h/jour ≈ 420 h/mois, ce qui laisse de la marge pour
 # le service IA (réveillé à la demande, avec repli heuristique en attendant).
-# Garder les DEUX éveillés 24 h/24 depasserait le quota (1440 h).
+# Garder les DEUX éveillés 24 h/24 dépasserait le quota (1440 h).
 #
 # Les minutes GitHub Actions sont illimitées sur un dépôt public.
-name: Garder l'API eveillee
+name: Garder l'API éveillée
 
 on:
   schedule:
@@ -22,24 +22,25 @@ on:
 
 # Pas d'empilement si une exécution traîne.
 concurrency:
-  group: keepalive
+  group: garder-api-eveillee
   cancel-in-progress: true
 
 jobs:
-  ping:
+  reveil:
+    name: Réveil de l'API
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Reveiller l'API
-        # Deux appels espaces : le cron de GitHub peut etre retarde de plusieurs
-        # minutes, et un seul ping toutes les 10 min laisserait parfois passer
-        # les 15 min fatidiques.
+      - name: Réveiller l'API
+        # Deux appels espacés : le planificateur de GitHub peut être retardé de
+        # plusieurs minutes, et un seul appel toutes les 10 min laisserait
+        # parfois passer les 15 min fatidiques.
         run: |
-          reveil() {
+          reveiller() {
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
               https://samacommerce-api.onrender.com/api/sante || echo 000)
             echo "$(date -u +%H:%M:%S) sante -> $code"
           }
-          reveil
+          reveiller
           sleep 300
-          reveil
+          reveiller

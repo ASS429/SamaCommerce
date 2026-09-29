@@ -6,7 +6,7 @@
 # tourne, lui, indépendamment de l'état de l'application.
 #
 # ⚠️ LE DÉPÔT EST PUBLIC : les artefacts de workflow sont téléchargeables par
-# n'importe qui. Le dump est donc CHIFFRÉ avant publication, et le job échoue
+# n'importe qui. L'export est donc CHIFFRÉ avant publication, et le job échoue
 # volontairement si la phrase secrète manque — mieux vaut pas de sauvegarde
 # qu'une sauvegarde en clair contenant les ventes et les numéros de téléphone
 # des clients.
@@ -28,12 +28,12 @@ on:
 
 # Une seule sauvegarde à la fois.
 concurrency:
-  group: backup
+  group: sauvegarde-base
   cancel-in-progress: false
 
 jobs:
-  dump:
-    name: Dump chiffré de la base
+  sauvegarde:
+    name: Export chiffré de la base
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -41,20 +41,20 @@ jobs:
 
       - name: Vérifier la présence des secrets
         env:
-          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          URL_BASE: ${{ secrets.SUPABASE_DB_URL }}
+          PHRASE_SECRETE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
           manquants=""
-          [ -z "$DB_URL" ] && manquants="$manquants SUPABASE_DB_URL"
-          [ -z "$PASSPHRASE" ] && manquants="$manquants BACKUP_PASSPHRASE"
+          [ -z "$URL_BASE" ] && manquants="$manquants SUPABASE_DB_URL"
+          [ -z "$PHRASE_SECRETE" ] && manquants="$manquants BACKUP_PASSPHRASE"
           if [ -n "$manquants" ]; then
             echo "::error::Secret(s) manquant(s) :$manquants"
-            echo "Sans phrase secrète, le dump serait publié EN CLAIR sur un dépôt public."
+            echo "Sans phrase secrète, l'export serait publié EN CLAIR sur un dépôt public."
             exit 1
           fi
           # Une phrase courte se casse hors ligne : la sauvegarde est publique.
-          if [ ${#PASSPHRASE} -lt 20 ]; then
-            echo "::error::BACKUP_PASSPHRASE trop courte (${#PASSPHRASE} caractères, minimum 20)."
+          if [ ${#PHRASE_SECRETE} -lt 20 ]; then
+            echo "::error::BACKUP_PASSPHRASE trop courte (${#PHRASE_SECRETE} caractères, minimum 20)."
             exit 1
           fi
 
@@ -65,7 +65,7 @@ jobs:
         # PIÈGE : installer postgresql-client-17 ne suffit PAS. Sur Debian et
         # Ubuntu, `pg_dump` est un script d'aiguillage (pg_wrapper) qui choisit
         # la version PAR DÉFAUT du système — restée 16. Il faut donc appeler le
-        # binaire versionné explicitement, d'où PG_DUMP ci-dessous.
+        # binaire versionné explicitement, d'où CHEMIN_PG_DUMP ci-dessous.
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -sS -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
@@ -76,39 +76,39 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
 
-          PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump
-          if [ ! -x "$PG_DUMP" ]; then
+          CHEMIN_PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump
+          if [ ! -x "$CHEMIN_PG_DUMP" ]; then
             echo "::error::pg_dump 17 introuvable après installation"
             exit 1
           fi
-          echo "PG_DUMP=$PG_DUMP" >> "$GITHUB_ENV"
+          echo "CHEMIN_PG_DUMP=$CHEMIN_PG_DUMP" >> "$GITHUB_ENV"
           echo "Aiguilleur : $(pg_dump --version)"
-          echo "Utilise    : $($PG_DUMP --version)"
+          echo "Utilisé    : $($CHEMIN_PG_DUMP --version)"
 
-      - name: Dump de la base
+      - name: Exporter la base
         env:
           # PGSSLMODE : Supabase refuse les connexions non chiffrées.
           PGSSLMODE: require
         run: |
           horodatage=$(date -u +'%Y-%m-%d_%Hh%M')
           echo "HORODATAGE=$horodatage" >> "$GITHUB_ENV"
-          # --no-owner / --no-privileges : le dump se restaure dans une base
+          # --no-owner / --no-privileges : l'export se restaure dans une base
           # neuve sans avoir à recréer les rôles Supabase.
-          "$PG_DUMP" "${{ secrets.SUPABASE_DB_URL }}" \
+          "$CHEMIN_PG_DUMP" "${{ secrets.SUPABASE_DB_URL }}" \
             --format=plain --no-owner --no-privileges \
             --exclude-schema='supabase_*' --exclude-schema='auth' --exclude-schema='storage' \
             > "samacommerce_$horodatage.sql"
 
-      - name: Vérifier que le dump est exploitable
+      - name: Vérifier que l'export est exploitable
         # Un fichier vide produit sans erreur est PIRE que pas de sauvegarde :
         # on le découvrirait le jour de la restauration. On contrôle donc la
         # taille ET la présence des tables métier avant de publier.
         run: |
           fichier="samacommerce_${HORODATAGE}.sql"
           taille=$(stat -c%s "$fichier")
-          echo "Taille du dump : $taille octets"
+          echo "Taille de l'export : $taille octets"
           if [ "$taille" -lt 10240 ]; then
-            echo "::error::Dump suspect (< 10 Ko) — sauvegarde refusée."
+            echo "::error::Export suspect (< 10 Ko) — sauvegarde refusée."
             exit 1
           fi
           # Tables métier sous leur nom français (depuis le 29/09/2026). Pendant
@@ -125,17 +125,17 @@ jobs:
           elif presentes "users products sales clients boutiques"; then
             echo "✅ Tables métier présentes (anciens noms anglais)."
           else
-            echo "::error::Tables métier absentes du dump — sauvegarde refusée."
+            echo "::error::Tables métier absentes de l'export — sauvegarde refusée."
             exit 1
           fi
 
       - name: Chiffrer
         env:
-          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          PHRASE_SECRETE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
           fichier="samacommerce_${HORODATAGE}.sql"
           gpg --batch --yes --symmetric --cipher-algo AES256 \
-            --passphrase "$PASSPHRASE" --output "$fichier.gpg" "$fichier"
+            --passphrase "$PHRASE_SECRETE" --output "$fichier.gpg" "$fichier"
           rm -f "$fichier"   # aucune trace en clair sur le runner
           ls -lh "$fichier.gpg"
 
@@ -143,10 +143,10 @@ jobs:
         # Sans ce contrôle, on découvrirait le jour du sinistre que l'archive
         # est inutilisable. On déchiffre et on relit une table métier.
         env:
-          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          PHRASE_SECRETE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
           fichier="samacommerce_${HORODATAGE}.sql"
-          gpg --batch --yes --decrypt --passphrase "$PASSPHRASE" \
+          gpg --batch --yes --decrypt --passphrase "$PHRASE_SECRETE" \
             --output /tmp/controle.sql "$fichier.gpg"
           grep -qE "CREATE TABLE public\.(ventes|sales) \(" /tmp/controle.sql
           echo "✅ Archive déchiffrable et complète."

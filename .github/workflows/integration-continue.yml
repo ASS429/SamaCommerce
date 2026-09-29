@@ -1,6 +1,7 @@
-# T7 — Pipeline d'intégration continue : lint + tests API + tests web + build + audits.
-# Aucun merge ne doit passer au rouge.
-name: CI
+# T7 — Intégration continue : analyse du code, tests de l'API, du site et du
+# service IA, construction du site, audits de sécurité des dépendances.
+# Aucune fusion ne doit passer au rouge.
+name: Intégration continue
 
 on:
   push:
@@ -24,25 +25,25 @@ jobs:
           php-version: '8.4'
           extensions: pdo, sqlite, mbstring
           coverage: none
-      - name: Install dependencies
+      - name: Installer les dépendances
         run: composer install --prefer-dist --no-interaction --no-progress
-      - name: Prepare env
+      - name: Préparer l'environnement
         run: |
           cp .env.example .env || true
           php artisan key:generate
           touch database/database.sqlite
-      - name: Lint (Pint)
+      - name: Style du code (Pint)
         run: vendor/bin/pint --test || true
-      - name: Run PHPUnit
+      - name: Tests (PHPUnit)
         run: php artisan test
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-      - name: Security audit
+      - name: Audit de sécurité
         run: composer audit || true
 
   web:
-    name: Web (React) — lint + build
+    name: Site (React) — analyse + tests + construction
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -52,14 +53,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
-      - name: Lint (oxlint)
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Analyse du code (oxlint)
         run: npx oxlint src
-      - name: Unit tests (Vitest)
+      - name: Tests unitaires (Vitest)
         run: npm run test -- --run
-      - name: Build
+      - name: Construction
         run: npm run build
-      - name: Security audit
+      - name: Audit de sécurité
         run: npm audit --omit=dev || true
 
   ia:
@@ -73,7 +75,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
-      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt -r requirements-dev.txt
       # Anciennes routes identiques aux empreintes d'origine, nouvelles routes
       # équivalentes, modèles aux noms de variables français.
       - name: Tests (pytest)

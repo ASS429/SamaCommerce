@@ -5,8 +5,8 @@ ni le calme d'improviser.
 
 ## Ce qui est sauvegardé
 
-Le workflow [`.github/workflows/backup.yml`](../.github/workflows/backup.yml)
-produit chaque nuit (02h17 UTC) un dump complet de la base de production,
+Le workflow [`.github/workflows/sauvegarde-base.yml`](../.github/workflows/sauvegarde-base.yml)
+produit chaque nuit (02h17 UTC) un export complet de la base de production,
 **chiffré en AES256**, publié comme artefact GitHub et conservé **90 jours**.
 
 Le dépôt étant public, l'archive est chiffrée : sans la phrase secrète
@@ -18,7 +18,7 @@ Le dépôt étant public, l'archive est chiffrée : sans la phrase secrète
 
 Chaque sauvegarde n'est publiée qu'après trois contrôles : taille minimale,
 présence des tables métier (`utilisateurs`, `produits`, `ventes`, `clients`,
-`boutiques`), et **déchiffrement de contrôle**. Un dump vide ou corrompu fait
+`boutiques`), et **déchiffrement de contrôle**. Un export vide ou corrompu fait
 échouer le job au lieu d'être publié — on ne découvre pas le problème le jour
 du sinistre.
 
@@ -28,6 +28,11 @@ du sinistre.
 2. Ouvrir l'exécution de la date voulue.
 3. Section **Artifacts** → télécharger `base-AAAA-MM-JJ_HHhMM`.
 4. Dézipper : vous obtenez `samacommerce_AAAA-MM-JJ_HHhMM.sql.gpg`.
+
+> **Sauvegarde d'avant octobre 2026 ?** Le fichier du workflow s'appelait alors
+> `backup.yml`. GitHub range ses exécutions sous cet ancien nom : elles
+> n'apparaissent plus sous « Sauvegarde base », mais restent dans
+> **All workflows** (toutes les exécutions), jusqu'à expiration des 90 jours.
 
 ## Déchiffrer
 
@@ -42,13 +47,15 @@ Vérifiez avant d'aller plus loin :
 
 ```bash
 grep -c 'CREATE TABLE' base.sql   # doit renvoyer une vingtaine de tables
-grep 'INSERT INTO public.ventes' base.sql | wc -l   # vos ventes sont là
+# pg_dump écrit les lignes en bloc (COPY … FROM stdin), pas en INSERT :
+# on compte les lignes entre l'en-tête du bloc et sa fin « \. ».
+awk '/^COPY public\.ventes /{dedans=1; next} /^\\\.$/{dedans=0} dedans' base.sql | wc -l   # vos ventes sont là
 ```
 
 ## Restaurer
 
 > ⛔ **Ne restaurez JAMAIS directement par-dessus la production** sans avoir
-> d'abord fait un dump de l'état actuel — même abîmé. Une restauration écrase :
+> d'abord fait un export de l'état actuel — même abîmé. Une restauration écrase :
 > si le diagnostic était faux, vous perdez ce qui restait.
 
 ### 1. Sauvegarder l'état actuel, quel qu'il soit
@@ -89,7 +96,7 @@ redémarre et applique les migrations automatiquement.
 
 ## Ce que la sauvegarde ne couvre PAS
 
-- **Les ventes faites entre le dernier dump et l'incident.** Au pire 24 h de
+- **Les ventes faites entre le dernier export et l'incident.** Au pire 24 h de
   perte. Les ventes encore en file hors-ligne sur les téléphones remonteront
   d'elles-mêmes au retour du réseau.
 - **Les schémas internes de Supabase** (`auth`, `storage`, `supabase_*`), exclus

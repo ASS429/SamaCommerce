@@ -18,9 +18,9 @@ let client: QueryClient
 beforeEach(() => {
   appels = 0
   client = creerClientRequetes()
-  api.defaults.adapter = async (config) => {
+  api.defaults.adapter = async (requete) => {
     appels++
-    return { data: [{ id: 1, nom: 'Riz', stock: 10 }], status: 200, statusText: '', headers: {}, config }
+    return { data: [{ id: 1, nom: 'Riz', stock: 10 }], status: 200, statusText: '', headers: {}, config: requete }
   }
 })
 afterEach(() => { client.clear(); vi.restoreAllMocks() })

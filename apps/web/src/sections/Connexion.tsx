@@ -42,8 +42,8 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
       .catch(() => { /* jeton mort : l'écran reste une connexion ordinaire */ })
   }, [])
 
-  const erreurApi = (err: any, repli: string) =>
-    definirErreur(err?.response?.data?.erreur || (err?.response?.data?.errors ? Object.values(err.response.data.errors)[0] as string : repli))
+  const erreurApi = (e: any, repli: string) =>
+    definirErreur(e?.response?.data?.erreur || (e?.response?.data?.errors ? Object.values(e.response.data.errors)[0] as string : repli))
 
   /* Identifiants de la boutique-vitrine. Ils sont publics par nature : ce
      compte ne contient que des données fictives, et le cloisonnement par
@@ -68,15 +68,15 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
         return
       }
       surConnexion(resultat.utilisateur)
-    } catch (err: any) {
-      erreurApi(err, 'Identifiants incorrects.')
+    } catch (e: any) {
+      erreurApi(e, 'Identifiants incorrects.')
     } finally { definirChargement(false) }
   }
 
   const verifier = async (e: React.FormEvent) => {
     e.preventDefault(); definirChargement(true); definirErreur('')
     try { surConnexion(await verifierDoubleFacteur(identifiant, code)) }
-    catch (err: any) { erreurApi(err, 'Code invalide') } finally { definirChargement(false) }
+    catch (e: any) { erreurApi(e, 'Code invalide') } finally { definirChargement(false) }
   }
 
   const envoyerCode = async () => {
@@ -85,7 +85,7 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
       const r = await motDePasseOublie(identifiant)
       definirCodeEnvoye(true)
       bulle(r.code_dev ? `Code (dev) : ${r.code_dev}` : 'Code envoyé', 'info')
-    } catch (err: any) { erreurApi(err, 'Erreur') } finally { definirChargement(false) }
+    } catch (e: any) { erreurApi(e, 'Erreur') } finally { definirChargement(false) }
   }
   const reinitialiser = async (e: React.FormEvent) => {
     e.preventDefault(); definirChargement(true); definirErreur('')
@@ -93,7 +93,7 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
       await reinitialiserMotDePasse(identifiant, code, motDePasse)
       bulle('Mot de passe réinitialisé ✅', 'succes')
       definirMode('connexion'); definirCodeEnvoye(false); definirCode('')
-    } catch (err: any) { erreurApi(err, 'Code invalide') } finally { definirChargement(false) }
+    } catch (e: any) { erreurApi(e, 'Code invalide') } finally { definirChargement(false) }
   }
 
   return (

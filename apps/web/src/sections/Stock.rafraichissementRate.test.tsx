@@ -22,8 +22,8 @@ function afficherAvecCache(produits: unknown[], enEchec: boolean) {
   client.setQueryData(CLES.produits, produits)
   client.setQueryData(CLES.categories, [])
   // Puis le rafraîchissement échoue.
-  api.defaults.adapter = async (config) => {
-    if (!enEchec) return { data: produits, status: 200, statusText: '', headers: {}, config }
+  api.defaults.adapter = async (requete) => {
+    if (!enEchec) return { data: produits, status: 200, statusText: '', headers: {}, config: requete }
     const erreur: Error & { response?: unknown } = new Error('réseau')
     erreur.response = undefined
     throw erreur

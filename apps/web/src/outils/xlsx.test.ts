@@ -4,8 +4,8 @@ import { construireClasseur, lettreColonne } from './xlsx'
 
 /** Décompresse le classeur produit et rend ses parties en texte. */
 async function parties(classeur: Parameters<typeof construireClasseur>[0]) {
-  const blob = await construireClasseur(classeur)
-  const fichiers = unzipSync(new Uint8Array(await blob.arrayBuffer()))
+  const archive = await construireClasseur(classeur)
+  const fichiers = unzipSync(new Uint8Array(await archive.arrayBuffer()))
   return Object.fromEntries(Object.entries(fichiers).map(([k, v]) => [k, strFromU8(v)]))
 }
 

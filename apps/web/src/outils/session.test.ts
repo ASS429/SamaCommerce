@@ -18,11 +18,11 @@ import { api, lireJeton, EVENEMENT_SESSION_EXPIREE } from './api'
  *  Un adaptateur doit REJETER lui-même hors 2xx : c'est le rôle de `settle`
  *  dans l'adaptateur natif, et c'est cette erreur que voit l'intercepteur. */
 function repondre(statut: number) {
-  api.defaults.adapter = async (config) => {
-    const reponse = { data: {}, status: statut, statusText: '', headers: {}, config }
+  api.defaults.adapter = async (requete) => {
+    const reponse = { data: {}, status: statut, statusText: '', headers: {}, config: requete }
     if (statut >= 200 && statut < 300) return reponse
     const erreur = Object.assign(new Error(`Request failed with status code ${statut}`), {
-      isAxiosError: true, config, response: reponse,
+      isAxiosError: true, config: requete, response: reponse,
     })
     throw erreur
   }

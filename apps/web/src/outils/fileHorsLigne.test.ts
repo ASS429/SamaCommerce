@@ -98,10 +98,10 @@ describe('une vente hors ligne en attente survit à la mise à jour', () => {
     await installerAncienneFile([ANCIENNE_VENTE])
     let corps: { ventes: Record<string, unknown>[] } | null = null
     let adresse = ''
-    api.defaults.adapter = async (config) => {
-      adresse = config.url ?? ''
-      corps = JSON.parse(config.data)
-      return { data: { synchronisees: [ANCIENNE_VENTE.client_uuid], doublons: [], echecs: [] }, status: 200, statusText: '', headers: {}, config }
+    api.defaults.adapter = async (requete) => {
+      adresse = requete.url ?? ''
+      corps = JSON.parse(requete.data)
+      return { data: { synchronisees: [ANCIENNE_VENTE.client_uuid], doublons: [], echecs: [] }, status: 200, statusText: '', headers: {}, config: requete }
     }
 
     expect(await synchroniserVentesEnAttente()).toBe(1)

@@ -13,16 +13,16 @@ import Clients from './Clients'
 
 /** Fait échouer tous les appels avec ce statut (0 = coupure réseau). */
 function apiEnEchec(statut: number) {
-  api.defaults.adapter = async (config) => {
+  api.defaults.adapter = async (requete) => {
     const erreur: Error & { config?: unknown; response?: unknown } = new Error('échec simulé')
-    if (statut) erreur.response = { data: {}, status: statut, statusText: '', headers: {}, config }
-    erreur.config = config
+    if (statut) erreur.response = { data: {}, status: statut, statusText: '', headers: {}, config: requete }
+    erreur.config = requete
     throw erreur
   }
 }
 /** Fait répondre l'API avec cette liste. */
-function apiRepond(data: unknown) {
-  api.defaults.adapter = async (config) => ({ data, status: 200, statusText: '', headers: {}, config })
+function apiRepond(donnees: unknown) {
+  api.defaults.adapter = async (requete) => ({ data: donnees, status: 200, statusText: '', headers: {}, config: requete })
 }
 
 beforeEach(() => localStorage.setItem('samacommerce_jeton', 'jeton-valide'))

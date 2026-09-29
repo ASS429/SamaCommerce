@@ -173,8 +173,8 @@ export async function construireClasseur(classeur: Classeur): Promise<Blob> {
 
 /** Déclenche le téléchargement du classeur. */
 export async function exporterClasseur(nomFichier: string, classeur: Classeur) {
-  const blob = await construireClasseur(classeur)
-  const adresse = URL.createObjectURL(blob)
+  const archive = await construireClasseur(classeur)
+  const adresse = URL.createObjectURL(archive)
   const lien = document.createElement('a')
   lien.href = adresse
   lien.download = nomFichier.endsWith('.xlsx') ? nomFichier : `${nomFichier}.xlsx`

@@ -90,7 +90,7 @@ export default function Credits() {
       Clients.pourVente().then(definirListeClients).catch(() => {}) // la fiche vient peut-être d'être créée
       charger()
     }
-    catch (err: any) { alert(err?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
+    catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
   // Remboursement : on choisit le moyen de paiement dans une liste illustrée
   // (auparavant il fallait taper « especes / wave / orange » au clavier).

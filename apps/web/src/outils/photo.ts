@@ -44,7 +44,7 @@ async function decoder(fichier: File): Promise<{ l: number; h: number; dessiner:
   } catch (e) { URL.revokeObjectURL(adresse); throw e }
 }
 
-function versDataUrl(toile: HTMLCanvasElement, type: string, qualite: number): string {
+function encoder(toile: HTMLCanvasElement, type: string, qualite: number): string {
   return toile.toDataURL(type, qualite)
 }
 
@@ -70,12 +70,12 @@ export async function compresserPhoto(fichier: File, coteMax = PHOTO_COTE_MAX): 
     source.dessiner(ctx, l, h)
 
     // WebP quand le navigateur sait le produire (≈ 30 % plus léger), sinon JPEG.
-    const webpPossible = versDataUrl(toile, 'image/webp', 0.7).startsWith('data:image/webp')
+    const webpPossible = encoder(toile, 'image/webp', 0.7).startsWith('data:image/webp')
     const type = webpPossible ? 'image/webp' : 'image/jpeg'
 
     for (const qualite of [0.72, 0.6, 0.5, 0.4, 0.3]) {
-      const dataUrl = versDataUrl(toile, type, qualite)
-      if (dataUrl.length <= PHOTO_OCTETS_MAX) return dataUrl
+      const encodee = encoder(toile, type, qualite)
+      if (encodee.length <= PHOTO_OCTETS_MAX) return encodee
     }
     // Dernier recours : on rétrécit encore une fois.
     if (coteMax > 128) return compresserPhoto(fichier, 128)

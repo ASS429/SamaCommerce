@@ -21,8 +21,8 @@ export default function Premium({ surFermeture, surDemandeEnvoyee }: { surFermet
       alert('Demande envoyée ! Un administrateur validera votre passage en Premium.')
       surDemandeEnvoyee()
       surFermeture()
-    } catch (err: any) {
-      alert(err?.response?.data?.erreur || 'Erreur')
+    } catch (e: any) {
+      alert(e?.response?.data?.erreur || 'Erreur')
     } finally { definirEnvoi(false) }
   }
 

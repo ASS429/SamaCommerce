@@ -115,10 +115,10 @@ function memoriserSession(jeton: string, utilisateur: Utilisateur) {
   localStorage.setItem(CLE_UTILISATEUR, JSON.stringify(utilisateur))
 }
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((requete) => {
   const jeton = lireJeton()
-  if (jeton) config.headers.Authorization = `Bearer ${jeton}`
-  return config
+  if (jeton) requete.headers.Authorization = `Bearer ${jeton}`
+  return requete
 })
 
 /* Chemins d'AUTHENTIFICATION : un 401 y veut dire « identifiants refusés », pas

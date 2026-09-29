@@ -29,20 +29,20 @@ const ELEMENTS: Element[] = [
  * quatre, tout tient d'un seul écran et l'on vise directement le pictogramme —
  * comme sur l'écran d'accueil d'un téléphone. */
 export default function VoletPlus({ peutVoir, surFermeture, surNavigation }: { peutVoir: (e: Ecran) => boolean; surFermeture: () => void; surNavigation: (e: Ecran) => void }) {
-  const elements = ELEMENTS.filter((el) => !el.ecran || peutVoir(el.ecran))
+  const elements = ELEMENTS.filter((element) => !element.ecran || peutVoir(element.ecran))
   return (
     <div className="fenetre-calque" onClick={surFermeture} style={{ alignItems: 'flex-end' }}>
       <div className="fenetre-boite" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, borderRadius: '22px 22px 0 0' }}>
         <div className="fenetre-titre">{traduire('plus.titre')}</div>
         <div className="volet-grille">
-          {elements.map((el) => (
-            <button key={el.titre} className="volet-tuile"
-              disabled={el.bientot}
-              onClick={() => el.ecran && surNavigation(el.ecran)}
-              title={el.sousTitre}
-              style={{ opacity: el.bientot ? 0.5 : 1, cursor: el.bientot ? 'default' : 'pointer' }}>
-              <span className="volet-tuile-icone" style={{ background: el.fond }} aria-hidden="true">{el.bientot ? '🔒' : el.icone}</span>
-              <span className="volet-tuile-libelle">{el.ecran ? traduire('nav.' + el.ecran) : el.titre}</span>
+          {elements.map((element) => (
+            <button key={element.titre} className="volet-tuile"
+              disabled={element.bientot}
+              onClick={() => element.ecran && surNavigation(element.ecran)}
+              title={element.sousTitre}
+              style={{ opacity: element.bientot ? 0.5 : 1, cursor: element.bientot ? 'default' : 'pointer' }}>
+              <span className="volet-tuile-icone" style={{ background: element.fond }} aria-hidden="true">{element.bientot ? '🔒' : element.icone}</span>
+              <span className="volet-tuile-libelle">{element.ecran ? traduire('nav.' + element.ecran) : element.titre}</span>
             </button>
           ))}
         </div>

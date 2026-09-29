@@ -17,9 +17,11 @@ jobs:
         working-directory: apps/api
     steps:
       - uses: actions/checkout@v4
+      # Même version que l'image de production (php:8.4-apache) : le
+      # composer.lock exige PHP >= 8.4.1, la CI restait rouge en 8.3.
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: pdo, sqlite, mbstring
           coverage: none
       - name: Install dependencies

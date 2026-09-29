@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 /**
@@ -28,17 +29,24 @@ class ContratHistoriqueTest extends TestCase
 
     private const EMPREINTES = 'tests/Contrat/empreintes_avant_francisation.json';
 
-    /** Routes volontairement hors scénario, avec la raison. */
-    private const NON_JOUEES = [
-        // Le code reçu par e-mail est haché en base : impossible à connaître
-        // depuis un test boîte noire. Le cas d'échec est joué, le succès est
-        // couvert par MotDePasseOublieTest.
-    ];
+    /**
+     * Routes volontairement hors scénario, avec la raison. Aucune à ce jour.
+     * (Pour la réinitialisation du mot de passe, seul le refus est joué : le
+     * code reçu par e-mail est haché en base, le succès est couvert par
+     * MotDePasseOublieTest.)
+     */
+    private const NON_JOUEES = [];
 
     public function test_chaque_route_repond_comme_avant_la_francisation(): void
     {
-        // Réponses de production : sans trace de débogage (chemins de fichiers).
-        config(['app.debug' => false]);
+        // Réglages de PRODUCTION, imposés pour que les empreintes ne dépendent
+        // pas du poste : sans trace de débogage, langue de secours par défaut
+        // (elle fournit les libellés de pagination), adresse de base fixe
+        // (elle apparaît dans les liens de pagination).
+        config(['app.debug' => false, 'app.url' => 'http://localhost']);
+        URL::forceRootUrl('http://localhost');
+        $this->app->setLocale('fr');
+        $this->app['translator']->setFallback('en');
         $this->travelTo(Carbon::parse('2026-09-15 10:00:00'));
         User::create([
             'username' => 'admin@samacommerce.sn', 'password' => Hash::make('MotDePasseAdmin2026'),

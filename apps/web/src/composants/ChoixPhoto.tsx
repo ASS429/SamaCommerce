@@ -13,7 +13,8 @@
  */
 
 import { useRef, useState } from 'react'
-import { compresserPhoto, ErreurPhoto } from '../outils/photo'
+import { compresserPhoto, ErreurPhoto, MESSAGE_ILLISIBLE } from '../outils/photo'
+import { signalerErreur } from '../outils/rapporteurErreurs'
 import { bulle } from '../outils/bulles'
 import Avatar from './Avatar'
 
@@ -39,7 +40,24 @@ export default function ChoixPhoto({ valeur, surChangement, icone, nom, libelle 
       surChangement(await compresserPhoto(fichier))
       bulle('Photo ajoutée 📸', 'succes')
     } catch (e) {
-      bulle(e instanceof ErreurPhoto ? e.message : 'Photo illisible', 'erreur')
+      const erreurPhoto = e instanceof ErreurPhoto
+      // Message long (il dit quoi faire) : laissé à l'écran le temps de le lire.
+      bulle(erreurPhoto ? e.message : MESSAGE_ILLISIBLE, 'erreur', { duree: 8000 })
+      /* La cause EXACTE part au serveur. Le message « Photo illisible » masquait
+         tout : ce défaut a duré des semaines sans qu'on sache pourquoi. Aucune
+         donnée personnelle : ni l'image ni son nom, seulement son format. */
+      if (!erreurPhoto || e.details.length) {
+        signalerErreur({
+          message: `Photo non lue : ${fichier.type || 'type inconnu'} · ${Math.round(fichier.size / 1024)} Ko`,
+          pile: [
+            ...(erreurPhoto ? e.details : [String((e as Error)?.stack || e)]),
+            `extension : ${(fichier.name.split('.').pop() || '').toLowerCase()}`,
+            `navigateur : ${navigator.userAgent}`,
+          ].join('\n'),
+          url: location.pathname,
+          type: 'erreur',
+        })
+      }
     } finally {
       definirOccupe(false)
       if (champ) champ.value = '' // permet de reprendre le même fichier

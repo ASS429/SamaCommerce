@@ -23,25 +23,82 @@ export const PHOTO_OCTETS_MAX = 24 * 1024
 /** Garde-fou serveur : au-delà, la requête est rejetée (cf. validation API). */
 export const PHOTO_LIMITE_DURE = 60 * 1024
 
-export class ErreurPhoto extends Error {}
-
-/** Charge le fichier en image en respectant l'orientation EXIF du téléphone. */
-async function decoder(fichier: File): Promise<{ l: number; h: number; dessiner: (ctx: CanvasRenderingContext2D, l: number, h: number) => void; liberer: () => void }> {
-  if (typeof createImageBitmap === 'function') {
-    // imageOrientation : sans elle, les photos prises en portrait arrivent couchées.
-    const image = await createImageBitmap(fichier, { imageOrientation: 'from-image' })
-    return { l: image.width, h: image.height, dessiner: (ctx, l, h) => ctx.drawImage(image, 0, 0, l, h), liberer: () => image.close() }
+/**
+ * Échec compréhensible par le commerçant : `message` dit quoi faire.
+ * `details` garde les causes techniques, pour le signalement au serveur.
+ */
+export class ErreurPhoto extends Error {
+  details: string[]
+  constructor(message: string, details: string[] = []) {
+    super(message)
+    this.details = details
   }
+}
+
+/** Image prête à être dessinée, quelle que soit la manière dont on l'a lue. */
+type ImageLue = { l: number; h: number; dessiner: (ctx: CanvasRenderingContext2D, l: number, h: number) => void; liberer: () => void }
+
+/** Photo HEIC/HEIF (iPhone, certains Samsung) : Safari la lit, Chrome non. */
+export function estHeic(fichier: Pick<File, 'type' | 'name'>): boolean {
+  return /hei[cf]/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name)
+}
+
+export const MESSAGE_HEIC = '📷 Cette photo est au format HEIC, que ce téléphone ne sait pas lire. '
+  + 'Utilisez « Prendre une photo », ou réglez l\'appareil photo sur JPEG (« le plus compatible »).'
+export const MESSAGE_ILLISIBLE = '📷 Cette photo n\'a pas pu être lue. Essayez « Prendre une photo », ou choisissez une autre image.'
+
+async function lireAvecBitmap(fichier: File, options?: ImageBitmapOptions): Promise<ImageLue> {
+  const image = options ? await createImageBitmap(fichier, options) : await createImageBitmap(fichier)
+  return { l: image.width, h: image.height, dessiner: (ctx, l, h) => ctx.drawImage(image, 0, 0, l, h), liberer: () => image.close() }
+}
+
+async function lireAvecElementImage(fichier: File): Promise<ImageLue> {
   const adresse = URL.createObjectURL(fichier)
   try {
     const image = await new Promise<HTMLImageElement>((resoudre, rejeter) => {
       const element = new Image()
       element.onload = () => resoudre(element)
-      element.onerror = () => rejeter(new ErreurPhoto('Image illisible'))
+      element.onerror = () => rejeter(new Error('le navigateur ne décode pas ce fichier'))
       element.src = adresse
     })
+    if (!image.naturalWidth || !image.naturalHeight) throw new Error('image vide')
     return { l: image.naturalWidth, h: image.naturalHeight, dessiner: (ctx, l, h) => ctx.drawImage(image, 0, 0, l, h), liberer: () => URL.revokeObjectURL(adresse) }
   } catch (e) { URL.revokeObjectURL(adresse); throw e }
+}
+
+/**
+ * Lit la photo en essayant trois méthodes, de la meilleure à la plus tolérante.
+ *
+ * POURQUOI. Une seule méthode était tentée, avec l'option
+ * `imageOrientation: 'from-image'`. Les navigateurs qui ne connaissent pas
+ * cette valeur (Safari avant iOS 17, Chrome avant la version 110) REFUSENT
+ * alors tout l'appel : sur ces téléphones, chaque photo échouait, et
+ * l'utilisateur ne voyait que « Photo illisible ».
+ *
+ *   1. createImageBitmap avec l'orientation EXIF (portrait remis droit) ;
+ *   2. élément <img> : le plus ancien, qui applique lui aussi l'orientation ;
+ *   3. createImageBitmap sans option, en dernier recours.
+ *
+ * @throws ErreurPhoto avec un message qui dit quoi faire, et les causes
+ *         techniques de chaque tentative dans `details`.
+ */
+export async function lirePhoto(fichier: File): Promise<ImageLue> {
+  const tentatives: [string, () => Promise<ImageLue>][] = []
+  const bitmap = typeof createImageBitmap === 'function'
+  if (bitmap) tentatives.push(['bitmap orienté', () => lireAvecBitmap(fichier, { imageOrientation: 'from-image' })])
+  tentatives.push(['élément image', () => lireAvecElementImage(fichier)])
+  if (bitmap) tentatives.push(['bitmap simple', () => lireAvecBitmap(fichier)])
+
+  const echecs: string[] = []
+  for (const [nom, tenter] of tentatives) {
+    try {
+      return await tenter()
+    } catch (e) {
+      const erreur = e as { name?: string; message?: string }
+      echecs.push(`${nom} : ${erreur?.name || 'Erreur'} ${erreur?.message || String(e)}`)
+    }
+  }
+  throw new ErreurPhoto(estHeic(fichier) ? MESSAGE_HEIC : MESSAGE_ILLISIBLE, echecs)
 }
 
 function encoder(toile: HTMLCanvasElement, type: string, qualite: number): string {
@@ -53,9 +110,11 @@ function encoder(toile: HTMLCanvasElement, type: string, qualite: number): strin
  * @throws ErreurPhoto si le fichier n'est pas une image ou reste trop lourd.
  */
 export async function compresserPhoto(fichier: File, coteMax = PHOTO_COTE_MAX): Promise<string> {
-  if (!fichier.type.startsWith('image/')) throw new ErreurPhoto('Ce fichier n\'est pas une image')
+  // Type VIDE accepté : certains sélecteurs Android (gestionnaire de fichiers,
+  // Drive) n'en donnent pas pour une vraie photo. Le décodage tranchera.
+  if (fichier.type && !fichier.type.startsWith('image/')) throw new ErreurPhoto('Ce fichier n\'est pas une image')
 
-  const source = await decoder(fichier)
+  const source = await lirePhoto(fichier)
   try {
     const echelle = Math.min(1, coteMax / Math.max(source.l, source.h))
     const l = Math.max(1, Math.round(source.l * echelle))

@@ -1,0 +1,2510 @@
+[
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/activity",
+        "action": "App\\Http\\Controllers\\ActivityController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-settings",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/admin-settings",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PATCH",
+        "uri": "api/admin-settings/twofa",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@toggle2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/accounts",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@accounts",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/accounts/{method}",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@accountDetails",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/overview",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@overview",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/revenus",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@revenus",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/revenus/evolution",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@evolution",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-stats/transactions",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@transactions",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-transfers",
+        "action": "App\\Http\\Controllers\\Admin\\TransferController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/admin-transfers",
+        "action": "App\\Http\\Controllers\\Admin\\TransferController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/admin-withdrawals",
+        "action": "App\\Http\\Controllers\\Admin\\WithdrawalController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/admin-withdrawals",
+        "action": "App\\Http\\Controllers\\Admin\\WithdrawalController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/2fa",
+        "action": "App\\Http\\Controllers\\AuthController@toggle2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/forgot-password",
+        "action": "App\\Http\\Controllers\\AuthController@forgotPassword",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/login",
+        "action": "App\\Http\\Controllers\\AuthController@login",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/logout",
+        "action": "App\\Http\\Controllers\\AuthController@logout",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/logout-all",
+        "action": "App\\Http\\Controllers\\AuthController@logoutAll",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/auth/me",
+        "action": "App\\Http\\Controllers\\AuthController@me",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/preferences",
+        "action": "App\\Http\\Controllers\\AuthController@updatePreferences",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/profile",
+        "action": "App\\Http\\Controllers\\AuthController@updateProfile",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/register",
+        "action": "App\\Http\\Controllers\\AuthController@register",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/reset-password",
+        "action": "App\\Http\\Controllers\\AuthController@resetPassword",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/upgrade",
+        "action": "App\\Http\\Controllers\\AuthController@upgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/upgrade/{id}/approve",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@approveUpgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/upgrade/{id}/reject",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@rejectUpgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/auth/users",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/users",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/auth/users/{id}",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/users/{id}/activate",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@activate",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/auth/users/{id}/block",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@block",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/users/{id}/reminder",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@reminder",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/auth/verify-2fa",
+        "action": "App\\Http\\Controllers\\AuthController@verify2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/boutiques",
+        "action": "App\\Http\\Controllers\\BoutiqueController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/boutiques",
+        "action": "App\\Http\\Controllers\\BoutiqueController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/boutiques/dashboard",
+        "action": "App\\Http\\Controllers\\BoutiqueController@dashboard",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/boutiques/{id}",
+        "action": "App\\Http\\Controllers\\BoutiqueController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/boutiques/{id}",
+        "action": "App\\Http\\Controllers\\BoutiqueController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/boutiques/{id}/stats",
+        "action": "App\\Http\\Controllers\\BoutiqueController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/boutiques/{id}/switch",
+        "action": "App\\Http\\Controllers\\BoutiqueController@switch",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/caisse/close",
+        "action": "App\\Http\\Controllers\\CaisseController@close",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/caisse/history",
+        "action": "App\\Http\\Controllers\\CaisseController@history",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/caisse/today",
+        "action": "App\\Http\\Controllers\\CaisseController@today",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/caisse/weekly",
+        "action": "App\\Http\\Controllers\\CaisseController@weekly",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/categories",
+        "action": "App\\Http\\Controllers\\CategoryController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories|vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/categories",
+        "action": "App\\Http\\Controllers\\CategoryController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/categories/{id}",
+        "action": "App\\Http\\Controllers\\CategoryController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/categories/{id}",
+        "action": "App\\Http\\Controllers\\CategoryController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/client-errors",
+        "action": "App\\Http\\Controllers\\ClientErrorController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/clients",
+        "action": "App\\Http\\Controllers\\ClientController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/clients",
+        "action": "App\\Http\\Controllers\\ClientController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/clients/for-sale",
+        "action": "App\\Http\\Controllers\\ClientController@forSale",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/clients/{id}/stats",
+        "action": "App\\Http\\Controllers\\ClientController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/commandes",
+        "action": "App\\Http\\Controllers\\CommandeController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/commandes",
+        "action": "App\\Http\\Controllers\\CommandeController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "PATCH",
+        "uri": "api/commandes/{id}/recevoir",
+        "action": "App\\Http\\Controllers\\CommandeController@recevoir",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/fournisseurs",
+        "action": "App\\Http\\Controllers\\FournisseurController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/fournisseurs",
+        "action": "App\\Http\\Controllers\\FournisseurController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/fournisseurs/{id}",
+        "action": "App\\Http\\Controllers\\FournisseurController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/fournisseurs/{id}",
+        "action": "App\\Http\\Controllers\\FournisseurController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/fournisseurs/{id}/reappro-message",
+        "action": "App\\Http\\Controllers\\FournisseurController@reapproMessage",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/health",
+        "action": "App\\Http\\Controllers\\HealthController@index",
+        "intergiciels": [
+            "api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/ia/credit-score",
+        "action": "App\\Http\\Controllers\\IaController@creditScore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:ia"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/ia/reappro",
+        "action": "App\\Http\\Controllers\\IaController@reappro",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:ia"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/livraisons",
+        "action": "App\\Http\\Controllers\\LivraisonController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/livraisons",
+        "action": "App\\Http\\Controllers\\LivraisonController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/members",
+        "action": "App\\Http\\Controllers\\MemberController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/members/accept",
+        "action": "App\\Http\\Controllers\\MemberController@accept",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/members/invite",
+        "action": "App\\Http\\Controllers\\MemberController@invite",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/members/invite/{token}",
+        "action": "App\\Http\\Controllers\\MemberController@preview",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/members/my-boutique",
+        "action": "App\\Http\\Controllers\\MemberController@myBoutique",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/members/{id}",
+        "action": "App\\Http\\Controllers\\MemberController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/members/{id}",
+        "action": "App\\Http\\Controllers\\MemberController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/products",
+        "action": "App\\Http\\Controllers\\ProductController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock|vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/products",
+        "action": "App\\Http\\Controllers\\ProductController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/products/trash",
+        "action": "App\\Http\\Controllers\\ProductController@trash",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/products/{id}/restore",
+        "action": "App\\Http\\Controllers\\ProductController@restore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/returns",
+        "action": "App\\Http\\Controllers\\ReturnController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/returns",
+        "action": "App\\Http\\Controllers\\ReturnController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/returns/stats",
+        "action": "App\\Http\\Controllers\\ReturnController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/sales",
+        "action": "App\\Http\\Controllers\\SaleController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/sales",
+        "action": "App\\Http\\Controllers\\SaleController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/sales/sync",
+        "action": "App\\Http\\Controllers\\SaleController@sync",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/sales/trash",
+        "action": "App\\Http\\Controllers\\SaleController@trash",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/sales/{id}",
+        "action": "App\\Http\\Controllers\\SaleController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/sales/{id}",
+        "action": "App\\Http\\Controllers\\SaleController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/sales/{id}/restore",
+        "action": "App\\Http\\Controllers\\SaleController@restore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/marchandage",
+        "action": "App\\Http\\Controllers\\StatsController@marchandage",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/marge-categorie",
+        "action": "App\\Http\\Controllers\\StatsController@margeParCategorie",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/meilleurs-clients",
+        "action": "App\\Http\\Controllers\\StatsController@meilleursClients",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/paiements",
+        "action": "App\\Http\\Controllers\\StatsController@paiements",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/resume-jour",
+        "action": "App\\Http\\Controllers\\StatsController@resumeJour",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock|vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/rotation-stock",
+        "action": "App\\Http\\Controllers\\StatsController@rotationStock",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/stock-faible",
+        "action": "App\\Http\\Controllers\\StatsController@stockFaible",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/top-produits",
+        "action": "App\\Http\\Controllers\\StatsController@topProduits",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/ventes-par-categorie",
+        "action": "App\\Http\\Controllers\\StatsController@ventesParCategorie",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/stats/ventes-par-jour",
+        "action": "App\\Http\\Controllers\\StatsController@ventesParJour",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/tontines",
+        "action": "App\\Http\\Controllers\\TontineController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/tontines",
+        "action": "App\\Http\\Controllers\\TontineController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/activity",
+        "action": "App\\Http\\Controllers\\ActivityController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-settings",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/admin-settings",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PATCH",
+        "uri": "api/v1/admin-settings/twofa",
+        "action": "App\\Http\\Controllers\\Admin\\SettingController@toggle2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/accounts",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@accounts",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/accounts/{method}",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@accountDetails",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/overview",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@overview",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/revenus",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@revenus",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/revenus/evolution",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@evolution",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-stats/transactions",
+        "action": "App\\Http\\Controllers\\Admin\\AdminStatsController@transactions",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-transfers",
+        "action": "App\\Http\\Controllers\\Admin\\TransferController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/admin-transfers",
+        "action": "App\\Http\\Controllers\\Admin\\TransferController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/admin-withdrawals",
+        "action": "App\\Http\\Controllers\\Admin\\WithdrawalController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/admin-withdrawals",
+        "action": "App\\Http\\Controllers\\Admin\\WithdrawalController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/2fa",
+        "action": "App\\Http\\Controllers\\AuthController@toggle2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/forgot-password",
+        "action": "App\\Http\\Controllers\\AuthController@forgotPassword",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/login",
+        "action": "App\\Http\\Controllers\\AuthController@login",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/logout",
+        "action": "App\\Http\\Controllers\\AuthController@logout",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/logout-all",
+        "action": "App\\Http\\Controllers\\AuthController@logoutAll",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/auth/me",
+        "action": "App\\Http\\Controllers\\AuthController@me",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/preferences",
+        "action": "App\\Http\\Controllers\\AuthController@updatePreferences",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/profile",
+        "action": "App\\Http\\Controllers\\AuthController@updateProfile",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/register",
+        "action": "App\\Http\\Controllers\\AuthController@register",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/reset-password",
+        "action": "App\\Http\\Controllers\\AuthController@resetPassword",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/upgrade",
+        "action": "App\\Http\\Controllers\\AuthController@upgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/upgrade/{id}/approve",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@approveUpgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/upgrade/{id}/reject",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@rejectUpgrade",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/auth/users",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/users",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/auth/users/{id}",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/users/{id}/activate",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@activate",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "PUT",
+        "uri": "api/v1/auth/users/{id}/block",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@block",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/users/{id}/reminder",
+        "action": "App\\Http\\Controllers\\Admin\\AdminUserController@reminder",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\EnsureAdmin"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/auth/verify-2fa",
+        "action": "App\\Http\\Controllers\\AuthController@verify2fa",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/boutiques",
+        "action": "App\\Http\\Controllers\\BoutiqueController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/boutiques",
+        "action": "App\\Http\\Controllers\\BoutiqueController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/boutiques/dashboard",
+        "action": "App\\Http\\Controllers\\BoutiqueController@dashboard",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/boutiques/{id}",
+        "action": "App\\Http\\Controllers\\BoutiqueController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/boutiques/{id}",
+        "action": "App\\Http\\Controllers\\BoutiqueController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/boutiques/{id}/stats",
+        "action": "App\\Http\\Controllers\\BoutiqueController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/boutiques/{id}/switch",
+        "action": "App\\Http\\Controllers\\BoutiqueController@switch",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/caisse/close",
+        "action": "App\\Http\\Controllers\\CaisseController@close",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/caisse/history",
+        "action": "App\\Http\\Controllers\\CaisseController@history",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/caisse/today",
+        "action": "App\\Http\\Controllers\\CaisseController@today",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/caisse/weekly",
+        "action": "App\\Http\\Controllers\\CaisseController@weekly",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:caisse"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/categories",
+        "action": "App\\Http\\Controllers\\CategoryController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories|vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/categories",
+        "action": "App\\Http\\Controllers\\CategoryController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/categories/{id}",
+        "action": "App\\Http\\Controllers\\CategoryController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/categories/{id}",
+        "action": "App\\Http\\Controllers\\CategoryController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:categories"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/client-errors",
+        "action": "App\\Http\\Controllers\\ClientErrorController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/clients",
+        "action": "App\\Http\\Controllers\\ClientController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/clients",
+        "action": "App\\Http\\Controllers\\ClientController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/clients/for-sale",
+        "action": "App\\Http\\Controllers\\ClientController@forSale",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/clients/{id}",
+        "action": "App\\Http\\Controllers\\ClientController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/clients/{id}/stats",
+        "action": "App\\Http\\Controllers\\ClientController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:clients"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/commandes",
+        "action": "App\\Http\\Controllers\\CommandeController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/commandes",
+        "action": "App\\Http\\Controllers\\CommandeController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/commandes/{id}",
+        "action": "App\\Http\\Controllers\\CommandeController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "PATCH",
+        "uri": "api/v1/commandes/{id}/recevoir",
+        "action": "App\\Http\\Controllers\\CommandeController@recevoir",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:commandes"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/fournisseurs",
+        "action": "App\\Http\\Controllers\\FournisseurController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/fournisseurs",
+        "action": "App\\Http\\Controllers\\FournisseurController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/fournisseurs/{id}",
+        "action": "App\\Http\\Controllers\\FournisseurController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/fournisseurs/{id}",
+        "action": "App\\Http\\Controllers\\FournisseurController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/fournisseurs/{id}/reappro-message",
+        "action": "App\\Http\\Controllers\\FournisseurController@reapproMessage",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:fournisseurs"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/health",
+        "action": "App\\Http\\Controllers\\HealthController@index",
+        "intergiciels": [
+            "api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/ia/credit-score",
+        "action": "App\\Http\\Controllers\\IaController@creditScore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:ia"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/ia/reappro",
+        "action": "App\\Http\\Controllers\\IaController@reappro",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:ia"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/livraisons",
+        "action": "App\\Http\\Controllers\\LivraisonController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/livraisons",
+        "action": "App\\Http\\Controllers\\LivraisonController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/livraisons/{id}",
+        "action": "App\\Http\\Controllers\\LivraisonController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:livraisons"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/members",
+        "action": "App\\Http\\Controllers\\MemberController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/members/accept",
+        "action": "App\\Http\\Controllers\\MemberController@accept",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/members/invite",
+        "action": "App\\Http\\Controllers\\MemberController@invite",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/members/invite/{token}",
+        "action": "App\\Http\\Controllers\\MemberController@preview",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/members/my-boutique",
+        "action": "App\\Http\\Controllers\\MemberController@myBoutique",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/members/{id}",
+        "action": "App\\Http\\Controllers\\MemberController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/members/{id}",
+        "action": "App\\Http\\Controllers\\MemberController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/products",
+        "action": "App\\Http\\Controllers\\ProductController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock|vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/products",
+        "action": "App\\Http\\Controllers\\ProductController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/products/trash",
+        "action": "App\\Http\\Controllers\\ProductController@trash",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@show",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/products/{id}",
+        "action": "App\\Http\\Controllers\\ProductController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/products/{id}/restore",
+        "action": "App\\Http\\Controllers\\ProductController@restore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/returns",
+        "action": "App\\Http\\Controllers\\ReturnController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/returns",
+        "action": "App\\Http\\Controllers\\ReturnController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/returns/stats",
+        "action": "App\\Http\\Controllers\\ReturnController@stats",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:credits"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/sales",
+        "action": "App\\Http\\Controllers\\SaleController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/sales",
+        "action": "App\\Http\\Controllers\\SaleController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/sales/sync",
+        "action": "App\\Http\\Controllers\\SaleController@sync",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/sales/trash",
+        "action": "App\\Http\\Controllers\\SaleController@trash",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "DELETE",
+        "uri": "api/v1/sales/{id}",
+        "action": "App\\Http\\Controllers\\SaleController@destroy",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "PUT|PATCH",
+        "uri": "api/v1/sales/{id}",
+        "action": "App\\Http\\Controllers\\SaleController@update",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/sales/{id}/restore",
+        "action": "App\\Http\\Controllers\\SaleController@restore",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/marchandage",
+        "action": "App\\Http\\Controllers\\StatsController@marchandage",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/marge-categorie",
+        "action": "App\\Http\\Controllers\\StatsController@margeParCategorie",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/meilleurs-clients",
+        "action": "App\\Http\\Controllers\\StatsController@meilleursClients",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/paiements",
+        "action": "App\\Http\\Controllers\\StatsController@paiements",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/resume-jour",
+        "action": "App\\Http\\Controllers\\StatsController@resumeJour",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:stock|vente"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/rotation-stock",
+        "action": "App\\Http\\Controllers\\StatsController@rotationStock",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/stock-faible",
+        "action": "App\\Http\\Controllers\\StatsController@stockFaible",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/top-produits",
+        "action": "App\\Http\\Controllers\\StatsController@topProduits",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/ventes-par-categorie",
+        "action": "App\\Http\\Controllers\\StatsController@ventesParCategorie",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/stats/ventes-par-jour",
+        "action": "App\\Http\\Controllers\\StatsController@ventesParJour",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api",
+            "App\\Http\\Middleware\\EnsurePermission:rapports"
+        ]
+    },
+    {
+        "methodes": "GET|HEAD",
+        "uri": "api/v1/tontines",
+        "action": "App\\Http\\Controllers\\TontineController@index",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    },
+    {
+        "methodes": "POST",
+        "uri": "api/v1/tontines",
+        "action": "App\\Http\\Controllers\\TontineController@store",
+        "intergiciels": [
+            "api",
+            "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+            "App\\Http\\Middleware\\ResolveTenant",
+            "Illuminate\\Routing\\Middleware\\ThrottleRequests:api"
+        ]
+    }
+]

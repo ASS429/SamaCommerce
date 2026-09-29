@@ -1,0 +1,4393 @@
+[
+    {
+        "nom": "santé",
+        "requete": "GET /api/health",
+        "statut": 200,
+        "reponse": {
+            "status": "degraded",
+            "version": "3.1.0",
+            "stats_cache": false,
+            "time": "2026-09-15T10:00:01+00:00",
+            "services": {
+                "database": {
+                    "ok": true,
+                    "latency_ms": "<N>"
+                },
+                "ia": {
+                    "ok": false,
+                    "latency_ms": "<N>"
+                }
+            }
+        }
+    },
+    {
+        "nom": "inscription propriétaire",
+        "requete": "POST /api/auth/register",
+        "statut": 201,
+        "reponse": {
+            "message": "Compte créé avec succès",
+            "user": {
+                "id": 2,
+                "username": "awa@boutique.sn",
+                "company_name": "Boutique Awa",
+                "phone": "77 111 22 33",
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:00:02.000000Z",
+                "current_boutique_id": 1,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:00:02+00:00"
+        }
+    },
+    {
+        "nom": "inscription refusée (mot de passe faible)",
+        "requete": "POST /api/auth/register",
+        "statut": 422,
+        "reponse": {
+            "message": "Le champ mot de passe doit contenir au moins 8 caractères. (and 1 more error)",
+            "errors": {
+                "password": [
+                    "Le champ mot de passe doit contenir au moins 8 caractères.",
+                    "Le mot de passe doit contenir au moins un chiffre."
+                ]
+            }
+        }
+    },
+    {
+        "nom": "connexion refusée",
+        "requete": "POST /api/auth/login",
+        "statut": 422,
+        "reponse": {
+            "message": "Identifiants incorrects.",
+            "errors": {
+                "username": [
+                    "Identifiants incorrects."
+                ]
+            }
+        }
+    },
+    {
+        "nom": "connexion second appareil",
+        "requete": "POST /api/auth/login",
+        "statut": 200,
+        "reponse": {
+            "user": {
+                "id": 2,
+                "username": "awa@boutique.sn",
+                "company_name": "Boutique Awa",
+                "phone": "77 111 22 33",
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:00:02.000000Z",
+                "current_boutique_id": 1,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null,
+                "is_employee": false,
+                "permissions": null
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:00:05+00:00"
+        }
+    },
+    {
+        "nom": "non connecté",
+        "requete": "GET /api/products",
+        "statut": 401,
+        "reponse": {
+            "message": "Unauthenticated."
+        }
+    },
+    {
+        "nom": "moi",
+        "requete": "GET /api/auth/me",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "username": "awa@boutique.sn",
+            "company_name": "Boutique Awa",
+            "phone": "77 111 22 33",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Free",
+            "payment_status": "À jour",
+            "payment_method": null,
+            "expiration": null,
+            "amount": "0.00",
+            "upgrade_status": "validé",
+            "created_at": "2026-09-15T10:00:02.000000Z",
+            "updated_at": "2026-09-15T10:00:02.000000Z",
+            "current_boutique_id": 1,
+            "twofa_enabled": false,
+            "photo": null,
+            "preferences": [],
+            "is_employee": false,
+            "permissions": null,
+            "boutiques": [
+                {
+                    "id": 1,
+                    "owner_id": 2,
+                    "name": "Boutique Awa",
+                    "phone": null,
+                    "address": null,
+                    "emoji": "🏪",
+                    "is_primary": true,
+                    "created_at": "2026-09-15T10:00:02.000000Z",
+                    "updated_at": "2026-09-15T10:00:02.000000Z",
+                    "photo": null
+                }
+            ]
+        }
+    },
+    {
+        "nom": "profil",
+        "requete": "PUT /api/auth/profile",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "username": "awa@boutique.sn",
+            "company_name": "Boutique Awa Ndiaye",
+            "phone": "77 111 22 44",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Free",
+            "payment_status": "À jour",
+            "payment_method": null,
+            "expiration": null,
+            "amount": "0.00",
+            "upgrade_status": "validé",
+            "created_at": "2026-09-15T10:00:02.000000Z",
+            "updated_at": "2026-09-15T10:00:08.000000Z",
+            "current_boutique_id": 1,
+            "twofa_enabled": false,
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "preferences": null
+        }
+    },
+    {
+        "nom": "préférences",
+        "requete": "PUT /api/auth/preferences",
+        "statut": 200,
+        "reponse": {
+            "preferences": {
+                "auto_print": true,
+                "modules_off": [
+                    "returns",
+                    "ia"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "préférences fusionnées",
+        "requete": "PUT /api/auth/preferences",
+        "statut": 200,
+        "reponse": {
+            "preferences": {
+                "auto_print": false,
+                "modules_off": [
+                    "returns",
+                    "ia"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "passage premium",
+        "requete": "PUT /api/auth/upgrade",
+        "statut": 200,
+        "reponse": {
+            "message": "Demande d’upgrade enregistrée",
+            "user": {
+                "id": 2,
+                "username": "awa@boutique.sn",
+                "company_name": "Boutique Awa Ndiaye",
+                "phone": "77 111 22 44",
+                "role": "user",
+                "status": "Actif",
+                "plan": "Premium",
+                "payment_status": "À jour",
+                "payment_method": "wave",
+                "expiration": "2026-10-15T00:00:00.000000Z",
+                "amount": "5000.00",
+                "upgrade_status": "en attente",
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:00:11.000000Z",
+                "current_boutique_id": 1,
+                "twofa_enabled": false,
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "preferences": {
+                    "auto_print": false,
+                    "modules_off": [
+                        "returns",
+                        "ia"
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "nom": "double facteur activé",
+        "requete": "PUT /api/auth/2fa",
+        "statut": 200,
+        "reponse": {
+            "twofa_enabled": true
+        }
+    },
+    {
+        "nom": "connexion avec double facteur",
+        "requete": "POST /api/auth/login",
+        "statut": 200,
+        "reponse": {
+            "twofa_required": true,
+            "username": "awa@boutique.sn",
+            "dev_code": null
+        }
+    },
+    {
+        "nom": "code double facteur refusé",
+        "requete": "POST /api/auth/verify-2fa",
+        "statut": 422,
+        "reponse": {
+            "message": "Code invalide",
+            "errors": {
+                "code": [
+                    "Code invalide"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "double facteur désactivé",
+        "requete": "PUT /api/auth/2fa",
+        "statut": 200,
+        "reponse": {
+            "twofa_enabled": false
+        }
+    },
+    {
+        "nom": "mot de passe oublié (inconnu)",
+        "requete": "POST /api/auth/forgot-password",
+        "statut": 200,
+        "reponse": {
+            "message": "Si ce compte existe, un code a été envoyé."
+        }
+    },
+    {
+        "nom": "mot de passe oublié",
+        "requete": "POST /api/auth/forgot-password",
+        "statut": 200,
+        "reponse": {
+            "message": "Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.",
+            "envoye": true,
+            "dev_code": null
+        }
+    },
+    {
+        "nom": "réinitialisation refusée",
+        "requete": "POST /api/auth/reset-password",
+        "statut": 422,
+        "reponse": {
+            "message": "Code invalide",
+            "errors": {
+                "code": [
+                    "Code invalide"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "erreur navigateur",
+        "requete": "POST /api/client-errors",
+        "statut": 204,
+        "reponse": null
+    },
+    {
+        "nom": "catégorie 1",
+        "requete": "POST /api/categories",
+        "statut": 201,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "name": "Alimentation",
+            "emoji": "🍞",
+            "couleur": "#F59E0B",
+            "negociable": false,
+            "created_at": "2026-09-15T10:01:20.000000Z",
+            "updated_at": "2026-09-15T10:01:20.000000Z"
+        }
+    },
+    {
+        "nom": "catégorie 2",
+        "requete": "POST /api/categories",
+        "statut": 201,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "name": "Boissons",
+            "emoji": "🥤",
+            "couleur": null,
+            "negociable": true,
+            "created_at": "2026-09-15T10:01:21.000000Z",
+            "updated_at": "2026-09-15T10:01:21.000000Z"
+        }
+    },
+    {
+        "nom": "catégorie 3",
+        "requete": "POST /api/categories",
+        "statut": 201,
+        "reponse": {
+            "id": 3,
+            "user_id": 2,
+            "name": "Vide",
+            "emoji": "🏷️",
+            "couleur": null,
+            "negociable": false,
+            "created_at": "2026-09-15T10:01:22.000000Z",
+            "updated_at": "2026-09-15T10:01:22.000000Z"
+        }
+    },
+    {
+        "nom": "catégories",
+        "requete": "GET /api/categories",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "user_id": 2,
+                "name": "Alimentation",
+                "emoji": "🍞",
+                "couleur": "#F59E0B",
+                "negociable": false,
+                "created_at": "2026-09-15T10:01:20.000000Z",
+                "updated_at": "2026-09-15T10:01:20.000000Z"
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "name": "Boissons",
+                "emoji": "🥤",
+                "couleur": null,
+                "negociable": true,
+                "created_at": "2026-09-15T10:01:21.000000Z",
+                "updated_at": "2026-09-15T10:01:21.000000Z"
+            },
+            {
+                "id": 3,
+                "user_id": 2,
+                "name": "Vide",
+                "emoji": "🏷️",
+                "couleur": null,
+                "negociable": false,
+                "created_at": "2026-09-15T10:01:22.000000Z",
+                "updated_at": "2026-09-15T10:01:22.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "catégorie modifiée",
+        "requete": "PATCH /api/categories/{cat2}",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "name": "Boissons",
+            "emoji": "🥤",
+            "couleur": "#10B981",
+            "negociable": true,
+            "created_at": "2026-09-15T10:01:21.000000Z",
+            "updated_at": "2026-09-15T10:01:24.000000Z"
+        }
+    },
+    {
+        "nom": "produit au poids avec conditionnement",
+        "requete": "POST /api/products",
+        "statut": 201,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Riz parfumé",
+            "category_id": 1,
+            "scent": "Riz brisé",
+            "barcode": "6001234567890",
+            "price": 600,
+            "price_achat": 450,
+            "stock": 100000,
+            "unite_base": "g",
+            "prix_min": 550,
+            "negociable": null,
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "units": [
+                {
+                    "id": 1,
+                    "product_id": 1,
+                    "libelle": "Sac 50 kg",
+                    "facteur": 50000,
+                    "prix": 27500
+                }
+            ],
+            "created_at": "2026-09-15T10:01:25.000000Z",
+            "updated_at": "2026-09-15T10:01:25.000000Z"
+        }
+    },
+    {
+        "nom": "produit 2",
+        "requete": "POST /api/products",
+        "statut": 201,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Jus bissap",
+            "category_id": 2,
+            "scent": null,
+            "barcode": null,
+            "price": 200,
+            "price_achat": 100,
+            "stock": 50,
+            "unite_base": "piece",
+            "prix_min": null,
+            "negociable": null,
+            "photo": null,
+            "units": [],
+            "created_at": "2026-09-15T10:01:26.000000Z",
+            "updated_at": "2026-09-15T10:01:26.000000Z"
+        }
+    },
+    {
+        "nom": "produit 3",
+        "requete": "POST /api/products",
+        "statut": 201,
+        "reponse": {
+            "id": 3,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Savon",
+            "category_id": null,
+            "scent": null,
+            "barcode": null,
+            "price": 350,
+            "price_achat": 250,
+            "stock": 3,
+            "unite_base": "piece",
+            "prix_min": null,
+            "negociable": false,
+            "photo": null,
+            "units": [],
+            "created_at": "2026-09-15T10:01:27.000000Z",
+            "updated_at": "2026-09-15T10:01:27.000000Z"
+        }
+    },
+    {
+        "nom": "produit 4",
+        "requete": "POST /api/products",
+        "statut": 201,
+        "reponse": {
+            "id": 4,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Jetable",
+            "category_id": null,
+            "scent": null,
+            "barcode": null,
+            "price": 100,
+            "price_achat": 0,
+            "stock": 1,
+            "unite_base": "piece",
+            "prix_min": null,
+            "negociable": null,
+            "photo": null,
+            "units": [],
+            "created_at": "2026-09-15T10:01:28.000000Z",
+            "updated_at": "2026-09-15T10:01:28.000000Z"
+        }
+    },
+    {
+        "nom": "produit refusé",
+        "requete": "POST /api/products",
+        "statut": 422,
+        "reponse": {
+            "message": "Le champ nom est obligatoire. (and 1 more error)",
+            "errors": {
+                "name": [
+                    "Le champ nom est obligatoire."
+                ],
+                "price": [
+                    "Le champ prix doit être au moins égal à 0."
+                ]
+            }
+        }
+    },
+    {
+        "nom": "produits",
+        "requete": "GET /api/products",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jetable",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 100,
+                "price_achat": 0,
+                "stock": 1,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:28.000000Z",
+                "updated_at": "2026-09-15T10:01:28.000000Z"
+            },
+            {
+                "id": 3,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Savon",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 350,
+                "price_achat": 250,
+                "stock": 3,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": false,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:27.000000Z",
+                "updated_at": "2026-09-15T10:01:27.000000Z"
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jus bissap",
+                "category_id": 2,
+                "scent": null,
+                "barcode": null,
+                "price": 200,
+                "price_achat": 100,
+                "stock": 50,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:26.000000Z",
+                "updated_at": "2026-09-15T10:01:26.000000Z"
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Riz parfumé",
+                "category_id": 1,
+                "scent": "Riz brisé",
+                "barcode": "6001234567890",
+                "price": 600,
+                "price_achat": 450,
+                "stock": 100000,
+                "unite_base": "g",
+                "prix_min": 550,
+                "negociable": null,
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "units": [
+                    {
+                        "id": 1,
+                        "product_id": 1,
+                        "libelle": "Sac 50 kg",
+                        "facteur": 50000,
+                        "prix": 27500
+                    }
+                ],
+                "created_at": "2026-09-15T10:01:25.000000Z",
+                "updated_at": "2026-09-15T10:01:25.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "produits paginés",
+        "requete": "GET /api/products?page=1&per_page=2",
+        "statut": 200,
+        "reponse": {
+            "current_page": 1,
+            "data": [
+                {
+                    "id": 4,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "name": "Jetable",
+                    "category_id": null,
+                    "scent": null,
+                    "barcode": null,
+                    "price": 100,
+                    "price_achat": 0,
+                    "stock": 1,
+                    "unite_base": "piece",
+                    "prix_min": null,
+                    "negociable": null,
+                    "photo": null,
+                    "units": [],
+                    "created_at": "2026-09-15T10:01:28.000000Z",
+                    "updated_at": "2026-09-15T10:01:28.000000Z"
+                },
+                {
+                    "id": 3,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "name": "Savon",
+                    "category_id": null,
+                    "scent": null,
+                    "barcode": null,
+                    "price": 350,
+                    "price_achat": 250,
+                    "stock": 3,
+                    "unite_base": "piece",
+                    "prix_min": null,
+                    "negociable": false,
+                    "photo": null,
+                    "units": [],
+                    "created_at": "2026-09-15T10:01:27.000000Z",
+                    "updated_at": "2026-09-15T10:01:27.000000Z"
+                }
+            ],
+            "first_page_url": "http://localhost:8000/api/products?page=1",
+            "from": 1,
+            "last_page": 2,
+            "last_page_url": "http://localhost:8000/api/products?page=2",
+            "links": [
+                {
+                    "url": null,
+                    "label": "pagination.previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/products?page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": "http://localhost:8000/api/products?page=2",
+                    "label": "2",
+                    "page": 2,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/products?page=2",
+                    "label": "pagination.next",
+                    "page": 2,
+                    "active": false
+                }
+            ],
+            "next_page_url": "http://localhost:8000/api/products?page=2",
+            "path": "http://localhost:8000/api/products",
+            "per_page": 2,
+            "prev_page_url": null,
+            "to": 2,
+            "total": 4
+        }
+    },
+    {
+        "nom": "produit",
+        "requete": "GET /api/products/{prod1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Riz parfumé",
+            "category_id": 1,
+            "scent": "Riz brisé",
+            "barcode": "6001234567890",
+            "price": 600,
+            "price_achat": 450,
+            "stock": 100000,
+            "unite_base": "g",
+            "prix_min": 550,
+            "negociable": null,
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "units": [
+                {
+                    "id": 1,
+                    "product_id": 1,
+                    "libelle": "Sac 50 kg",
+                    "facteur": 50000,
+                    "prix": 27500
+                }
+            ],
+            "created_at": "2026-09-15T10:01:25.000000Z",
+            "updated_at": "2026-09-15T10:01:25.000000Z"
+        }
+    },
+    {
+        "nom": "produit modifié (PUT)",
+        "requete": "PUT /api/products/{prod2}",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Jus bissap",
+            "category_id": 2,
+            "scent": null,
+            "barcode": null,
+            "price": 250,
+            "price_achat": 100,
+            "stock": 60,
+            "unite_base": "piece",
+            "prix_min": null,
+            "negociable": null,
+            "photo": null,
+            "units": [],
+            "created_at": "2026-09-15T10:01:26.000000Z",
+            "updated_at": "2026-09-15T10:01:33.000000Z"
+        }
+    },
+    {
+        "nom": "produit supprimé",
+        "requete": "DELETE /api/products/{prod4}",
+        "statut": 200,
+        "reponse": {
+            "message": "Produit supprimé"
+        }
+    },
+    {
+        "nom": "corbeille produits",
+        "requete": "GET /api/products/trash",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jetable",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 100,
+                "price_achat": 0,
+                "stock": 1,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:28.000000Z",
+                "updated_at": "2026-09-15T10:01:34.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "produit restauré",
+        "requete": "POST /api/products/{prod4}/restore",
+        "statut": 200,
+        "reponse": {
+            "id": 4,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Jetable",
+            "category_id": null,
+            "scent": null,
+            "barcode": null,
+            "price": 100,
+            "price_achat": 0,
+            "stock": 1,
+            "unite_base": "piece",
+            "prix_min": null,
+            "negociable": null,
+            "photo": null,
+            "units": [],
+            "created_at": "2026-09-15T10:01:28.000000Z",
+            "updated_at": "2026-09-15T10:01:36.000000Z"
+        }
+    },
+    {
+        "nom": "catégorie non vide",
+        "requete": "DELETE /api/categories/{cat1}",
+        "statut": 400,
+        "reponse": {
+            "error": "Impossible de supprimer : catégorie avec produits."
+        }
+    },
+    {
+        "nom": "catégorie vide supprimée",
+        "requete": "DELETE /api/categories/{cat3}",
+        "statut": 200,
+        "reponse": {
+            "success": true,
+            "message": "Catégorie supprimée avec succès"
+        }
+    },
+    {
+        "nom": "produits v1",
+        "requete": "GET /api/v1/products",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jetable",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 100,
+                "price_achat": 0,
+                "stock": 1,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:28.000000Z",
+                "updated_at": "2026-09-15T10:01:36.000000Z"
+            },
+            {
+                "id": 3,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Savon",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 350,
+                "price_achat": 250,
+                "stock": 3,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": false,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:27.000000Z",
+                "updated_at": "2026-09-15T10:01:27.000000Z"
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jus bissap",
+                "category_id": 2,
+                "scent": null,
+                "barcode": null,
+                "price": 250,
+                "price_achat": 100,
+                "stock": 60,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:26.000000Z",
+                "updated_at": "2026-09-15T10:01:33.000000Z"
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Riz parfumé",
+                "category_id": 1,
+                "scent": "Riz brisé",
+                "barcode": "6001234567890",
+                "price": 600,
+                "price_achat": 450,
+                "stock": 100000,
+                "unite_base": "g",
+                "prix_min": 550,
+                "negociable": null,
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "units": [
+                    {
+                        "id": 1,
+                        "product_id": 1,
+                        "libelle": "Sac 50 kg",
+                        "facteur": 50000,
+                        "prix": 27500
+                    }
+                ],
+                "created_at": "2026-09-15T10:01:25.000000Z",
+                "updated_at": "2026-09-15T10:01:25.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "client",
+        "requete": "POST /api/clients",
+        "statut": 201,
+        "reponse": {
+            "name": "Fatou Diop",
+            "phone": "77 222 33 44",
+            "email": "fatou@x.sn",
+            "address": "Médina",
+            "notes": "Fidèle",
+            "boutique_id": 1,
+            "user_id": 2,
+            "updated_at": "2026-09-15T10:01:40.000000Z",
+            "created_at": "2026-09-15T10:01:40.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "client en double",
+        "requete": "POST /api/clients",
+        "statut": 400,
+        "reponse": {
+            "error": "Un client nommé « fatou diop » existe déjà"
+        }
+    },
+    {
+        "nom": "clients pour la vente",
+        "requete": "GET /api/clients/for-sale",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "name": "Fatou Diop",
+                "phone": "77 222 33 44"
+            }
+        ]
+    },
+    {
+        "nom": "fournisseur",
+        "requete": "POST /api/fournisseurs",
+        "statut": 201,
+        "reponse": {
+            "name": "Grossiste Sandaga",
+            "phone": "77 333 44 55",
+            "address": "Sandaga",
+            "notes": "Livre le mardi",
+            "boutique_id": 1,
+            "user_id": 2,
+            "updated_at": "2026-09-15T10:01:43.000000Z",
+            "created_at": "2026-09-15T10:01:43.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "fournisseurs",
+        "requete": "GET /api/fournisseurs",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Grossiste Sandaga",
+                "phone": "77 333 44 55",
+                "email": null,
+                "address": "Sandaga",
+                "notes": "Livre le mardi",
+                "created_at": "2026-09-15T10:01:43.000000Z",
+                "updated_at": "2026-09-15T10:01:43.000000Z",
+                "photo": null
+            }
+        ]
+    },
+    {
+        "nom": "fournisseur modifié",
+        "requete": "PATCH /api/fournisseurs/{four1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Grossiste Sandaga",
+            "phone": "77 333 44 55",
+            "email": "sandaga@x.sn",
+            "address": "Sandaga",
+            "notes": "Livre le mardi",
+            "created_at": "2026-09-15T10:01:43.000000Z",
+            "updated_at": "2026-09-15T10:01:45.000000Z",
+            "photo": null
+        }
+    },
+    {
+        "nom": "vente espèces",
+        "requete": "POST /api/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 2,
+            "total": 500,
+            "payment_method": "especes",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 2,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 200,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:46.000000Z"
+        }
+    },
+    {
+        "nom": "vente au poids marchandée",
+        "requete": "POST /api/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 1,
+            "product_name": null,
+            "quantity": 3,
+            "total": 1450,
+            "payment_method": "wave",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 2500,
+            "unit_id": null,
+            "unit_libelle": "kg",
+            "prix_reference": 600,
+            "prix_reel": 580,
+            "remise": 50,
+            "cogs": 1125,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:47.000000Z"
+        }
+    },
+    {
+        "nom": "vente en gros",
+        "requete": "POST /api/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 3,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 1,
+            "product_name": null,
+            "quantity": 1,
+            "total": 27500,
+            "payment_method": "orange",
+            "client_id": 1,
+            "client_name": "Fatou Diop",
+            "client_phone": "77 222 33 44",
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 50000,
+            "unit_id": 1,
+            "unit_libelle": "Sac 50 kg",
+            "prix_reference": 27500,
+            "prix_reel": 27500,
+            "remise": 0,
+            "cogs": 22500,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:48.000000Z"
+        }
+    },
+    {
+        "nom": "vente à crédit",
+        "requete": "POST /api/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 4,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 3,
+            "total": 750,
+            "payment_method": "credit",
+            "client_id": 2,
+            "client_name": "Moussa Fall",
+            "client_phone": "77 444 55 66",
+            "due_date": "2026-09-25T00:00:00.000000Z",
+            "paid": false,
+            "repayment_method": null,
+            "quantite_base": 3,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 300,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:49.000000Z"
+        }
+    },
+    {
+        "nom": "stock insuffisant",
+        "requete": "POST /api/sales",
+        "statut": 400,
+        "reponse": {
+            "error": "Stock insuffisant"
+        }
+    },
+    {
+        "nom": "vente déjà reçue",
+        "requete": "POST /api/sales",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 2,
+            "total": 500,
+            "payment_method": "especes",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 2,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 200,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:46.000000Z"
+        }
+    },
+    {
+        "nom": "synchronisation hors ligne",
+        "requete": "POST /api/sales/sync",
+        "statut": 200,
+        "reponse": {
+            "synced": [
+                "22222222-2222-4222-8222-222222222222"
+            ],
+            "duplicates": [
+                "11111111-1111-4111-8111-111111111111"
+            ],
+            "failed": [
+                {
+                    "client_uuid": "33333333-3333-4333-8333-333333333333",
+                    "error": "Produit introuvable ou données invalides"
+                },
+                {
+                    "client_uuid": "44444444-4444-4444-8444-444444444444",
+                    "error": "Le champ product id est obligatoire."
+                }
+            ]
+        }
+    },
+    {
+        "nom": "ventes",
+        "requete": "GET /api/sales",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 5,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 2,
+                "product_name": "Jus bissap",
+                "quantity": 1,
+                "total": 250,
+                "payment_method": "especes",
+                "client_id": null,
+                "client_name": null,
+                "client_phone": null,
+                "due_date": null,
+                "paid": true,
+                "repayment_method": null,
+                "quantite_base": 1,
+                "unit_id": null,
+                "unit_libelle": "pièce",
+                "prix_reference": 250,
+                "prix_reel": 250,
+                "remise": 0,
+                "cogs": 100,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:52.000000Z"
+            },
+            {
+                "id": 4,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 2,
+                "product_name": "Jus bissap",
+                "quantity": 3,
+                "total": 750,
+                "payment_method": "credit",
+                "client_id": 2,
+                "client_name": "Moussa Fall",
+                "client_phone": "77 444 55 66",
+                "due_date": "2026-09-25T00:00:00.000000Z",
+                "paid": false,
+                "repayment_method": null,
+                "quantite_base": 3,
+                "unit_id": null,
+                "unit_libelle": "pièce",
+                "prix_reference": 250,
+                "prix_reel": 250,
+                "remise": 0,
+                "cogs": 300,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:49.000000Z"
+            },
+            {
+                "id": 3,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 1,
+                "product_name": "Riz parfumé",
+                "quantity": 1,
+                "total": 27500,
+                "payment_method": "orange",
+                "client_id": 1,
+                "client_name": "Fatou Diop",
+                "client_phone": "77 222 33 44",
+                "due_date": null,
+                "paid": true,
+                "repayment_method": null,
+                "quantite_base": 50000,
+                "unit_id": 1,
+                "unit_libelle": "Sac 50 kg",
+                "prix_reference": 27500,
+                "prix_reel": 27500,
+                "remise": 0,
+                "cogs": 22500,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:48.000000Z"
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 1,
+                "product_name": "Riz parfumé",
+                "quantity": 3,
+                "total": 1450,
+                "payment_method": "wave",
+                "client_id": null,
+                "client_name": null,
+                "client_phone": null,
+                "due_date": null,
+                "paid": true,
+                "repayment_method": null,
+                "quantite_base": 2500,
+                "unit_id": null,
+                "unit_libelle": "kg",
+                "prix_reference": 600,
+                "prix_reel": 580,
+                "remise": 50,
+                "cogs": 1125,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:47.000000Z"
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 2,
+                "product_name": "Jus bissap",
+                "quantity": 2,
+                "total": 500,
+                "payment_method": "especes",
+                "client_id": null,
+                "client_name": null,
+                "client_phone": null,
+                "due_date": null,
+                "paid": true,
+                "repayment_method": null,
+                "quantite_base": 2,
+                "unit_id": null,
+                "unit_libelle": "pièce",
+                "prix_reference": 250,
+                "prix_reel": 250,
+                "remise": 0,
+                "cogs": 200,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:46.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "ventes paginées",
+        "requete": "GET /api/sales?page=1&per_page=2",
+        "statut": 200,
+        "reponse": {
+            "current_page": 1,
+            "data": [
+                {
+                    "id": 5,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "product_id": 2,
+                    "product_name": "Jus bissap",
+                    "quantity": 1,
+                    "total": 250,
+                    "payment_method": "especes",
+                    "client_id": null,
+                    "client_name": null,
+                    "client_phone": null,
+                    "due_date": null,
+                    "paid": true,
+                    "repayment_method": null,
+                    "quantite_base": 1,
+                    "unit_id": null,
+                    "unit_libelle": "pièce",
+                    "prix_reference": 250,
+                    "prix_reel": 250,
+                    "remise": 0,
+                    "cogs": 100,
+                    "backfilled": false,
+                    "vendu_par_nom": "awa@boutique.sn",
+                    "created_at": "2026-09-15T10:01:52.000000Z"
+                },
+                {
+                    "id": 4,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "product_id": 2,
+                    "product_name": "Jus bissap",
+                    "quantity": 3,
+                    "total": 750,
+                    "payment_method": "credit",
+                    "client_id": 2,
+                    "client_name": "Moussa Fall",
+                    "client_phone": "77 444 55 66",
+                    "due_date": "2026-09-25T00:00:00.000000Z",
+                    "paid": false,
+                    "repayment_method": null,
+                    "quantite_base": 3,
+                    "unit_id": null,
+                    "unit_libelle": "pièce",
+                    "prix_reference": 250,
+                    "prix_reel": 250,
+                    "remise": 0,
+                    "cogs": 300,
+                    "backfilled": false,
+                    "vendu_par_nom": "awa@boutique.sn",
+                    "created_at": "2026-09-15T10:01:49.000000Z"
+                }
+            ],
+            "first_page_url": "http://localhost:8000/api/sales?page=1",
+            "from": 1,
+            "last_page": 3,
+            "last_page_url": "http://localhost:8000/api/sales?page=3",
+            "links": [
+                {
+                    "url": null,
+                    "label": "pagination.previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/sales?page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": "http://localhost:8000/api/sales?page=2",
+                    "label": "2",
+                    "page": 2,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/sales?page=3",
+                    "label": "3",
+                    "page": 3,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/sales?page=2",
+                    "label": "pagination.next",
+                    "page": 2,
+                    "active": false
+                }
+            ],
+            "next_page_url": "http://localhost:8000/api/sales?page=2",
+            "path": "http://localhost:8000/api/sales",
+            "per_page": 2,
+            "prev_page_url": null,
+            "to": 2,
+            "total": 5
+        }
+    },
+    {
+        "nom": "score crédit (client connu)",
+        "requete": "POST /api/ia/credit-score",
+        "statut": 200,
+        "reponse": {
+            "score": 44,
+            "risk": "red",
+            "reasons": [
+                "0/1 crédits remboursés à temps",
+                "Échéance longue (45 jours)"
+            ],
+            "method": "heuristic"
+        }
+    },
+    {
+        "nom": "score crédit (nouveau client)",
+        "requete": "POST /api/ia/credit-score",
+        "statut": 200,
+        "reponse": {
+            "score": 55,
+            "risk": "amber",
+            "reasons": [
+                "Nouveau client, aucun historique de crédit"
+            ],
+            "method": "heuristic"
+        }
+    },
+    {
+        "nom": "crédit réglé",
+        "requete": "PATCH /api/sales/{vente4}",
+        "statut": 200,
+        "reponse": {
+            "id": 4,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 3,
+            "total": 750,
+            "payment_method": "credit",
+            "client_id": 2,
+            "client_name": "Moussa Fall",
+            "client_phone": "77 444 55 66",
+            "due_date": "2026-09-25T00:00:00.000000Z",
+            "paid": true,
+            "repayment_method": "wave",
+            "quantite_base": 3,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 300,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:49.000000Z"
+        }
+    },
+    {
+        "nom": "quantité modifiée",
+        "requete": "PUT /api/sales/{vente1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 3,
+            "total": 750,
+            "payment_method": "especes",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 2,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 200,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:46.000000Z"
+        }
+    },
+    {
+        "nom": "retour",
+        "requete": "POST /api/returns",
+        "statut": 201,
+        "reponse": {
+            "message": "Retour enregistré — 250 F remboursés",
+            "return": {
+                "sale_id": 1,
+                "product_id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "quantity": 1,
+                "reason": "Abîmé",
+                "refund_method": "especes",
+                "refund_amount": "250.00",
+                "updated_at": "2026-09-15T10:01:59.000000Z",
+                "created_at": "2026-09-15T10:01:59.000000Z",
+                "id": 1
+            },
+            "stock_restitue": 1,
+            "refund_amount": 250
+        }
+    },
+    {
+        "nom": "retour excessif",
+        "requete": "POST /api/returns",
+        "statut": 400,
+        "reponse": {
+            "error": "Maximum 1 unité(s) retournable(s)"
+        }
+    },
+    {
+        "nom": "retours",
+        "requete": "GET /api/returns",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "sale_id": 1,
+                "product_id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "quantity": 1,
+                "reason": "Abîmé",
+                "refund_method": "especes",
+                "refund_amount": "250.00",
+                "created_at": "2026-09-15T10:01:59.000000Z",
+                "updated_at": "2026-09-15T10:01:59.000000Z",
+                "product_name": "Jus bissap",
+                "product_price": 250
+            }
+        ]
+    },
+    {
+        "nom": "statistiques retours",
+        "requete": "GET /api/returns/stats",
+        "statut": 200,
+        "reponse": {
+            "nb_retours": 1,
+            "total_rembourse": 250,
+            "retours_jour": 1,
+            "rembourse_jour": 250
+        }
+    },
+    {
+        "nom": "vente annulée",
+        "requete": "DELETE /api/sales/{vente2}",
+        "statut": 200,
+        "reponse": {
+            "message": "Vente annulée"
+        }
+    },
+    {
+        "nom": "corbeille ventes",
+        "requete": "GET /api/sales/trash",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "product_id": 1,
+                "product_name": "Riz parfumé",
+                "quantity": 3,
+                "total": 1450,
+                "payment_method": "wave",
+                "client_id": null,
+                "client_name": null,
+                "client_phone": null,
+                "due_date": null,
+                "paid": true,
+                "repayment_method": null,
+                "quantite_base": 2500,
+                "unit_id": null,
+                "unit_libelle": "kg",
+                "prix_reference": 600,
+                "prix_reel": 580,
+                "remise": 50,
+                "cogs": 1125,
+                "backfilled": false,
+                "vendu_par_nom": "awa@boutique.sn",
+                "created_at": "2026-09-15T10:01:47.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "vente restaurée",
+        "requete": "POST /api/sales/{vente2}/restore",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 1,
+            "product_name": null,
+            "quantity": 3,
+            "total": 1450,
+            "payment_method": "wave",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 2500,
+            "unit_id": null,
+            "unit_libelle": "kg",
+            "prix_reference": 600,
+            "prix_reel": 580,
+            "remise": 50,
+            "cogs": 1125,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:01:47.000000Z"
+        }
+    },
+    {
+        "nom": "vente v1",
+        "requete": "POST /api/v1/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 6,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 1,
+            "total": 250,
+            "payment_method": "orange",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 1,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 100,
+            "backfilled": false,
+            "vendu_par_nom": "awa@boutique.sn",
+            "created_at": "2026-09-15T10:02:06.000000Z"
+        }
+    },
+    {
+        "nom": "clients",
+        "requete": "GET /api/clients",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Fatou Diop",
+                "phone": "77 222 33 44",
+                "email": "fatou@x.sn",
+                "address": "Médina",
+                "notes": "Fidèle",
+                "created_at": "2026-09-15T10:01:40.000000Z",
+                "updated_at": "2026-09-15T10:01:40.000000Z",
+                "deleted_at": null,
+                "photo": null,
+                "nb_achats": 1,
+                "total_achats": 27500,
+                "credits_ouverts": 0,
+                "credits_montant": 0
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Moussa Fall",
+                "phone": "77 444 55 66",
+                "email": null,
+                "address": null,
+                "notes": null,
+                "created_at": "2026-09-15T10:01:49.000000Z",
+                "updated_at": "2026-09-15T10:01:49.000000Z",
+                "deleted_at": null,
+                "photo": null,
+                "nb_achats": 1,
+                "total_achats": 750,
+                "credits_ouverts": 0,
+                "credits_montant": 0
+            }
+        ]
+    },
+    {
+        "nom": "clients paginés",
+        "requete": "GET /api/clients?page=1&per_page=1",
+        "statut": 200,
+        "reponse": {
+            "data": [
+                {
+                    "id": 1,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "name": "Fatou Diop",
+                    "phone": "77 222 33 44",
+                    "email": "fatou@x.sn",
+                    "address": "Médina",
+                    "notes": "Fidèle",
+                    "created_at": "2026-09-15T10:01:40.000000Z",
+                    "updated_at": "2026-09-15T10:01:40.000000Z",
+                    "deleted_at": null,
+                    "photo": null,
+                    "nb_achats": 1,
+                    "total_achats": 27500,
+                    "credits_ouverts": 0,
+                    "credits_montant": 0
+                }
+            ],
+            "current_page": 1,
+            "last_page": 2,
+            "total": 2
+        }
+    },
+    {
+        "nom": "fiche client",
+        "requete": "GET /api/clients/{client1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Fatou Diop",
+            "phone": "77 222 33 44",
+            "email": "fatou@x.sn",
+            "address": "Médina",
+            "notes": "Fidèle",
+            "created_at": "2026-09-15T10:01:40.000000Z",
+            "updated_at": "2026-09-15T10:01:40.000000Z",
+            "deleted_at": null,
+            "photo": null,
+            "achats": [
+                {
+                    "id": 3,
+                    "user_id": 2,
+                    "product_id": 1,
+                    "quantity": 1,
+                    "total": 27500,
+                    "payment_method": "orange",
+                    "client_name": "Fatou Diop",
+                    "client_phone": "77 222 33 44",
+                    "due_date": null,
+                    "paid": true,
+                    "repayment_method": null,
+                    "created_at": "2026-09-15T10:01:48.000000Z",
+                    "updated_at": "2026-09-15T10:01:48.000000Z",
+                    "client_id": 1,
+                    "boutique_id": 1,
+                    "quantite_base": 50000,
+                    "unit_id": 1,
+                    "unit_libelle": "Sac 50 kg",
+                    "prix_reference": 27500,
+                    "prix_reel": 27500,
+                    "remise": 0,
+                    "cogs": 22500,
+                    "vendu_par": 2,
+                    "vendu_par_nom": "awa@boutique.sn",
+                    "deleted_at": null,
+                    "client_uuid": null,
+                    "backfilled": false,
+                    "product_name": "Riz parfumé"
+                }
+            ]
+        }
+    },
+    {
+        "nom": "statistiques client",
+        "requete": "GET /api/clients/{client1}/stats",
+        "statut": 200,
+        "reponse": {
+            "nb_achats": 1,
+            "ca_total": 27500,
+            "ca_encaisse": 27500,
+            "credits_ouverts": 0,
+            "achats_30j": 1,
+            "dernier_achat": "2026-09-15T10:01:48.000000Z"
+        }
+    },
+    {
+        "nom": "client modifié",
+        "requete": "PATCH /api/clients/{client1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "name": "Fatou Diop",
+            "phone": "77 222 33 44",
+            "email": "fatou@x.sn",
+            "address": "Médina",
+            "notes": "Très fidèle",
+            "created_at": "2026-09-15T10:01:40.000000Z",
+            "updated_at": "2026-09-15T10:02:11.000000Z",
+            "deleted_at": null,
+            "photo": null
+        }
+    },
+    {
+        "nom": "client 2",
+        "requete": "POST /api/clients",
+        "statut": 201,
+        "reponse": {
+            "name": "À supprimer",
+            "boutique_id": 1,
+            "user_id": 2,
+            "updated_at": "2026-09-15T10:02:12.000000Z",
+            "created_at": "2026-09-15T10:02:12.000000Z",
+            "id": 3
+        }
+    },
+    {
+        "nom": "client supprimé",
+        "requete": "DELETE /api/clients/{client2}",
+        "statut": 200,
+        "reponse": {
+            "message": "Client supprimé"
+        }
+    },
+    {
+        "nom": "commande",
+        "requete": "POST /api/commandes",
+        "statut": 201,
+        "reponse": {
+            "user_id": 2,
+            "boutique_id": 1,
+            "fournisseur_id": 1,
+            "total": "6000.00",
+            "notes": "Urgent",
+            "expected_date": "2026-09-20T00:00:00.000000Z",
+            "status": "en_attente",
+            "updated_at": "2026-09-15T10:02:14.000000Z",
+            "created_at": "2026-09-15T10:02:14.000000Z",
+            "id": 1,
+            "items": [
+                {
+                    "id": 1,
+                    "commande_id": 1,
+                    "product_id": 3,
+                    "quantity": 20,
+                    "prix_unitaire": "250.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z"
+                },
+                {
+                    "id": 2,
+                    "commande_id": 1,
+                    "product_id": 2,
+                    "quantity": 10,
+                    "prix_unitaire": "100.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z"
+                }
+            ]
+        }
+    },
+    {
+        "nom": "commande 2",
+        "requete": "POST /api/commandes",
+        "statut": 201,
+        "reponse": {
+            "user_id": 2,
+            "boutique_id": 1,
+            "fournisseur_id": null,
+            "total": "1250.00",
+            "notes": null,
+            "expected_date": null,
+            "status": "en_attente",
+            "updated_at": "2026-09-15T10:02:15.000000Z",
+            "created_at": "2026-09-15T10:02:15.000000Z",
+            "id": 2,
+            "items": [
+                {
+                    "id": 3,
+                    "commande_id": 2,
+                    "product_id": 3,
+                    "quantity": 5,
+                    "prix_unitaire": "250.00",
+                    "created_at": "2026-09-15T10:02:15.000000Z",
+                    "updated_at": "2026-09-15T10:02:15.000000Z"
+                }
+            ]
+        }
+    },
+    {
+        "nom": "commandes",
+        "requete": "GET /api/commandes",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "fournisseur_id": null,
+                "total": "1250.00",
+                "notes": null,
+                "expected_date": null,
+                "status": "en_attente",
+                "created_at": "2026-09-15T10:02:15.000000Z",
+                "updated_at": "2026-09-15T10:02:15.000000Z",
+                "items_count": 1
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "fournisseur_id": 1,
+                "total": "6000.00",
+                "notes": "Urgent",
+                "expected_date": "2026-09-20T00:00:00.000000Z",
+                "status": "en_attente",
+                "created_at": "2026-09-15T10:02:14.000000Z",
+                "updated_at": "2026-09-15T10:02:14.000000Z",
+                "items_count": 2
+            }
+        ]
+    },
+    {
+        "nom": "commande détaillée",
+        "requete": "GET /api/commandes/{cmd1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "boutique_id": 1,
+            "fournisseur_id": 1,
+            "total": "6000.00",
+            "notes": "Urgent",
+            "expected_date": "2026-09-20T00:00:00.000000Z",
+            "status": "en_attente",
+            "created_at": "2026-09-15T10:02:14.000000Z",
+            "updated_at": "2026-09-15T10:02:14.000000Z",
+            "fournisseur": {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Grossiste Sandaga",
+                "phone": "77 333 44 55",
+                "email": "sandaga@x.sn",
+                "address": "Sandaga",
+                "notes": "Livre le mardi",
+                "created_at": "2026-09-15T10:01:43.000000Z",
+                "updated_at": "2026-09-15T10:01:45.000000Z",
+                "photo": null
+            },
+            "items": [
+                {
+                    "id": 1,
+                    "commande_id": 1,
+                    "product_id": 3,
+                    "quantity": 20,
+                    "prix_unitaire": "250.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z",
+                    "product": {
+                        "id": 3,
+                        "name": "Savon",
+                        "stock": 3
+                    }
+                },
+                {
+                    "id": 2,
+                    "commande_id": 1,
+                    "product_id": 2,
+                    "quantity": 10,
+                    "prix_unitaire": "100.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z",
+                    "product": {
+                        "id": 2,
+                        "name": "Jus bissap",
+                        "stock": 53
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "nom": "commande modifiée",
+        "requete": "PATCH /api/commandes/{cmd2}",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "user_id": 2,
+            "boutique_id": 1,
+            "fournisseur_id": null,
+            "total": "1250.00",
+            "notes": "Finalement non",
+            "expected_date": null,
+            "status": "en_attente",
+            "created_at": "2026-09-15T10:02:15.000000Z",
+            "updated_at": "2026-09-15T10:02:18.000000Z"
+        }
+    },
+    {
+        "nom": "livraison",
+        "requete": "POST /api/livraisons",
+        "statut": 201,
+        "reponse": {
+            "user_id": 2,
+            "boutique_id": 1,
+            "commande_id": 1,
+            "tracking_note": "Camion de 14 h",
+            "status": "en_attente",
+            "updated_at": "2026-09-15T10:02:19.000000Z",
+            "created_at": "2026-09-15T10:02:19.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "livraison sans commande",
+        "requete": "POST /api/livraisons",
+        "statut": 201,
+        "reponse": {
+            "user_id": 2,
+            "boutique_id": 1,
+            "commande_id": null,
+            "tracking_note": "Sans commande",
+            "status": "en_attente",
+            "updated_at": "2026-09-15T10:02:20.000000Z",
+            "created_at": "2026-09-15T10:02:20.000000Z",
+            "id": 2
+        }
+    },
+    {
+        "nom": "livraisons",
+        "requete": "GET /api/livraisons",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 2,
+                "user_id": 2,
+                "commande_id": null,
+                "tracking_note": "Sans commande",
+                "status": "en_attente",
+                "delivered_at": null,
+                "created_at": "2026-09-15T10:02:20.000000Z",
+                "updated_at": "2026-09-15T10:02:20.000000Z",
+                "boutique_id": 1,
+                "commande_status": null,
+                "commande_total": null,
+                "expected_date": null,
+                "fournisseur_name": null,
+                "fournisseur_phone": null
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "commande_id": 1,
+                "tracking_note": "Camion de 14 h",
+                "status": "en_attente",
+                "delivered_at": null,
+                "created_at": "2026-09-15T10:02:19.000000Z",
+                "updated_at": "2026-09-15T10:02:19.000000Z",
+                "boutique_id": 1,
+                "commande_status": "en_attente",
+                "commande_total": 6000,
+                "expected_date": "2026-09-20 00:00:00",
+                "fournisseur_name": "Grossiste Sandaga",
+                "fournisseur_phone": "77 333 44 55"
+            }
+        ]
+    },
+    {
+        "nom": "livraison détaillée",
+        "requete": "GET /api/livraisons/{liv1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "commande_id": 1,
+            "tracking_note": "Camion de 14 h",
+            "status": "en_attente",
+            "delivered_at": null,
+            "created_at": "2026-09-15T10:02:19.000000Z",
+            "updated_at": "2026-09-15T10:02:19.000000Z",
+            "boutique_id": 1,
+            "commande": {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "fournisseur_id": 1,
+                "total": "6000.00",
+                "notes": "Urgent",
+                "expected_date": "2026-09-20T00:00:00.000000Z",
+                "status": "en_attente",
+                "created_at": "2026-09-15T10:02:14.000000Z",
+                "updated_at": "2026-09-15T10:02:14.000000Z",
+                "fournisseur": {
+                    "id": 1,
+                    "user_id": 2,
+                    "boutique_id": 1,
+                    "name": "Grossiste Sandaga",
+                    "phone": "77 333 44 55",
+                    "email": "sandaga@x.sn",
+                    "address": "Sandaga",
+                    "notes": "Livre le mardi",
+                    "created_at": "2026-09-15T10:01:43.000000Z",
+                    "updated_at": "2026-09-15T10:01:45.000000Z",
+                    "photo": null
+                }
+            },
+            "items": [
+                {
+                    "id": 1,
+                    "commande_id": 1,
+                    "product_id": 3,
+                    "quantity": 20,
+                    "prix_unitaire": "250.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z",
+                    "product_name": "Savon"
+                },
+                {
+                    "id": 2,
+                    "commande_id": 1,
+                    "product_id": 2,
+                    "quantity": 10,
+                    "prix_unitaire": "100.00",
+                    "created_at": "2026-09-15T10:02:14.000000Z",
+                    "updated_at": "2026-09-15T10:02:14.000000Z",
+                    "product_name": "Jus bissap"
+                }
+            ]
+        }
+    },
+    {
+        "nom": "livraison en cours",
+        "requete": "PATCH /api/livraisons/{liv1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "commande_id": 1,
+            "tracking_note": "Camion de 14 h",
+            "status": "en_cours",
+            "delivered_at": null,
+            "created_at": "2026-09-15T10:02:19.000000Z",
+            "updated_at": "2026-09-15T10:02:23.000000Z",
+            "boutique_id": 1,
+            "commande_a_recevoir": null
+        }
+    },
+    {
+        "nom": "livraison livrée",
+        "requete": "PATCH /api/livraisons/{liv1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "commande_id": 1,
+            "tracking_note": "Camion de 14 h",
+            "status": "livree",
+            "delivered_at": "2026-09-15T10:02:24.000000Z",
+            "created_at": "2026-09-15T10:02:19.000000Z",
+            "updated_at": "2026-09-15T10:02:24.000000Z",
+            "boutique_id": 1,
+            "commande_a_recevoir": 1
+        }
+    },
+    {
+        "nom": "livraison réceptionnée",
+        "requete": "PUT /api/livraisons/{liv1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "user_id": 2,
+            "commande_id": 1,
+            "tracking_note": "Camion de 14 h",
+            "status": "livree",
+            "delivered_at": "2026-09-15T10:02:25.000000Z",
+            "created_at": "2026-09-15T10:02:19.000000Z",
+            "updated_at": "2026-09-15T10:02:25.000000Z",
+            "boutique_id": 1,
+            "commande_recue": true,
+            "message": "Livraison enregistrée et stock mis à jour pour 2 produit(s)"
+        }
+    },
+    {
+        "nom": "commande reçue",
+        "requete": "PATCH /api/commandes/{cmd2}/recevoir",
+        "statut": 200,
+        "reponse": {
+            "commande": {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "fournisseur_id": null,
+                "total": "1250.00",
+                "notes": "Finalement non",
+                "expected_date": null,
+                "status": "recue",
+                "created_at": "2026-09-15T10:02:15.000000Z",
+                "updated_at": "2026-09-15T10:02:26.000000Z",
+                "items": [
+                    {
+                        "id": 3,
+                        "commande_id": 2,
+                        "product_id": 3,
+                        "quantity": 5,
+                        "prix_unitaire": "250.00",
+                        "created_at": "2026-09-15T10:02:15.000000Z",
+                        "updated_at": "2026-09-15T10:02:15.000000Z"
+                    }
+                ]
+            },
+            "message": "Stock mis à jour pour 1 produit(s)"
+        }
+    },
+    {
+        "nom": "livraison supprimée",
+        "requete": "DELETE /api/livraisons/{liv2}",
+        "statut": 200,
+        "reponse": {
+            "message": "Livraison supprimée"
+        }
+    },
+    {
+        "nom": "commande supprimée",
+        "requete": "DELETE /api/commandes/{cmd2}",
+        "statut": 200,
+        "reponse": {
+            "message": "Commande supprimée"
+        }
+    },
+    {
+        "nom": "message de réappro",
+        "requete": "GET /api/fournisseurs/{four1}/reappro-message?seuil=10&date=2026-09-20",
+        "statut": 200,
+        "reponse": {
+            "fournisseur": {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Grossiste Sandaga",
+                "phone": "77 333 44 55",
+                "email": "sandaga@x.sn",
+                "address": "Sandaga",
+                "notes": "Livre le mardi",
+                "created_at": "2026-09-15T10:01:43.000000Z",
+                "updated_at": "2026-09-15T10:01:45.000000Z",
+                "photo": null
+            },
+            "message": "📋 *DEMANDE DE RÉAPPROVISIONNEMENT*\n🚚 Grossiste Sandaga\n📅 15/09/2026\n\n• Jetable × 39 pièce (reste 1)\n\n🗓️ Livraison souhaitée : 2026-09-20\n\nMerci de confirmer disponibilité et prix 🙏\n\n🏪 *Boutique Awa Ndiaye*\n📞 77 111 22 44",
+            "produits_faibles": [
+                {
+                    "name": "Jetable",
+                    "stock": 1,
+                    "unite_base": "piece"
+                }
+            ],
+            "whatsapp_url": "https://wa.me/221773334455?text=%F0%9F%93%8B%20%2ADEMANDE%20DE%20R%C3%89APPROVISIONNEMENT%2A%0A%F0%9F%9A%9A%20Grossiste%20Sandaga%0A%F0%9F%93%85%2015%2F09%2F2026%0A%0A%E2%80%A2%20Jetable%20%C3%97%2039%20pi%C3%A8ce%20%28reste%201%29%0A%0A%F0%9F%97%93%EF%B8%8F%20Livraison%20souhait%C3%A9e%20%3A%202026-09-20%0A%0AMerci%20de%20confirmer%20disponibilit%C3%A9%20et%20prix%20%F0%9F%99%8F%0A%0A%F0%9F%8F%AA%20%2ABoutique%20Awa%20Ndiaye%2A%0A%F0%9F%93%9E%2077%20111%2022%2044"
+        }
+    },
+    {
+        "nom": "caisse du jour",
+        "requete": "GET /api/caisse/today",
+        "statut": 200,
+        "reponse": {
+            "nb_ventes": 6,
+            "especes": 750,
+            "wave": 1450,
+            "orange": 27750,
+            "credits": 0,
+            "total_encaisse": 30700,
+            "total_ca": 30700,
+            "total_retours": 250,
+            "nb_retours": 1,
+            "net": 30450
+        }
+    },
+    {
+        "nom": "clôture de caisse",
+        "requete": "POST /api/caisse/close",
+        "statut": 200,
+        "reponse": {
+            "user_id": 2,
+            "boutique_id": 1,
+            "date": "2026-09-15",
+            "total_especes": "750.00",
+            "total_wave": "1450.00",
+            "total_orange": "27750.00",
+            "total_credits": "0.00",
+            "total_retours": "250.00",
+            "total_net": "30450.00",
+            "nb_ventes": 6,
+            "notes": "RAS",
+            "updated_at": "2026-09-15T10:02:31.000000Z",
+            "created_at": "2026-09-15T10:02:31.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "historique de caisse",
+        "requete": "GET /api/caisse/history",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "date": "2026-09-15",
+                "total_especes": "750.00",
+                "total_wave": "1450.00",
+                "total_orange": "27750.00",
+                "total_credits": "0.00",
+                "total_retours": "250.00",
+                "total_net": "30450.00",
+                "nb_ventes": 6,
+                "notes": "RAS",
+                "created_at": "2026-09-15T10:02:31.000000Z",
+                "updated_at": "2026-09-15T10:02:31.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "caisse de la semaine",
+        "requete": "GET /api/caisse/weekly",
+        "statut": 200,
+        "reponse": [
+            {
+                "date": "2026-09-09",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-10",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-11",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-12",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-13",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-14",
+                "nb_ventes": 0,
+                "total_encaisse": 0,
+                "especes": 0,
+                "wave": 0,
+                "orange": 0,
+                "credits": 0
+            },
+            {
+                "date": "2026-09-15",
+                "nb_ventes": 6,
+                "total_encaisse": 30700,
+                "especes": 750,
+                "wave": 1450,
+                "orange": 27750,
+                "credits": 0
+            }
+        ]
+    },
+    {
+        "nom": "résumé du jour",
+        "requete": "GET /api/stats/resume-jour",
+        "statut": 200,
+        "reponse": {
+            "date": "2026-09-15",
+            "ca": 30700,
+            "articles": 11,
+            "stock": 47592
+        }
+    },
+    {
+        "nom": "ventes par catégorie",
+        "requete": "GET /api/stats/ventes-par-categorie",
+        "statut": 200,
+        "reponse": [
+            {
+                "categorie": "Boissons",
+                "total_quantite": 7,
+                "total_montant": 1750
+            },
+            {
+                "categorie": "Alimentation",
+                "total_quantite": 4,
+                "total_montant": 2400
+            }
+        ]
+    },
+    {
+        "nom": "ventes par jour",
+        "requete": "GET /api/stats/ventes-par-jour",
+        "statut": 200,
+        "reponse": [
+            {
+                "date": "2026-09-15",
+                "total_quantite": 11,
+                "total_montant": 4150
+            }
+        ]
+    },
+    {
+        "nom": "paiements",
+        "requete": "GET /api/stats/paiements",
+        "statut": 200,
+        "reponse": [
+            {
+                "payment_method": "credit",
+                "total_ventes": 1,
+                "total_montant": 750
+            },
+            {
+                "payment_method": "especes",
+                "total_ventes": 2,
+                "total_montant": 750
+            },
+            {
+                "payment_method": "orange",
+                "total_ventes": 2,
+                "total_montant": 850
+            },
+            {
+                "payment_method": "wave",
+                "total_ventes": 1,
+                "total_montant": 1800
+            }
+        ]
+    },
+    {
+        "nom": "meilleurs produits",
+        "requete": "GET /api/stats/top-produits",
+        "statut": 200,
+        "reponse": [
+            {
+                "produit": "Jus bissap",
+                "total_quantite": 7,
+                "total_montant": 1750
+            },
+            {
+                "produit": "Riz parfumé",
+                "total_quantite": 4,
+                "total_montant": 2400
+            }
+        ]
+    },
+    {
+        "nom": "stock faible",
+        "requete": "GET /api/stats/stock-faible?seuil=10",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "produit": "Jetable",
+                "stock": 1
+            }
+        ]
+    },
+    {
+        "nom": "marge par catégorie",
+        "requete": "GET /api/stats/marge-categorie",
+        "statut": 200,
+        "reponse": [
+            {
+                "categorie": "Boissons",
+                "ca": 1750,
+                "marge": 1050
+            },
+            {
+                "categorie": "Alimentation",
+                "ca": 2400,
+                "marge": 600
+            }
+        ]
+    },
+    {
+        "nom": "rotation du stock",
+        "requete": "GET /api/stats/rotation-stock",
+        "statut": 200,
+        "reponse": [
+            {
+                "produit": "Jus bissap",
+                "stock": 63,
+                "vendus": 7
+            },
+            {
+                "produit": "Riz parfumé",
+                "stock": 47500,
+                "vendus": 4
+            },
+            {
+                "produit": "Savon",
+                "stock": 28,
+                "vendus": 0
+            },
+            {
+                "produit": "Jetable",
+                "stock": 1,
+                "vendus": 0
+            }
+        ]
+    },
+    {
+        "nom": "meilleurs clients",
+        "requete": "GET /api/stats/meilleurs-clients",
+        "statut": 200,
+        "reponse": [
+            {
+                "client": "Fatou Diop",
+                "phone": "77 222 33 44",
+                "nb_achats": 1,
+                "total": 27500
+            },
+            {
+                "client": "Moussa Fall",
+                "phone": "77 444 55 66",
+                "nb_achats": 1,
+                "total": 750
+            },
+            {
+                "client": "À supprimer",
+                "phone": null,
+                "nb_achats": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "nom": "marchandage",
+        "requete": "GET /api/stats/marchandage",
+        "statut": 200,
+        "reponse": {
+            "ca": 30700,
+            "marge": 6375,
+            "remise_totale": 50,
+            "nb": 6,
+            "taux_marge": 20.8,
+            "par_vendeur": [
+                {
+                    "vendeur": "awa@boutique.sn",
+                    "nb": 6,
+                    "ca": 30700,
+                    "marge": 6375,
+                    "remise": 50
+                }
+            ]
+        }
+    },
+    {
+        "nom": "réappro IA",
+        "requete": "GET /api/ia/reappro",
+        "statut": 200,
+        "reponse": [
+            {
+                "product_id": 1,
+                "name": "Riz parfumé",
+                "display_label": "kg",
+                "stock_display": 47.5,
+                "avg_daily_display": 7,
+                "days_until_stockout": 6.8,
+                "reorder_display": 50.5,
+                "method": "heuristic"
+            },
+            {
+                "product_id": 2,
+                "name": "Jus bissap",
+                "display_label": "pièce",
+                "stock_display": 63,
+                "avg_daily_display": 0.933,
+                "days_until_stockout": 67.5,
+                "reorder_display": 0,
+                "method": "heuristic"
+            },
+            {
+                "product_id": 3,
+                "name": "Savon",
+                "display_label": "pièce",
+                "stock_display": 28,
+                "avg_daily_display": 0,
+                "days_until_stockout": null,
+                "reorder_display": 0,
+                "method": "heuristic"
+            },
+            {
+                "product_id": 4,
+                "name": "Jetable",
+                "display_label": "pièce",
+                "stock_display": 1,
+                "avg_daily_display": 0,
+                "days_until_stockout": null,
+                "reorder_display": 0,
+                "method": "heuristic"
+            }
+        ]
+    },
+    {
+        "nom": "journal",
+        "requete": "GET /api/activity",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 15,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "caisse.cloture",
+                "detail": "Net 30 450 FCFA — 6 ventes",
+                "created_at": "2026-09-15T10:02:31.000000Z",
+                "updated_at": "2026-09-15T10:02:31.000000Z"
+            },
+            {
+                "id": 14,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Jus bissap — 250 FCFA",
+                "created_at": "2026-09-15T10:02:06.000000Z",
+                "updated_at": "2026-09-15T10:02:06.000000Z"
+            },
+            {
+                "id": 13,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente.restaure",
+                "detail": "Vente #2 restaurée",
+                "created_at": "2026-09-15T10:02:05.000000Z",
+                "updated_at": "2026-09-15T10:02:05.000000Z"
+            },
+            {
+                "id": 12,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "remboursement",
+                "detail": "Crédit remboursé (750 FCFA)",
+                "created_at": "2026-09-15T10:01:57.000000Z",
+                "updated_at": "2026-09-15T10:01:57.000000Z"
+            },
+            {
+                "id": 11,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Jus bissap — 250 FCFA",
+                "created_at": "2026-09-15T10:01:52.000000Z",
+                "updated_at": "2026-09-15T10:01:52.000000Z"
+            },
+            {
+                "id": 10,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Jus bissap — 750 FCFA (crédit)",
+                "created_at": "2026-09-15T10:01:49.000000Z",
+                "updated_at": "2026-09-15T10:01:49.000000Z"
+            },
+            {
+                "id": 9,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Riz parfumé — 27 500 FCFA",
+                "created_at": "2026-09-15T10:01:48.000000Z",
+                "updated_at": "2026-09-15T10:01:48.000000Z"
+            },
+            {
+                "id": 8,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Riz parfumé — 1 450 FCFA (remise 50)",
+                "created_at": "2026-09-15T10:01:47.000000Z",
+                "updated_at": "2026-09-15T10:01:47.000000Z"
+            },
+            {
+                "id": 7,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "vente",
+                "detail": "Jus bissap — 500 FCFA",
+                "created_at": "2026-09-15T10:01:46.000000Z",
+                "updated_at": "2026-09-15T10:01:46.000000Z"
+            },
+            {
+                "id": 6,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.restaure",
+                "detail": "Jetable",
+                "created_at": "2026-09-15T10:01:36.000000Z",
+                "updated_at": "2026-09-15T10:01:36.000000Z"
+            },
+            {
+                "id": 5,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.suppr",
+                "detail": "Jetable",
+                "created_at": "2026-09-15T10:01:34.000000Z",
+                "updated_at": "2026-09-15T10:01:34.000000Z"
+            },
+            {
+                "id": 4,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.ajout",
+                "detail": "Jetable",
+                "created_at": "2026-09-15T10:01:28.000000Z",
+                "updated_at": "2026-09-15T10:01:28.000000Z"
+            },
+            {
+                "id": 3,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.ajout",
+                "detail": "Savon",
+                "created_at": "2026-09-15T10:01:27.000000Z",
+                "updated_at": "2026-09-15T10:01:27.000000Z"
+            },
+            {
+                "id": 2,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.ajout",
+                "detail": "Jus bissap",
+                "created_at": "2026-09-15T10:01:26.000000Z",
+                "updated_at": "2026-09-15T10:01:26.000000Z"
+            },
+            {
+                "id": 1,
+                "owner_id": 2,
+                "actor_id": 2,
+                "actor_name": "awa@boutique.sn",
+                "boutique_id": 1,
+                "action": "produit.ajout",
+                "detail": "Riz parfumé",
+                "created_at": "2026-09-15T10:01:25.000000Z",
+                "updated_at": "2026-09-15T10:01:25.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "journal paginé",
+        "requete": "GET /api/activity?page=1&per_page=5",
+        "statut": 200,
+        "reponse": {
+            "current_page": 1,
+            "data": [
+                {
+                    "id": 15,
+                    "owner_id": 2,
+                    "actor_id": 2,
+                    "actor_name": "awa@boutique.sn",
+                    "boutique_id": 1,
+                    "action": "caisse.cloture",
+                    "detail": "Net 30 450 FCFA — 6 ventes",
+                    "created_at": "2026-09-15T10:02:31.000000Z",
+                    "updated_at": "2026-09-15T10:02:31.000000Z"
+                },
+                {
+                    "id": 14,
+                    "owner_id": 2,
+                    "actor_id": 2,
+                    "actor_name": "awa@boutique.sn",
+                    "boutique_id": 1,
+                    "action": "vente",
+                    "detail": "Jus bissap — 250 FCFA",
+                    "created_at": "2026-09-15T10:02:06.000000Z",
+                    "updated_at": "2026-09-15T10:02:06.000000Z"
+                },
+                {
+                    "id": 13,
+                    "owner_id": 2,
+                    "actor_id": 2,
+                    "actor_name": "awa@boutique.sn",
+                    "boutique_id": 1,
+                    "action": "vente.restaure",
+                    "detail": "Vente #2 restaurée",
+                    "created_at": "2026-09-15T10:02:05.000000Z",
+                    "updated_at": "2026-09-15T10:02:05.000000Z"
+                },
+                {
+                    "id": 12,
+                    "owner_id": 2,
+                    "actor_id": 2,
+                    "actor_name": "awa@boutique.sn",
+                    "boutique_id": 1,
+                    "action": "remboursement",
+                    "detail": "Crédit remboursé (750 FCFA)",
+                    "created_at": "2026-09-15T10:01:57.000000Z",
+                    "updated_at": "2026-09-15T10:01:57.000000Z"
+                },
+                {
+                    "id": 11,
+                    "owner_id": 2,
+                    "actor_id": 2,
+                    "actor_name": "awa@boutique.sn",
+                    "boutique_id": 1,
+                    "action": "vente",
+                    "detail": "Jus bissap — 250 FCFA",
+                    "created_at": "2026-09-15T10:01:52.000000Z",
+                    "updated_at": "2026-09-15T10:01:52.000000Z"
+                }
+            ],
+            "first_page_url": "http://localhost:8000/api/activity?page=1",
+            "from": 1,
+            "last_page": 3,
+            "last_page_url": "http://localhost:8000/api/activity?page=3",
+            "links": [
+                {
+                    "url": null,
+                    "label": "pagination.previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/activity?page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": "http://localhost:8000/api/activity?page=2",
+                    "label": "2",
+                    "page": 2,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/activity?page=3",
+                    "label": "3",
+                    "page": 3,
+                    "active": false
+                },
+                {
+                    "url": "http://localhost:8000/api/activity?page=2",
+                    "label": "pagination.next",
+                    "page": 2,
+                    "active": false
+                }
+            ],
+            "next_page_url": "http://localhost:8000/api/activity?page=2",
+            "path": "http://localhost:8000/api/activity",
+            "per_page": 5,
+            "prev_page_url": null,
+            "to": 5,
+            "total": 15
+        }
+    },
+    {
+        "nom": "tontines (vide)",
+        "requete": "GET /api/tontines",
+        "statut": 200,
+        "reponse": []
+    },
+    {
+        "nom": "tontine",
+        "requete": "POST /api/tontines",
+        "statut": 201,
+        "reponse": {
+            "name": "Tontine du marché",
+            "type": "Hebdomadaire",
+            "amount": "5000.00",
+            "members": 12,
+            "updated_at": "2026-09-15T10:02:48.000000Z",
+            "created_at": "2026-09-15T10:02:48.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "tontines",
+        "requete": "GET /api/tontines",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "name": "Tontine du marché",
+                "type": "Hebdomadaire",
+                "amount": "5000.00",
+                "members": 12,
+                "created_date": "<HORLOGE_BASE>",
+                "created_at": "2026-09-15T10:02:48.000000Z",
+                "updated_at": "2026-09-15T10:02:48.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "boutiques",
+        "requete": "GET /api/boutiques",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "owner_id": 2,
+                "name": "Boutique Awa Ndiaye",
+                "phone": null,
+                "address": null,
+                "emoji": "🏪",
+                "is_primary": true,
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:00:08.000000Z",
+                "photo": null,
+                "nb_produits": 4,
+                "nb_ventes": 6,
+                "nb_membres": 0
+            }
+        ]
+    },
+    {
+        "nom": "boutique 2",
+        "requete": "POST /api/boutiques",
+        "statut": 201,
+        "reponse": {
+            "name": "Boutique Marché",
+            "phone": "77 555 66 77",
+            "address": "HLM",
+            "emoji": "🏬",
+            "is_primary": false,
+            "owner_id": 2,
+            "updated_at": "2026-09-15T10:02:51.000000Z",
+            "created_at": "2026-09-15T10:02:51.000000Z",
+            "id": 2
+        }
+    },
+    {
+        "nom": "tableau de bord",
+        "requete": "GET /api/boutiques/dashboard",
+        "statut": 200,
+        "reponse": {
+            "boutiques": [
+                {
+                    "id": 1,
+                    "name": "Boutique Awa Ndiaye",
+                    "emoji": "🏪",
+                    "photo": null,
+                    "is_primary": true,
+                    "ca_jour": 30700,
+                    "nb_ventes_jour": 6,
+                    "ca_mois": 30700,
+                    "nb_produits": 4,
+                    "stock_total": 47592,
+                    "ruptures": 0,
+                    "stock_faible": 1,
+                    "credits_impayes": 0,
+                    "nb_membres": 0
+                },
+                {
+                    "id": 2,
+                    "name": "Boutique Marché",
+                    "emoji": "🏬",
+                    "photo": null,
+                    "is_primary": false,
+                    "ca_jour": 0,
+                    "nb_ventes_jour": 0,
+                    "ca_mois": 0,
+                    "nb_produits": 0,
+                    "stock_total": 0,
+                    "ruptures": 0,
+                    "stock_faible": 0,
+                    "credits_impayes": 0,
+                    "nb_membres": 0
+                }
+            ],
+            "total": {
+                "ca_jour": 30700,
+                "nb_ventes_jour": 6,
+                "ca_mois": 30700,
+                "nb_produits": 4,
+                "ruptures": 0,
+                "credits_impayes": 0,
+                "nb_boutiques": 2
+            },
+            "meilleure": {
+                "id": 1,
+                "name": "Boutique Awa Ndiaye",
+                "emoji": "🏪",
+                "photo": null,
+                "is_primary": true,
+                "ca_jour": 30700,
+                "nb_ventes_jour": 6,
+                "ca_mois": 30700,
+                "nb_produits": 4,
+                "stock_total": 47592,
+                "ruptures": 0,
+                "stock_faible": 1,
+                "credits_impayes": 0,
+                "nb_membres": 0
+            }
+        }
+    },
+    {
+        "nom": "statistiques boutique",
+        "requete": "GET /api/boutiques/{boutique2}/stats",
+        "statut": 200,
+        "reponse": {
+            "boutique_id": 2,
+            "nb_produits": 0,
+            "nb_ventes": 0,
+            "ca_total": 0,
+            "nb_membres": 0
+        }
+    },
+    {
+        "nom": "boutique modifiée",
+        "requete": "PATCH /api/boutiques/{boutique2}",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "owner_id": 2,
+            "name": "Boutique Marché",
+            "phone": "77 555 66 77",
+            "address": "HLM 5",
+            "emoji": "🏬",
+            "is_primary": false,
+            "created_at": "2026-09-15T10:02:51.000000Z",
+            "updated_at": "2026-09-15T10:02:54.000000Z",
+            "photo": null
+        }
+    },
+    {
+        "nom": "boutique activée",
+        "requete": "POST /api/boutiques/{boutique2}/switch",
+        "statut": 200,
+        "reponse": {
+            "message": "Boutique active changée",
+            "boutique": {
+                "id": 2,
+                "owner_id": 2,
+                "name": "Boutique Marché",
+                "phone": "77 555 66 77",
+                "address": "HLM 5",
+                "emoji": "🏬",
+                "is_primary": false,
+                "created_at": "2026-09-15T10:02:51.000000Z",
+                "updated_at": "2026-09-15T10:02:54.000000Z",
+                "photo": null
+            }
+        }
+    },
+    {
+        "nom": "produits de la boutique 2",
+        "requete": "GET /api/products",
+        "statut": 200,
+        "reponse": []
+    },
+    {
+        "nom": "retour à la boutique 1",
+        "requete": "POST /api/boutiques/{boutique1}/switch",
+        "statut": 200,
+        "reponse": {
+            "message": "Boutique active changée",
+            "boutique": {
+                "id": 1,
+                "owner_id": 2,
+                "name": "Boutique Awa Ndiaye",
+                "phone": null,
+                "address": null,
+                "emoji": "🏪",
+                "is_primary": true,
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:00:08.000000Z",
+                "photo": null
+            }
+        }
+    },
+    {
+        "nom": "boutique principale indélébile",
+        "requete": "DELETE /api/boutiques/{boutique1}",
+        "statut": 400,
+        "reponse": {
+            "error": "Impossible de supprimer la boutique principale"
+        }
+    },
+    {
+        "nom": "boutique 3",
+        "requete": "POST /api/boutiques",
+        "statut": 201,
+        "reponse": {
+            "name": "Boutique Gare",
+            "phone": null,
+            "address": null,
+            "emoji": "🏪",
+            "is_primary": false,
+            "owner_id": 2,
+            "updated_at": "2026-09-15T10:02:59.000000Z",
+            "created_at": "2026-09-15T10:02:59.000000Z",
+            "id": 3
+        }
+    },
+    {
+        "nom": "limite de boutiques",
+        "requete": "POST /api/boutiques",
+        "statut": 400,
+        "reponse": {
+            "error": "Limite atteinte",
+            "code": "BOUTIQUE_LIMIT_REACHED",
+            "message": "Le plan Premium permet au maximum 3 boutique(s)."
+        }
+    },
+    {
+        "nom": "boutique supprimée",
+        "requete": "DELETE /api/boutiques/{boutique3}",
+        "statut": 200,
+        "reponse": {
+            "message": "Boutique supprimée"
+        }
+    },
+    {
+        "nom": "invitation",
+        "requete": "POST /api/members/invite",
+        "statut": 201,
+        "reponse": {
+            "message": "Invitation créée",
+            "member": {
+                "owner_id": 2,
+                "ref_boutique_id": 1,
+                "email": "moussa@boutique.sn",
+                "role": "employe",
+                "status": "pending",
+                "permissions": {
+                    "vente": true,
+                    "stock": false,
+                    "categories": false,
+                    "rapports": false,
+                    "caisse": true,
+                    "credits": true,
+                    "clients": true,
+                    "fournisseurs": false,
+                    "commandes": false,
+                    "livraisons": false
+                },
+                "name": "Moussa",
+                "phone": "77 666 77 88",
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "invite_token": "<JETON_INVITATION>",
+                "invite_expires_at": "2026-09-18T10:03:02.000000Z",
+                "updated_at": "2026-09-15T10:03:02.000000Z",
+                "created_at": "2026-09-15T10:03:02.000000Z",
+                "id": 1
+            },
+            "invite_token": "<JETON_INVITATION>",
+            "invite_link": "http://localhost:5173/?invite=<JETON_INVITATION>"
+        }
+    },
+    {
+        "nom": "invitation en double",
+        "requete": "POST /api/members/invite",
+        "statut": 400,
+        "reponse": {
+            "error": "Cet email est déjà invité dans cette boutique"
+        }
+    },
+    {
+        "nom": "aperçu public",
+        "requete": "GET /api/members/invite/{jeton_invitation}",
+        "statut": 200,
+        "reponse": {
+            "boutique": "Boutique Awa Ndiaye",
+            "role": "employe",
+            "email": "moussa@boutique.sn",
+            "name": "Moussa"
+        }
+    },
+    {
+        "nom": "aperçu inconnu",
+        "requete": "GET /api/members/invite/inconnu",
+        "statut": 404,
+        "reponse": {
+            "error": "Invitation invalide ou déjà utilisée"
+        }
+    },
+    {
+        "nom": "inscription employé",
+        "requete": "POST /api/auth/register",
+        "statut": 201,
+        "reponse": {
+            "message": "Compte créé avec succès",
+            "user": {
+                "id": 3,
+                "username": "moussa@boutique.sn",
+                "company_name": "Moussa",
+                "phone": null,
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:03:06.000000Z",
+                "updated_at": "2026-09-15T10:03:06.000000Z",
+                "current_boutique_id": 4,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:03:06+00:00"
+        }
+    },
+    {
+        "nom": "invitation acceptée",
+        "requete": "POST /api/members/accept",
+        "statut": 200,
+        "reponse": {
+            "message": "Invitation acceptée",
+            "role": "employe",
+            "permissions": {
+                "vente": true,
+                "stock": false,
+                "categories": false,
+                "rapports": false,
+                "caisse": true,
+                "credits": true,
+                "clients": true,
+                "fournisseurs": false,
+                "commandes": false,
+                "livraisons": false
+            },
+            "boutique": {
+                "id": 2,
+                "company_name": "Boutique Awa Ndiaye"
+            }
+        }
+    },
+    {
+        "nom": "ma boutique",
+        "requete": "GET /api/members/my-boutique",
+        "statut": 200,
+        "reponse": {
+            "role": "employe",
+            "permissions": {
+                "vente": true,
+                "stock": false,
+                "categories": false,
+                "rapports": false,
+                "caisse": true,
+                "credits": true,
+                "clients": true,
+                "fournisseurs": false,
+                "commandes": false,
+                "livraisons": false
+            },
+            "owner": {
+                "id": 2,
+                "company_name": "Boutique Awa Ndiaye"
+            },
+            "ref_boutique_id": 1
+        }
+    },
+    {
+        "nom": "membres",
+        "requete": "GET /api/members",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "owner_id": 2,
+                "ref_boutique_id": 1,
+                "member_id": 3,
+                "email": "moussa@boutique.sn",
+                "role": "employe",
+                "status": "accepted",
+                "permissions": {
+                    "vente": true,
+                    "stock": false,
+                    "categories": false,
+                    "rapports": false,
+                    "caisse": true,
+                    "credits": true,
+                    "clients": true,
+                    "fournisseurs": false,
+                    "commandes": false,
+                    "livraisons": false
+                },
+                "invite_token": null,
+                "invite_expires_at": "2026-09-18T10:03:02.000000Z",
+                "accepted_at": "2026-09-15T10:03:07.000000Z",
+                "created_at": "2026-09-15T10:03:02.000000Z",
+                "updated_at": "2026-09-15T10:03:07.000000Z",
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "name": "Moussa",
+                "phone": "77 666 77 88",
+                "user_company_name": "Moussa",
+                "user_phone": null
+            }
+        ]
+    },
+    {
+        "nom": "membres de la boutique 1",
+        "requete": "GET /api/members?boutique_id={boutique1}",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "owner_id": 2,
+                "ref_boutique_id": 1,
+                "member_id": 3,
+                "email": "moussa@boutique.sn",
+                "role": "employe",
+                "status": "accepted",
+                "permissions": {
+                    "vente": true,
+                    "stock": false,
+                    "categories": false,
+                    "rapports": false,
+                    "caisse": true,
+                    "credits": true,
+                    "clients": true,
+                    "fournisseurs": false,
+                    "commandes": false,
+                    "livraisons": false
+                },
+                "invite_token": null,
+                "invite_expires_at": "2026-09-18T10:03:02.000000Z",
+                "accepted_at": "2026-09-15T10:03:07.000000Z",
+                "created_at": "2026-09-15T10:03:02.000000Z",
+                "updated_at": "2026-09-15T10:03:07.000000Z",
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "name": "Moussa",
+                "phone": "77 666 77 88",
+                "user_company_name": "Moussa",
+                "user_phone": null
+            }
+        ]
+    },
+    {
+        "nom": "membre modifié",
+        "requete": "PATCH /api/members/{membre1}",
+        "statut": 200,
+        "reponse": {
+            "id": 1,
+            "owner_id": 2,
+            "ref_boutique_id": 1,
+            "member_id": 3,
+            "email": "moussa@boutique.sn",
+            "role": "employe",
+            "status": "accepted",
+            "permissions": {
+                "vente": true,
+                "stock": false,
+                "categories": false,
+                "rapports": false,
+                "caisse": true,
+                "credits": true,
+                "clients": true,
+                "fournisseurs": false,
+                "commandes": false,
+                "livraisons": false
+            },
+            "invite_token": null,
+            "invite_expires_at": "2026-09-18T10:03:02.000000Z",
+            "accepted_at": "2026-09-15T10:03:07.000000Z",
+            "created_at": "2026-09-15T10:03:02.000000Z",
+            "updated_at": "2026-09-15T10:03:11.000000Z",
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "name": "Moussa Sow",
+            "phone": "77 666 77 88"
+        }
+    },
+    {
+        "nom": "moi (employé)",
+        "requete": "GET /api/auth/me",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "username": "awa@boutique.sn",
+            "company_name": "Boutique Awa Ndiaye",
+            "phone": "77 111 22 44",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Premium",
+            "payment_status": "À jour",
+            "payment_method": "wave",
+            "expiration": "2026-10-15T00:00:00.000000Z",
+            "amount": "5000.00",
+            "upgrade_status": "en attente",
+            "created_at": "2026-09-15T10:00:02.000000Z",
+            "updated_at": "2026-09-15T10:02:57.000000Z",
+            "current_boutique_id": 1,
+            "twofa_enabled": false,
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "preferences": [],
+            "is_employee": true,
+            "permissions": {
+                "vente": true,
+                "stock": false,
+                "categories": false,
+                "rapports": false,
+                "caisse": true,
+                "credits": true,
+                "clients": true,
+                "fournisseurs": false,
+                "commandes": false,
+                "livraisons": false
+            },
+            "boutiques": [
+                {
+                    "id": 1,
+                    "owner_id": 2,
+                    "name": "Boutique Awa Ndiaye",
+                    "phone": null,
+                    "address": null,
+                    "emoji": "🏪",
+                    "is_primary": true,
+                    "created_at": "2026-09-15T10:00:02.000000Z",
+                    "updated_at": "2026-09-15T10:00:08.000000Z",
+                    "photo": null
+                },
+                {
+                    "id": 2,
+                    "owner_id": 2,
+                    "name": "Boutique Marché",
+                    "phone": "77 555 66 77",
+                    "address": "HLM 5",
+                    "emoji": "🏬",
+                    "is_primary": false,
+                    "created_at": "2026-09-15T10:02:51.000000Z",
+                    "updated_at": "2026-09-15T10:02:54.000000Z",
+                    "photo": null
+                }
+            ]
+        }
+    },
+    {
+        "nom": "connexion employé",
+        "requete": "POST /api/auth/login",
+        "statut": 200,
+        "reponse": {
+            "user": {
+                "id": 3,
+                "username": "moussa@boutique.sn",
+                "company_name": "Moussa",
+                "phone": null,
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:03:06.000000Z",
+                "updated_at": "2026-09-15T10:03:06.000000Z",
+                "current_boutique_id": 4,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null,
+                "is_employee": true,
+                "permissions": {
+                    "vente": true,
+                    "stock": false,
+                    "categories": false,
+                    "rapports": false,
+                    "caisse": true,
+                    "credits": true,
+                    "clients": true,
+                    "fournisseurs": false,
+                    "commandes": false,
+                    "livraisons": false
+                }
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:03:13+00:00"
+        }
+    },
+    {
+        "nom": "produits (employé)",
+        "requete": "GET /api/products",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jetable",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 100,
+                "price_achat": 0,
+                "stock": 1,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:28.000000Z",
+                "updated_at": "2026-09-15T10:01:36.000000Z"
+            },
+            {
+                "id": 3,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Savon",
+                "category_id": null,
+                "scent": null,
+                "barcode": null,
+                "price": 350,
+                "price_achat": 250,
+                "stock": 28,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": false,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:27.000000Z",
+                "updated_at": "2026-09-15T10:02:26.000000Z"
+            },
+            {
+                "id": 2,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Jus bissap",
+                "category_id": 2,
+                "scent": null,
+                "barcode": null,
+                "price": 250,
+                "price_achat": 100,
+                "stock": 63,
+                "unite_base": "piece",
+                "prix_min": null,
+                "negociable": null,
+                "photo": null,
+                "units": [],
+                "created_at": "2026-09-15T10:01:26.000000Z",
+                "updated_at": "2026-09-15T10:02:25.000000Z"
+            },
+            {
+                "id": 1,
+                "user_id": 2,
+                "boutique_id": 1,
+                "name": "Riz parfumé",
+                "category_id": 1,
+                "scent": "Riz brisé",
+                "barcode": "6001234567890",
+                "price": 600,
+                "price_achat": 450,
+                "stock": 47500,
+                "unite_base": "g",
+                "prix_min": 550,
+                "negociable": null,
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "units": [
+                    {
+                        "id": 1,
+                        "product_id": 1,
+                        "libelle": "Sac 50 kg",
+                        "facteur": 50000,
+                        "prix": 27500
+                    }
+                ],
+                "created_at": "2026-09-15T10:01:25.000000Z",
+                "updated_at": "2026-09-15T10:01:48.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "corbeille refusée (employé)",
+        "requete": "GET /api/products/trash",
+        "statut": 403,
+        "reponse": {
+            "error": "Accès refusé",
+            "permission": "stock",
+            "message": "Vous n'avez pas la permission « stock ». Contactez le propriétaire."
+        }
+    },
+    {
+        "nom": "vente (employé)",
+        "requete": "POST /api/sales",
+        "statut": 201,
+        "reponse": {
+            "id": 7,
+            "user_id": 2,
+            "boutique_id": 1,
+            "product_id": 2,
+            "product_name": null,
+            "quantity": 1,
+            "total": 250,
+            "payment_method": "especes",
+            "client_id": null,
+            "client_name": null,
+            "client_phone": null,
+            "due_date": null,
+            "paid": true,
+            "repayment_method": null,
+            "quantite_base": 1,
+            "unit_id": null,
+            "unit_libelle": "pièce",
+            "prix_reference": 250,
+            "prix_reel": 250,
+            "remise": 0,
+            "cogs": 100,
+            "backfilled": false,
+            "vendu_par_nom": "moussa@boutique.sn",
+            "created_at": "2026-09-15T10:03:16.000000Z"
+        }
+    },
+    {
+        "nom": "vente sous le plancher (employé)",
+        "requete": "POST /api/sales",
+        "statut": 422,
+        "reponse": {
+            "error": "Prix sous le plancher autorisé (550 / kg)"
+        }
+    },
+    {
+        "nom": "résumé du jour (employé)",
+        "requete": "GET /api/stats/resume-jour",
+        "statut": 200,
+        "reponse": {
+            "date": "2026-09-15",
+            "ca": 30950,
+            "articles": 12,
+            "stock": 47591
+        }
+    },
+    {
+        "nom": "statistiques refusées (employé)",
+        "requete": "GET /api/stats/paiements",
+        "statut": 403,
+        "reponse": {
+            "error": "Accès refusé",
+            "permission": "rapports",
+            "message": "Vous n'avez pas la permission « rapports ». Contactez le propriétaire."
+        }
+    },
+    {
+        "nom": "préférences (employé)",
+        "requete": "PUT /api/auth/preferences",
+        "statut": 200,
+        "reponse": {
+            "preferences": {
+                "modules_off": [
+                    "stock"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "clients pour la vente (employé)",
+        "requete": "GET /api/clients/for-sale",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "name": "Fatou Diop",
+                "phone": "77 222 33 44"
+            },
+            {
+                "id": 2,
+                "name": "Moussa Fall",
+                "phone": "77 444 55 66"
+            }
+        ]
+    },
+    {
+        "nom": "membre retiré",
+        "requete": "DELETE /api/members/{membre1}",
+        "statut": 200,
+        "reponse": {
+            "message": "Membre retiré"
+        }
+    },
+    {
+        "nom": "second commerçant",
+        "requete": "POST /api/auth/register",
+        "statut": 201,
+        "reponse": {
+            "message": "Compte créé avec succès",
+            "user": {
+                "id": 4,
+                "username": "autre@boutique.sn",
+                "company_name": "Autre",
+                "phone": null,
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:03:23.000000Z",
+                "updated_at": "2026-09-15T10:03:23.000000Z",
+                "current_boutique_id": 5,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:03:23+00:00"
+        }
+    },
+    {
+        "nom": "produit d'autrui introuvable",
+        "requete": "GET /api/products/{prod1}",
+        "statut": 404,
+        "reponse": {
+            "message": "<INTROUVABLE>"
+        }
+    },
+    {
+        "nom": "catégorie d'autrui refusée",
+        "requete": "POST /api/products",
+        "statut": 422,
+        "reponse": {
+            "message": "La valeur sélectionnée pour catégorie est invalide.",
+            "errors": {
+                "category_id": [
+                    "La valeur sélectionnée pour catégorie est invalide."
+                ]
+            }
+        }
+    },
+    {
+        "nom": "connexion admin",
+        "requete": "POST /api/auth/login",
+        "statut": 200,
+        "reponse": {
+            "user": {
+                "id": 1,
+                "username": "admin@samacommerce.sn",
+                "company_name": "Admin",
+                "phone": null,
+                "role": "admin",
+                "status": "Actif",
+                "plan": "Premium",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:00:00.000000Z",
+                "updated_at": "2026-09-15T10:00:00.000000Z",
+                "current_boutique_id": null,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null,
+                "is_employee": false,
+                "permissions": null
+            },
+            "token": "<JETON>",
+            "token_expires_at": "2026-09-22T10:03:26+00:00"
+        }
+    },
+    {
+        "nom": "utilisateurs",
+        "requete": "GET /api/auth/users",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 4,
+                "username": "autre@boutique.sn",
+                "company_name": "Autre",
+                "phone": null,
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:03:23.000000Z",
+                "updated_at": "2026-09-15T10:03:23.000000Z",
+                "current_boutique_id": 5,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null
+            },
+            {
+                "id": 3,
+                "username": "moussa@boutique.sn",
+                "company_name": "Moussa",
+                "phone": null,
+                "role": "user",
+                "status": "Actif",
+                "plan": "Free",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:03:06.000000Z",
+                "updated_at": "2026-09-15T10:03:20.000000Z",
+                "current_boutique_id": 4,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": {
+                    "modules_off": [
+                        "stock"
+                    ]
+                }
+            },
+            {
+                "id": 2,
+                "username": "awa@boutique.sn",
+                "company_name": "Boutique Awa Ndiaye",
+                "phone": "77 111 22 44",
+                "role": "user",
+                "status": "Actif",
+                "plan": "Premium",
+                "payment_status": "À jour",
+                "payment_method": "wave",
+                "expiration": "2026-10-15T00:00:00.000000Z",
+                "amount": "5000.00",
+                "upgrade_status": "en attente",
+                "created_at": "2026-09-15T10:00:02.000000Z",
+                "updated_at": "2026-09-15T10:02:57.000000Z",
+                "current_boutique_id": 1,
+                "twofa_enabled": false,
+                "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "preferences": {
+                    "auto_print": false,
+                    "modules_off": [
+                        "returns",
+                        "ia"
+                    ]
+                }
+            },
+            {
+                "id": 1,
+                "username": "admin@samacommerce.sn",
+                "company_name": "Admin",
+                "phone": null,
+                "role": "admin",
+                "status": "Actif",
+                "plan": "Premium",
+                "payment_status": "À jour",
+                "payment_method": null,
+                "expiration": null,
+                "amount": "0.00",
+                "upgrade_status": "validé",
+                "created_at": "2026-09-15T10:00:00.000000Z",
+                "updated_at": "2026-09-15T10:00:00.000000Z",
+                "current_boutique_id": null,
+                "twofa_enabled": false,
+                "photo": null,
+                "preferences": null
+            }
+        ]
+    },
+    {
+        "nom": "utilisateurs refusés (commerçant)",
+        "requete": "GET /api/auth/users",
+        "statut": 403,
+        "reponse": {
+            "error": "Accès réservé aux administrateurs"
+        }
+    },
+    {
+        "nom": "utilisateur créé",
+        "requete": "POST /api/auth/users",
+        "statut": 201,
+        "reponse": {
+            "username": "nouveau@x.sn",
+            "company_name": "Nouveau",
+            "phone": "77 777 88 99",
+            "plan": "Premium",
+            "payment_method": "orange",
+            "upgrade_status": "en attente",
+            "updated_at": "2026-09-15T10:03:29.000000Z",
+            "created_at": "2026-09-15T10:03:29.000000Z",
+            "id": 5
+        }
+    },
+    {
+        "nom": "utilisateur bloqué",
+        "requete": "PUT /api/auth/users/{util_nouveau}/block",
+        "statut": 200,
+        "reponse": {
+            "id": 5,
+            "username": "nouveau@x.sn",
+            "company_name": "Nouveau",
+            "phone": "77 777 88 99",
+            "role": "user",
+            "status": "Bloqué",
+            "plan": "Premium",
+            "payment_status": "À jour",
+            "payment_method": "orange",
+            "expiration": null,
+            "amount": "0.00",
+            "upgrade_status": "en attente",
+            "created_at": "2026-09-15T10:03:29.000000Z",
+            "updated_at": "2026-09-15T10:03:30.000000Z",
+            "current_boutique_id": null,
+            "twofa_enabled": false,
+            "photo": null,
+            "preferences": null
+        }
+    },
+    {
+        "nom": "utilisateur réactivé",
+        "requete": "PUT /api/auth/users/{util_nouveau}/activate",
+        "statut": 200,
+        "reponse": {
+            "id": 5,
+            "username": "nouveau@x.sn",
+            "company_name": "Nouveau",
+            "phone": "77 777 88 99",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Premium",
+            "payment_status": "À jour",
+            "payment_method": "orange",
+            "expiration": null,
+            "amount": "0.00",
+            "upgrade_status": "en attente",
+            "created_at": "2026-09-15T10:03:29.000000Z",
+            "updated_at": "2026-09-15T10:03:31.000000Z",
+            "current_boutique_id": null,
+            "twofa_enabled": false,
+            "photo": null,
+            "preferences": null
+        }
+    },
+    {
+        "nom": "relance",
+        "requete": "POST /api/auth/users/{util_nouveau}/reminder",
+        "statut": 200,
+        "reponse": {
+            "message": "Rappel envoyé à nouveau@x.sn"
+        }
+    },
+    {
+        "nom": "passage premium validé",
+        "requete": "PUT /api/auth/upgrade/{id_proprio}/approve",
+        "statut": 200,
+        "reponse": {
+            "id": 2,
+            "username": "awa@boutique.sn",
+            "company_name": "Boutique Awa Ndiaye",
+            "phone": "77 111 22 44",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Premium",
+            "payment_status": "À jour",
+            "payment_method": "wave",
+            "expiration": "2026-10-15T00:00:00.000000Z",
+            "amount": "5000.00",
+            "upgrade_status": "validé",
+            "created_at": "2026-09-15T10:00:02.000000Z",
+            "updated_at": "2026-09-15T10:03:33.000000Z",
+            "current_boutique_id": 1,
+            "twofa_enabled": false,
+            "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "preferences": {
+                "auto_print": false,
+                "modules_off": [
+                    "returns",
+                    "ia"
+                ]
+            }
+        }
+    },
+    {
+        "nom": "passage premium refusé",
+        "requete": "PUT /api/auth/upgrade/{util_nouveau}/reject",
+        "statut": 200,
+        "reponse": {
+            "id": 5,
+            "username": "nouveau@x.sn",
+            "company_name": "Nouveau",
+            "phone": "77 777 88 99",
+            "role": "user",
+            "status": "Actif",
+            "plan": "Free",
+            "payment_status": "À jour",
+            "payment_method": "orange",
+            "expiration": null,
+            "amount": "0.00",
+            "upgrade_status": "rejeté",
+            "created_at": "2026-09-15T10:03:29.000000Z",
+            "updated_at": "2026-09-15T10:03:34.000000Z",
+            "current_boutique_id": null,
+            "twofa_enabled": false,
+            "photo": null,
+            "preferences": null
+        }
+    },
+    {
+        "nom": "vue d'ensemble",
+        "requete": "GET /api/admin-stats/overview",
+        "statut": 200,
+        "reponse": {
+            "totalUsers": 5,
+            "activePremium": 2,
+            "revenues": 5000,
+            "pending": 0,
+            "growth": {
+                "totalUsers": {
+                    "current": 5,
+                    "previous": 0
+                },
+                "activePremium": {
+                    "current": 2,
+                    "previous": 2
+                },
+                "revenues": {
+                    "current": 5000,
+                    "previous": 0
+                }
+            }
+        }
+    },
+    {
+        "nom": "revenus du mois",
+        "requete": "GET /api/admin-stats/revenus?period=monthly",
+        "statut": 200,
+        "reponse": {
+            "balance": 5000,
+            "periodTotal": 0,
+            "pending": 0,
+            "period": "monthly"
+        }
+    },
+    {
+        "nom": "revenus totaux",
+        "requete": "GET /api/admin-stats/revenus?period=all",
+        "statut": 200,
+        "reponse": {
+            "balance": 5000,
+            "periodTotal": 5000,
+            "pending": 0,
+            "period": "all"
+        }
+    },
+    {
+        "nom": "évolution des revenus",
+        "requete": "GET /api/admin-stats/revenus/evolution",
+        "statut": 200,
+        "reponse": [
+            {
+                "mois": "2026-10",
+                "total": 5000
+            }
+        ]
+    },
+    {
+        "nom": "transactions",
+        "requete": "GET /api/admin-stats/transactions?limit=5",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 2,
+                "username": "awa@boutique.sn",
+                "plan": "Premium",
+                "amount": "5000.00",
+                "payment_method": "wave",
+                "upgrade_status": "validé",
+                "expiration": "2026-10-15T00:00:00.000000Z",
+                "created_at": "2026-09-15T10:00:02.000000Z"
+            },
+            {
+                "id": 1,
+                "username": "admin@samacommerce.sn",
+                "plan": "Premium",
+                "amount": "0.00",
+                "payment_method": null,
+                "upgrade_status": "validé",
+                "expiration": null,
+                "created_at": "2026-09-15T10:00:00.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "retrait",
+        "requete": "POST /api/admin-withdrawals",
+        "statut": 201,
+        "reponse": {
+            "message": "Demande de retrait enregistrée",
+            "withdrawal": {
+                "admin_id": 1,
+                "amount": "1000.00",
+                "method": "wave",
+                "status": "validé",
+                "updated_at": "2026-09-15T10:03:40.000000Z",
+                "created_at": "2026-09-15T10:03:40.000000Z",
+                "id": 1
+            }
+        }
+    },
+    {
+        "nom": "retraits",
+        "requete": "GET /api/admin-withdrawals",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "admin_id": 1,
+                "amount": "1000.00",
+                "method": "wave",
+                "status": "validé",
+                "created_at": "2026-09-15T10:03:40.000000Z",
+                "updated_at": "2026-09-15T10:03:40.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "transfert",
+        "requete": "POST /api/admin-transfers",
+        "statut": 201,
+        "reponse": {
+            "message": "Transfert enregistré",
+            "transfer": {
+                "admin_id": 1,
+                "from_account": "wave",
+                "to_account": "orange",
+                "amount": "500.00",
+                "updated_at": "2026-09-15T10:03:42.000000Z",
+                "created_at": "2026-09-15T10:03:42.000000Z",
+                "id": 1
+            }
+        }
+    },
+    {
+        "nom": "transferts",
+        "requete": "GET /api/admin-transfers",
+        "statut": 200,
+        "reponse": [
+            {
+                "id": 1,
+                "admin_id": 1,
+                "from_account": "wave",
+                "to_account": "orange",
+                "amount": "500.00",
+                "created_at": "2026-09-15T10:03:42.000000Z",
+                "updated_at": "2026-09-15T10:03:42.000000Z"
+            }
+        ]
+    },
+    {
+        "nom": "comptes",
+        "requete": "GET /api/admin-stats/accounts",
+        "statut": 200,
+        "reponse": {
+            "accounts": {
+                "orange": 500,
+                "wave": 3500,
+                "cash": 0
+            },
+            "total": 4000,
+            "entries": 5000,
+            "withdrawals": 1000,
+            "net": 4000
+        }
+    },
+    {
+        "nom": "détail d'un compte",
+        "requete": "GET /api/admin-stats/accounts/wave",
+        "statut": 200,
+        "reponse": {
+            "subscriptions": [
+                {
+                    "username": "awa@boutique.sn",
+                    "amount": "5000.00",
+                    "payment_method": "wave",
+                    "expiration": "2026-10-15T00:00:00.000000Z",
+                    "created_at": "2026-09-15T10:00:02.000000Z"
+                }
+            ],
+            "withdrawals": [
+                {
+                    "amount": "1000.00",
+                    "status": "validé",
+                    "created_at": "2026-09-15T10:03:40.000000Z"
+                }
+            ],
+            "transfers": [
+                {
+                    "id": 1,
+                    "admin_id": 1,
+                    "from_account": "wave",
+                    "to_account": "orange",
+                    "amount": "500.00",
+                    "created_at": "2026-09-15T10:03:42.000000Z",
+                    "updated_at": "2026-09-15T10:03:42.000000Z"
+                }
+            ]
+        }
+    },
+    {
+        "nom": "paramètres",
+        "requete": "GET /api/admin-settings",
+        "statut": 201,
+        "reponse": {
+            "admin_id": 1,
+            "updated_at": "2026-09-15T10:03:46.000000Z",
+            "created_at": "2026-09-15T10:03:46.000000Z",
+            "id": 1
+        }
+    },
+    {
+        "nom": "paramètres modifiés",
+        "requete": "PUT /api/admin-settings",
+        "statut": 200,
+        "reponse": {
+            "message": "Paramètres mis à jour",
+            "settings": {
+                "id": 1,
+                "admin_id": 1,
+                "app_name": "SamaCommerce",
+                "contact_email": "contact@x.sn",
+                "timezone": "Africa/Dakar",
+                "premium_price": "5000.00",
+                "grace_period": 7,
+                "alerts_enabled": true,
+                "notify_new_subs": false,
+                "notify_late_payments": true,
+                "notify_reports": true,
+                "multi_sessions": false,
+                "twofa_enabled": false,
+                "created_at": "2026-09-15T10:03:46.000000Z",
+                "updated_at": "2026-09-15T10:03:47.000000Z"
+            }
+        }
+    },
+    {
+        "nom": "double facteur admin",
+        "requete": "PATCH /api/admin-settings/twofa",
+        "statut": 200,
+        "reponse": {
+            "message": "2FA mis à jour",
+            "enabled": true
+        }
+    },
+    {
+        "nom": "utilisateur supprimé",
+        "requete": "DELETE /api/auth/users/{util_nouveau}",
+        "statut": 200,
+        "reponse": {
+            "message": "Utilisateur supprimé"
+        }
+    },
+    {
+        "nom": "fournisseur supprimé",
+        "requete": "DELETE /api/fournisseurs/{four1}",
+        "statut": 200,
+        "reponse": {
+            "message": "Fournisseur supprimé"
+        }
+    },
+    {
+        "nom": "déconnexion",
+        "requete": "POST /api/auth/logout",
+        "statut": 200,
+        "reponse": {
+            "message": "Déconnecté."
+        }
+    },
+    {
+        "nom": "jeton révoqué",
+        "requete": "GET /api/auth/me",
+        "statut": 401,
+        "reponse": {
+            "message": "Unauthenticated."
+        }
+    },
+    {
+        "nom": "déconnexion partout",
+        "requete": "POST /api/auth/logout-all",
+        "statut": 200,
+        "reponse": {
+            "message": "Déconnecté de tous les appareils."
+        }
+    },
+    {
+        "nom": "plus aucun jeton",
+        "requete": "GET /api/auth/me",
+        "statut": 401,
+        "reponse": {
+            "message": "Unauthenticated."
+        }
+    }
+]

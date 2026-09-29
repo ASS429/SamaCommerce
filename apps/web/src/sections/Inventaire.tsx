@@ -1,154 +1,154 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Sales, boutiqueIdentity, fcfa, type Sale } from '../lib/api'
-import { exportXlsx } from '../lib/xlsx'
-import { exportPdf, money } from '../lib/pdf'
-import { SkeletonList } from '../components/Skeleton'
-import { productIcon, productTint } from '../lib/productIcon'
-import Avatar from '../components/Avatar'
-import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
-import { useProduits, LISTE_VIDE } from '../lib/queries'
+import { Ventes, identiteBoutique, fcfa, type Vente } from '../outils/api'
+import { exporterClasseur } from '../outils/xlsx'
+import { exporterPdf, montant } from '../outils/pdf'
+import { ListeSquelette } from '../composants/Squelette'
+import { iconeProduit, fondProduit } from '../outils/iconeProduit'
+import Avatar from '../composants/Avatar'
+import ErreurChargement from '../composants/ErreurChargement'
+import { useErreurChargement } from '../outils/erreursChargement'
+import { useProduits, LISTE_VIDE } from '../outils/requetes'
 
 export default function Inventaire() {
-  // Catalogue partage : deja en memoire si l'on vient de Stock ou de Vendre.
-  const products = useProduits().data ?? LISTE_VIDE
-  const [sales, setSales] = useState<Sale[]>([])
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
+  // Catalogue partagé : déjà en mémoire si l'on vient de Stock ou de Vendre.
+  const produits = useProduits().data ?? LISTE_VIDE
+  const [ventes, definirVentes] = useState<Vente[]>([])
+  const [recherche, definirRecherche] = useState('')
+  const [chargement, definirChargement] = useState(true)
+  const { erreur, surveiller, effacer } = useErreurChargement()
 
-  const load = () => {
-    reset()
+  const charger = () => {
+    effacer()
     Promise.all([
-      watch(Sales.list().then(setSales)),
-    ]).finally(() => setLoading(false))
+      surveiller(Ventes.lister().then(definirVentes)),
+    ]).finally(() => definirChargement(false))
   }
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const vendues = useMemo(() => {
-    const m: Record<number, number> = {}
-    for (const s of sales) m[s.product_id] = (m[s.product_id] || 0) + s.quantity
-    return m
-  }, [sales])
+    const parProduit: Record<number, number> = {}
+    for (const v of ventes) parProduit[v.produit_id] = (parProduit[v.produit_id] || 0) + v.quantite
+    return parProduit
+  }, [ventes])
 
-  const rows = useMemo(() => products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())).map((p) => {
-    const v = vendues[p.id] || 0
-    const benefice = (Number(p.price) - Number(p.price_achat)) * v
-    const marge = Number(p.price) > 0 ? ((Number(p.price) - Number(p.price_achat)) / Number(p.price)) * 100 : 0
-    return { p, v, benefice, marge }
-  }), [products, vendues, search])
+  const lignes = useMemo(() => produits.filter((p) => p.nom.toLowerCase().includes(recherche.toLowerCase())).map((p) => {
+    const vendus = vendues[p.id] || 0
+    const benefice = (Number(p.prix_vente) - Number(p.prix_achat)) * vendus
+    const marge = Number(p.prix_vente) > 0 ? ((Number(p.prix_vente) - Number(p.prix_achat)) / Number(p.prix_vente)) * 100 : 0
+    return { p, vendus, benefice, marge }
+  }), [produits, vendues, recherche])
 
-  const totals = useMemo(() => ({
-    valeur: products.reduce((a, p) => a + Number(p.price_achat) * p.stock, 0),
-    benefice: rows.reduce((a, r) => a + r.benefice, 0),
-    produits: products.length,
+  const totaux = useMemo(() => ({
+    valeur: produits.reduce((a, p) => a + Number(p.prix_achat) * p.stock, 0),
+    benefice: lignes.reduce((a, l) => a + l.benefice, 0),
+    produits: produits.length,
     vendus: Object.values(vendues).reduce((a, b) => a + b, 0),
-  }), [products, rows, vendues])
+  }), [produits, lignes, vendues])
 
   /* Le produit qui rapporte le plus PAR VENTE. C'est l'information qu'un
      commerçant cherche dans un inventaire : sur quoi pousser. Elle était
      noyée dans une colonne « marge » de plus. */
   const meilleure = useMemo(() => {
-    const eligibles = rows.filter((r) => Number(r.p.price) > 0 && Number(r.p.price_achat) > 0)
+    const eligibles = lignes.filter((l) => Number(l.p.prix_vente) > 0 && Number(l.p.prix_achat) > 0)
     if (eligibles.length === 0) return null
-    return eligibles.reduce((best, r) => (r.marge > best.marge ? r : best))
-  }, [rows])
+    return eligibles.reduce((meilleure, l) => (l.marge > meilleure.marge ? l : meilleure))
+  }, [lignes])
 
-  const sousTitre = `${boutiqueIdentity().nom} — ${rows.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`
+  const sousTitre = `${identiteBoutique().nom} — ${lignes.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`
 
-  const exportExcel = () => exportXlsx('inventaire-samacommerce', {
-    sheet: 'Inventaire',
-    title: '📋 Inventaire & marges',
-    subtitle: sousTitre,
-    columns: [
-      { header: 'Produit', width: 32 },
-      { header: "Prix d'achat", width: 14, type: 'money' },
-      { header: 'Prix de vente', width: 14, type: 'money' },
-      { header: 'Stock', width: 10, type: 'number' },
-      { header: 'Vendus', width: 10, type: 'number' },
-      { header: 'Valeur stock', width: 15, type: 'money' },
-      { header: 'Bénéfice', width: 14, type: 'money' },
-      { header: 'Marge', width: 10, type: 'percent' },
+  const exporterExcel = () => exporterClasseur('inventaire-samacommerce', {
+    onglet: 'Inventaire',
+    titre: '📋 Inventaire & marges',
+    sousTitre,
+    colonnes: [
+      { entete: 'Produit', largeur: 32 },
+      { entete: "Prix d'achat", largeur: 14, type: 'montant' },
+      { entete: 'Prix de vente', largeur: 14, type: 'montant' },
+      { entete: 'Stock', largeur: 10, type: 'nombre' },
+      { entete: 'Vendus', largeur: 10, type: 'nombre' },
+      { entete: 'Valeur stock', largeur: 15, type: 'montant' },
+      { entete: 'Bénéfice', largeur: 14, type: 'montant' },
+      { entete: 'Marge', largeur: 10, type: 'pourcentage' },
     ],
-    rows: rows.map(({ p, v, benefice, marge }) => [
-      p.name, Number(p.price_achat), Number(p.price), p.stock, v,
-      Number(p.price_achat) * p.stock, Math.round(benefice), Number(marge.toFixed(1)),
+    lignes: lignes.map(({ p, vendus, benefice, marge }) => [
+      p.nom, Number(p.prix_achat), Number(p.prix_vente), p.stock, vendus,
+      Number(p.prix_achat) * p.stock, Math.round(benefice), Number(marge.toFixed(1)),
     ]),
-    totals: ['TOTAL', null, null, null, totals.vendus, totals.valeur, Math.round(totals.benefice), null],
+    totaux: ['TOTAL', null, null, null, totaux.vendus, totaux.valeur, Math.round(totaux.benefice), null],
   })
 
-  const exportInventairePdf = () => exportPdf('inventaire-samacommerce', {
-    title: 'Inventaire',
-    subtitle: sousTitre,
-    boutique: boutiqueIdentity(),
-    summary: [
-      { label: 'Valeur du stock', value: money(totals.valeur) },
-      { label: 'Bénéfice réalisé', value: money(totals.benefice), tone: 'green' },
-      { label: 'Articles vendus', value: String(totals.vendus), tone: 'orange' },
+  const exporterInventairePdf = () => exporterPdf('inventaire-samacommerce', {
+    titre: 'Inventaire',
+    sousTitre,
+    boutique: identiteBoutique(),
+    synthese: [
+      { libelle: 'Valeur du stock', valeur: montant(totaux.valeur) },
+      { libelle: 'Bénéfice réalisé', valeur: montant(totaux.benefice), teinte: 'vert' },
+      { libelle: 'Articles vendus', valeur: String(totaux.vendus), teinte: 'orange' },
     ],
-    columns: ['Produit', 'Achat', 'Vente', 'Stock', 'Vendus', 'Bénéfice', 'Marge'],
-    rows: rows.map(({ p, v, benefice, marge }) => [
-      p.name, money(Number(p.price_achat)), money(Number(p.price)), String(p.stock), String(v), money(benefice), `${marge.toFixed(0)} %`,
+    colonnes: ['Produit', 'Achat', 'Vente', 'Stock', 'Vendus', 'Bénéfice', 'Marge'],
+    lignes: lignes.map(({ p, vendus, benefice, marge }) => [
+      p.nom, montant(Number(p.prix_achat)), montant(Number(p.prix_vente)), String(p.stock), String(vendus), montant(benefice), `${marge.toFixed(0)} %`,
     ]),
-    foot: ['TOTAL', '', '', '', String(totals.vendus), money(totals.benefice), ''],
-    rightAlign: [1, 2, 3, 4, 5, 6],
+    pied: ['TOTAL', '', '', '', String(totaux.vendus), montant(totaux.benefice), ''],
+    alignesADroite: [1, 2, 3, 4, 5, 6],
   })
 
   return (
     <>
-      <div className="page-header">
+      <div className="page-entete">
         <h2>📋 Inventaire</h2>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportExcel} disabled={rows.length === 0}>📊 Excel</button>
-          <button className="btn-pdf" onClick={exportInventairePdf} disabled={rows.length === 0}>📄 PDF</button>
+          <button className="bouton-pdf" style={{ background: '#ECFDF5', color: 'var(--vert)' }} onClick={exporterExcel} disabled={lignes.length === 0}>📊 Excel</button>
+          <button className="bouton-pdf" onClick={exporterInventairePdf} disabled={lignes.length === 0}>📄 PDF</button>
         </div>
       </div>
 
-      <div className="stat-2x2">
-        <div className="st st-b"><div className="sv">{loading ? '—' : fcfa(totals.valeur)}</div><div className="sl">📦 Valeur du stock</div></div>
-        <div className="st st-g"><div className="sv">{loading ? '—' : fcfa(totals.benefice)}</div><div className="sl">💰 Bénéfice réalisé</div></div>
-        <div className="st st-p"><div className="sv">{loading ? '—' : totals.produits}</div><div className="sl">🏷️ Produits</div></div>
-        <div className="st st-y"><div className="sv">{loading ? '—' : totals.vendus}</div><div className="sl">🛒 Articles vendus</div></div>
+      <div className="grille-stats">
+        <div className="stat stat-bleu"><div className="stat-valeur">{chargement ? '—' : fcfa(totaux.valeur)}</div><div className="stat-libelle">📦 Valeur du stock</div></div>
+        <div className="stat stat-vert"><div className="stat-valeur">{chargement ? '—' : fcfa(totaux.benefice)}</div><div className="stat-libelle">💰 Bénéfice réalisé</div></div>
+        <div className="stat stat-violet"><div className="stat-valeur">{chargement ? '—' : totaux.produits}</div><div className="stat-libelle">🏷️ Produits</div></div>
+        <div className="stat stat-jaune"><div className="stat-valeur">{chargement ? '—' : totaux.vendus}</div><div className="stat-libelle">🛒 Articles vendus</div></div>
       </div>
 
-      {!loading && meilleure && (
-        <div className="tone-row">
-          <span className="invite-ico" aria-hidden="true">🏆</span>
+      {!chargement && meilleure && (
+        <div className="bandeau-couleur">
+          <span className="bandeau-icone" aria-hidden="true">🏆</span>
           <span style={{ minWidth: 0 }}>
-            <span className="invite-t" style={{ display: 'block' }}>Meilleure marge : {meilleure.p.name}</span>
-            <span className="invite-s" style={{ display: 'block' }}>
-              {fcfa(Number(meilleure.p.price_achat))} → {fcfa(Number(meilleure.p.price))} l'unité
+            <span className="bandeau-titre" style={{ display: 'block' }}>Meilleure marge : {meilleure.p.nom}</span>
+            <span className="bandeau-sous-titre" style={{ display: 'block' }}>
+              {fcfa(Number(meilleure.p.prix_achat))} → {fcfa(Number(meilleure.p.prix_vente))} l'unité
             </span>
           </span>
-          <span className="code-box" style={{ marginLeft: 'auto', minWidth: 58, fontSize: 16 }}>+{meilleure.marge.toFixed(0)} %</span>
+          <span className="case-code" style={{ marginLeft: 'auto', minWidth: 58, fontSize: 16 }}>+{meilleure.marge.toFixed(0)} %</span>
         </div>
       )}
 
-      <input className="search-bar" placeholder="🔍 Rechercher un produit..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      <input className="barre-recherche" placeholder="🔍 Rechercher un produit..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
-      {loading && <SkeletonList count={5} />}
-      {!loading && error && <LoadError error={error} onRetry={load} />}
-      {!loading && !error && rows.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <div className="empty-text">{products.length === 0 ? 'Rien à inventorier' : 'Aucun résultat'}</div>
-          <div className="empty-sub">{products.length === 0 ? 'Ajoutez des produits au stock pour voir vos marges' : 'Essayez un autre nom'}</div>
+      {chargement && <ListeSquelette nombre={5} />}
+      {!chargement && erreur && <ErreurChargement erreur={erreur} surReessai={charger} />}
+      {!chargement && !erreur && lignes.length === 0 && (
+        <div className="etat-vide">
+          <div className="vide-icone">📋</div>
+          <div className="vide-texte">{produits.length === 0 ? 'Rien à inventorier' : 'Aucun résultat'}</div>
+          <div className="vide-sous-titre">{produits.length === 0 ? 'Ajoutez des produits au stock pour voir vos marges' : 'Essayez un autre nom'}</div>
         </div>
       )}
 
       {/* Sur téléphone la lecture se fait en cartes : un tableau à 7 colonnes
           impose un défilement horizontal illisible. Le pictogramme du produit
           rend chaque ligne identifiable sans lire son nom. */}
-      {!loading && rows.map(({ p, v, benefice, marge }) => (
-        <div key={p.id} className="card inv-row">
-          <Avatar photo={p.photo} icon={productIcon(p.name)} name={p.name} size={42} radius={13} tint={productTint(p.name)} />
+      {!chargement && lignes.map(({ p, vendus, benefice, marge }) => (
+        <div key={p.id} className="carte ligne-inventaire">
+          <Avatar photo={p.photo} icone={iconeProduit(p.nom)} nom={p.nom} taille={42} rayon={13} fond={fondProduit(p.nom)} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="fiche-name">{p.name}</div>
-            <div className="fiche-sub">🏷️ {fcfa(Number(p.price_achat))} → {fcfa(Number(p.price))} · 🛒 {v} vendu(s)</div>
+            <div className="fiche-nom">{p.nom}</div>
+            <div className="fiche-sous-titre">🏷️ {fcfa(Number(p.prix_achat))} → {fcfa(Number(p.prix_vente))} · 🛒 {vendus} vendu(s)</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div className="sora" style={{ fontWeight: 800, color: benefice >= 0 ? 'var(--green)' : 'var(--red)' }}>{fcfa(benefice)}</div>
-            <span className={`produit-stock-pill ${p.stock <= 0 ? 'pill-critical' : p.stock <= 5 ? 'pill-low' : 'pill-ok'}`}>
+            <div className="police-titre" style={{ fontWeight: 800, color: benefice >= 0 ? 'var(--vert)' : 'var(--rouge)' }}>{fcfa(benefice)}</div>
+            <span className={`produit-stock-pilule ${p.stock <= 0 ? 'pilule-critique' : p.stock <= 5 ? 'pilule-bas' : 'pilule-ok'}`}>
               📦 {p.stock} · {marge.toFixed(0)} %
             </span>
           </div>

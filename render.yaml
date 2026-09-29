@@ -17,11 +17,10 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     region: frankfurt        # région Render la plus proche du Sénégal
-    # Ancienne adresse, encore servie par la couche de compatibilité : on ne
-    # change JAMAIS le chemin de santé dans le déploiement qui crée le nouveau
-    # (le conteneur encore en service ne le connaît pas). Passage à /api/sante
-    # au déploiement suivant.
-    healthCheckPath: /api/health
+    # Adresse française, en service depuis le déploiement précédent (29/09/2026).
+    # Règle : on ne change JAMAIS le chemin de santé dans le déploiement qui crée
+    # le nouveau — le conteneur encore en service ne le connaîtrait pas.
+    healthCheckPath: /api/sante
     envVars:
       - key: APP_NAME
         value: SamaCommerce
@@ -144,7 +143,7 @@ services:
       # alors TOUS les appels a l'API et chaque ecran affiche « Le serveur ne
       # repond pas ». C'est arrive : une resynchronisation du blueprint a
       # efface la valeur saisie a la main.
-      - key: VITE_API_URL
+      - key: VITE_URL_API
         value: https://samacommerce-api.onrender.com/api
     # SPA : toutes les routes retombent sur index.html
     routes:

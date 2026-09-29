@@ -58,7 +58,7 @@ Copie la sortie complète (`base64:....`). Tu la colleras dans Render.
    **Service `samacommerce-web`**
    | Variable | Valeur |
    |---|---|
-   | `VITE_API_URL` | `https://samacommerce-api.onrender.com/api` |
+   | `VITE_URL_API` | `https://samacommerce-api.onrender.com/api` |
 
 4. **Apply** → Render construit les deux services (le premier build Docker prend
    quelques minutes).
@@ -69,10 +69,10 @@ Une fois les 2 services créés, tu connais leurs URLs définitives. Ajuste :
 
 - API → `ORIGINES_CORS_AUTORISEES = https://samacommerce-web.onrender.com` (l'URL réelle du web)
 - API → `APP_URL = https://samacommerce-api.onrender.com`
-- Web → `VITE_API_URL = https://samacommerce-api.onrender.com/api`
+- Web → `VITE_URL_API = https://samacommerce-api.onrender.com/api`
 
 Après modif d'une variable, clique **Manual Deploy → Deploy latest commit** (le web doit
-être **rebuild** car `VITE_API_URL` est injecté au build).
+être **rebuild** car `VITE_URL_API` est injecté au build).
 
 ---
 
@@ -107,7 +107,7 @@ Comptes créés :
 | Symptôme | Cause probable | Solution |
 |---|---|---|
 | API ne démarre pas, erreur DB `could not connect` | Direct connection (IPv6) au lieu du pooler | Utiliser la chaîne **Session pooler** (étape 1) |
-| Web charge mais aucune donnée / erreurs réseau | `VITE_API_URL` faux ou web pas rebuild | Corriger la variable puis **rebuild** le web |
+| Web charge mais aucune donnée / erreurs réseau | `VITE_URL_API` faux ou web pas rebuild | Corriger la variable puis **rebuild** le web |
 | Erreurs CORS dans la console | `ORIGINES_CORS_AUTORISEES` ≠ URL du web | Mettre l'URL exacte du web (sans `/` final) |
 | `MissingAppKeyException` | `APP_KEY` non défini | Coller le `base64:...` (étape 2) dans les env vars de l'API |
 | 419 / sessions | clé changée à chaque redémarrage | Fixer `APP_KEY` en variable (ne pas laisser vide) |

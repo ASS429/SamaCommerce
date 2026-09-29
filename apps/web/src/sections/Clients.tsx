@@ -1,119 +1,119 @@
 import { useEffect, useState } from 'react'
-import { Clients as ClientsApi, boutiqueIdentity, fcfa, type Client } from '../lib/api'
-import { confirmAsync } from '../lib/toast'
-import { SkeletonList } from '../components/Skeleton'
-import SwipeRow from '../components/SwipeRow'
-import Avatar from '../components/Avatar'
-import PhotoPicker from '../components/PhotoPicker'
-import { creditReminderMessage, openWhatsapp, telLink } from '../lib/whatsapp'
-import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { Clients as ApiClients, identiteBoutique, fcfa, type Client } from '../outils/api'
+import { demanderConfirmation } from '../outils/bulles'
+import { ListeSquelette } from '../composants/Squelette'
+import LigneGlissante from '../composants/LigneGlissante'
+import Avatar from '../composants/Avatar'
+import ChoixPhoto from '../composants/ChoixPhoto'
+import { messageRappelCredit, ouvrirWhatsapp, lienAppel } from '../outils/whatsapp'
+import ErreurChargement from '../composants/ErreurChargement'
+import { useErreurChargement } from '../outils/erreursChargement'
 
 export default function Clients() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<Client | null>(null)
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
+  const [clients, definirClients] = useState<Client[]>([])
+  const [recherche, definirRecherche] = useState('')
+  const [fenetreOuverte, definirFenetreOuverte] = useState(false)
+  const [enEdition, definirEnEdition] = useState<Client | null>(null)
+  const [chargement, definirChargement] = useState(true)
+  const { erreur, surveiller, effacer } = useErreurChargement()
 
-  const load = () => { reset(); watch(ClientsApi.list().then(setClients)).finally(() => setLoading(false)) }
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const charger = () => { effacer(); surveiller(ApiClients.lister().then(definirClients)).finally(() => definirChargement(false)) }
+  useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const remove = async (c: Client) => { if (await confirmAsync(`Supprimer « ${c.name} » ?`)) { await ClientsApi.remove(c.id); load() } }
-  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || (c.phone || '').includes(search))
+  const supprimer = async (c: Client) => { if (await demanderConfirmation(`Supprimer « ${c.nom} » ?`)) { await ApiClients.supprimer(c.id); charger() } }
+  const filtres = clients.filter((c) => c.nom.toLowerCase().includes(recherche.toLowerCase()) || (c.telephone || '').includes(recherche))
 
   /** Rappel de dette : le message part prérempli, le commerçant n'a qu'à envoyer. */
-  const rappel = (c: Client) => openWhatsapp(c.phone, creditReminderMessage(boutiqueIdentity(), {
-    client: c.name, montant: Number(c.credits_montant || 0),
+  const rappel = (c: Client) => ouvrirWhatsapp(c.telephone, messageRappelCredit(identiteBoutique(), {
+    client: c.nom, montant: Number(c.montant_credits || 0),
   }))
 
   return (
     <>
-      <div className="page-header"><h2>👤 Clients</h2><button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button></div>
-      <input className="search-bar" placeholder="🔍 Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="page-entete"><h2>👤 Clients</h2><button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
+      <input className="barre-recherche" placeholder="🔍 Rechercher un client..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
-      {loading && <SkeletonList count={4} />}
-      {!loading && error && <LoadError error={error} onRetry={load} />}
-      {!loading && !error && filtered.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">👤</div>
-          <div className="empty-text">{clients.length === 0 ? 'Aucun client' : 'Aucun résultat'}</div>
-          <div className="empty-sub">{clients.length === 0 ? 'Ajoutez votre premier client' : 'Essayez un autre nom'}</div>
+      {chargement && <ListeSquelette nombre={4} />}
+      {!chargement && erreur && <ErreurChargement erreur={erreur} surReessai={charger} />}
+      {!chargement && !erreur && filtres.length === 0 && (
+        <div className="etat-vide">
+          <div className="vide-icone">👤</div>
+          <div className="vide-texte">{clients.length === 0 ? 'Aucun client' : 'Aucun résultat'}</div>
+          <div className="vide-sous-titre">{clients.length === 0 ? 'Ajoutez votre premier client' : 'Essayez un autre nom'}</div>
         </div>
       )}
 
-      {!loading && filtered.map((c) => {
-        const dette = Number(c.credits_montant || 0)
-        const tel = telLink(c.phone)
+      {!chargement && filtres.map((c) => {
+        const dette = Number(c.montant_credits || 0)
+        const appel = lienAppel(c.telephone)
         return (
-          <SwipeRow key={c.id} onDelete={() => remove(c)}>
-            <div className="card fiche" style={{ marginBottom: 0 }}>
-              <div className="fiche-head">
+          <LigneGlissante key={c.id} surSuppression={() => supprimer(c)}>
+            <div className="carte fiche" style={{ marginBottom: 0 }}>
+              <div className="fiche-entete">
                 {/* Photo ou initiales : on identifie le client d'un coup d'œil. */}
-                <Avatar photo={c.photo} name={c.name} size={52} />
-                <div className="fiche-id">
-                  <div className="fiche-name">{c.name}</div>
-                  {c.phone && <div className="fiche-sub">📞 {c.phone}</div>}
-                  {!c.phone && c.address && <div className="fiche-sub">📍 {c.address}</div>}
+                <Avatar photo={c.photo} nom={c.nom} taille={52} />
+                <div className="fiche-identite">
+                  <div className="fiche-nom">{c.nom}</div>
+                  {c.telephone && <div className="fiche-sous-titre">📞 {c.telephone}</div>}
+                  {!c.telephone && c.adresse && <div className="fiche-sous-titre">📍 {c.adresse}</div>}
                 </div>
-                <div className="fiche-tools">
-                  <button className="prd-btn prd-btn-edit" aria-label="Modifier" onClick={() => { setEditing(c); setShowModal(true) }}>✏️</button>
-                  <button className="prd-btn prd-btn-del" aria-label="Supprimer" onClick={() => remove(c)}>🗑️</button>
+                <div className="fiche-outils">
+                  <button className="bouton-compact bouton-compact-modifier" aria-label="Modifier" onClick={() => { definirEnEdition(c); definirFenetreOuverte(true) }}>✏️</button>
+                  <button className="bouton-compact bouton-compact-supprimer" aria-label="Supprimer" onClick={() => supprimer(c)}>🗑️</button>
                 </div>
               </div>
 
-              <div className="fiche-stats">
-                <span className="fst fst-b"><b>{c.nb_achats || 0}</b><span>🛒 achats</span></span>
-                <span className="fst fst-g"><b>{fcfa(c.total_achats || 0)}</b><span>💰 dépensé</span></span>
-                {dette > 0 && <span className="fst fst-r"><b>{fcfa(dette)}</b><span>📝 dette</span></span>}
+              <div className="fiche-chiffres">
+                <span className="chiffre chiffre-bleu"><b>{c.nb_achats || 0}</b><span>🛒 achats</span></span>
+                <span className="chiffre chiffre-vert"><b>{fcfa(c.total_achats || 0)}</b><span>💰 dépensé</span></span>
+                {dette > 0 && <span className="chiffre chiffre-rouge"><b>{fcfa(dette)}</b><span>📝 dette</span></span>}
               </div>
 
-              {c.phone && (
+              {c.telephone && (
                 <div className="fiche-actions">
-                  {tel && <a className="fa-btn fa-call" href={tel}>📞 Appeler</a>}
-                  <button className="fa-btn fa-wa" onClick={() => openWhatsapp(c.phone, `👋 Bonjour ${c.name},\n\n🏪 *${boutiqueIdentity().nom}*`)}>💬 WhatsApp</button>
-                  {dette > 0 && <button className="fa-btn fa-warn" onClick={() => rappel(c)}>🔔 Rappel dette</button>}
+                  {appel && <a className="fa-bouton fa-appeler" href={appel}>📞 Appeler</a>}
+                  <button className="fa-bouton fa-whatsapp" onClick={() => ouvrirWhatsapp(c.telephone, `👋 Bonjour ${c.nom},\n\n🏪 *${identiteBoutique().nom}*`)}>💬 WhatsApp</button>
+                  {dette > 0 && <button className="fa-bouton fa-alerte" onClick={() => rappel(c)}>🔔 Rappel dette</button>}
                 </div>
               )}
             </div>
-          </SwipeRow>
+          </LigneGlissante>
         )
       })}
 
-      {showModal && <ClientModal client={editing} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load() }} />}
+      {fenetreOuverte && <FenetreClient client={enEdition} surFermeture={() => definirFenetreOuverte(false)} surEnregistrement={() => { definirFenetreOuverte(false); charger() }} />}
     </>
   )
 }
 
-function ClientModal({ client, onClose, onSaved }: { client: Client | null; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(client?.name ?? '')
-  const [phone, setPhone] = useState(client?.phone ?? '')
-  const [email, setEmail] = useState(client?.email ?? '')
-  const [address, setAddress] = useState(client?.address ?? '')
-  const [notes, setNotes] = useState(client?.notes ?? '')
-  const [photo, setPhoto] = useState<string | null>(client?.photo ?? null)
-  const [saving, setSaving] = useState(false)
+function FenetreClient({ client, surFermeture, surEnregistrement }: { client: Client | null; surFermeture: () => void; surEnregistrement: () => void }) {
+  const [nom, definirNom] = useState(client?.nom ?? '')
+  const [telephone, definirTelephone] = useState(client?.telephone ?? '')
+  const [email, definirEmail] = useState(client?.email ?? '')
+  const [adresse, definirAdresse] = useState(client?.adresse ?? '')
+  const [notes, definirNotes] = useState(client?.notes ?? '')
+  const [photo, definirPhoto] = useState<string | null>(client?.photo ?? null)
+  const [envoi, definirEnvoi] = useState(false)
 
-  const save = async () => {
-    if (!name.trim()) return alert('Le nom est requis')
-    setSaving(true)
-    const payload = { name: name.trim(), phone: phone || null, email: email || null, address: address || null, notes: notes || null, photo }
-    try { if (client) await ClientsApi.update(client.id, payload); else await ClientsApi.create(payload); onSaved() }
-    catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
+  const enregistrer = async () => {
+    if (!nom.trim()) return alert('Le nom est requis')
+    definirEnvoi(true)
+    const charge = { nom: nom.trim(), telephone: telephone || null, email: email || null, adresse: adresse || null, notes: notes || null, photo }
+    try { if (client) await ApiClients.modifier(client.id, charge); else await ApiClients.creer(charge); surEnregistrement() }
+    catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">{client ? '✏️ Modifier le client' : '👤 Nouveau client'}</div>
-        <PhotoPicker value={photo} onChange={setPhoto} name={name} icon="👤" label="📷 Photo du client (facultatif)" />
-        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du client" /></div>
-        <div className="form-group"><label>📞 Téléphone</label><input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="77 123 45 67" /></div>
-        <div className="form-group"><label>✉️ Email</label><input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-        <div className="form-group"><label>📍 Adresse</label><input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
-        <div className="form-group"><label>📝 Notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
-        <div className="modal-actions"><button className="btn-cancel" onClick={onClose}>Annuler</button><button className="btn-confirm" onClick={save} disabled={saving}>{client ? 'Mettre à jour' : 'Ajouter'}</button></div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">{client ? '✏️ Modifier le client' : '👤 Nouveau client'}</div>
+        <ChoixPhoto valeur={photo} surChangement={definirPhoto} nom={nom} icone="👤" libelle="📷 Photo du client (facultatif)" />
+        <div className="groupe-champ"><label>Nom</label><input value={nom} onChange={(e) => definirNom(e.target.value)} placeholder="Nom du client" /></div>
+        <div className="groupe-champ"><label>📞 Téléphone</label><input type="tel" inputMode="tel" value={telephone} onChange={(e) => definirTelephone(e.target.value)} placeholder="77 123 45 67" /></div>
+        <div className="groupe-champ"><label>✉️ Email</label><input value={email} onChange={(e) => definirEmail(e.target.value)} /></div>
+        <div className="groupe-champ"><label>📍 Adresse</label><input value={adresse} onChange={(e) => definirAdresse(e.target.value)} /></div>
+        <div className="groupe-champ"><label>📝 Notes</label><textarea value={notes} onChange={(e) => definirNotes(e.target.value)} /></div>
+        <div className="fenetre-actions"><button className="bouton-annuler" onClick={surFermeture}>Annuler</button><button className="bouton-valider" onClick={enregistrer} disabled={envoi}>{client ? 'Mettre à jour' : 'Ajouter'}</button></div>
       </div>
     </div>
   )

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --brand: #0a7d4d;
-  --brand-2: #0a5c8a;
+  --marque: #0a7d4d;
+  --marque-2: #0a5c8a;
 }
 
 body {

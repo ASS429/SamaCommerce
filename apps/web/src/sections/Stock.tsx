@@ -1,308 +1,310 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
-import { Products, boutiqueIdentity, fcfa, DISPLAY_UNIT, type Category, type Product } from '../lib/api'
-// Design 3.7 — html5-qrcode chargé en lazy (uniquement à l'ouverture du scanner).
-const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'))
-import { confirmAsync } from '../lib/toast'
-import { haptic } from '../lib/haptics'
-import { SkeletonList } from '../components/Skeleton'
-import { productIcon, productTint } from '../lib/productIcon'
-import Avatar from '../components/Avatar'
-import PhotoPicker from '../components/PhotoPicker'
-import { exportXlsx } from '../lib/xlsx'
-import { exportPdf, money } from '../lib/pdf'
-import LoadError from '../components/LoadError'
-import { describeError } from '../lib/loadError'
-import { useProduits, useCategories, useRafraichirCatalogue, CLES, LISTE_VIDE } from '../lib/queries'
+import { Produits, identiteBoutique, fcfa, UNITE_AFFICHAGE, type Categorie, type Produit } from '../outils/api'
+// Design 3.7 — html5-qrcode chargé en différé (uniquement à l'ouverture du scanner).
+const ScannerCodeBarres = lazy(() => import('../composants/ScannerCodeBarres'))
+import { demanderConfirmation } from '../outils/bulles'
+import { vibration } from '../outils/vibrations'
+import { ListeSquelette } from '../composants/Squelette'
+import { iconeProduit, fondProduit } from '../outils/iconeProduit'
+import Avatar from '../composants/Avatar'
+import ChoixPhoto from '../composants/ChoixPhoto'
+import { exporterClasseur } from '../outils/xlsx'
+import { exporterPdf, montant } from '../outils/pdf'
+import ErreurChargement from '../composants/ErreurChargement'
+import { decrireErreur } from '../outils/erreursChargement'
+import { useProduits, useCategories, useRafraichirCatalogue, CLES, LISTE_VIDE } from '../outils/requetes'
 import { useQueryClient } from '@tanstack/react-query'
 
+const CLE_TRI = 'samacommerce_tri_stock'
+
 export default function Stock() {
-  /* Produits et categories viennent du cache partage (lib/queries) : revenir
-     de Vendre ne les retelecharge plus. Voir le staleTime la-bas. */
-  const produits = useProduits()
-  const cats = useCategories()
-  const queryClient = useQueryClient()
-  const products = produits.data ?? LISTE_VIDE
-  const categories = cats.data ?? LISTE_VIDE
-  const [filter, setFilter] = useState<number | 'tous'>('tous')
-  const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<Product | null>(null)
-  const [scanning, setScanning] = useState(false)
-  const loading = produits.isPending
-  /* react-query CONSERVE les dernieres donnees valides quand un simple
-     RAFRAICHISSEMENT echoue. Une requete ratee (API endormie une fois) laissait
-     donc l'erreur enregistree, et le grand bandeau s'affichait par-dessus une
-     liste pourtant correcte — l'utilisateur croyait a une panne alors que ses
-     produits etaient sous ses yeux.
-     Regle : on n'alerte QUE si l'on n'a RIEN a montrer. Si des donnees sont
-     affichees, l'echec devient un bandeau discret avec « Reessayer ». */
-  const aDesDonnees = produits.data !== undefined
-  const error = describeError(produits.error ?? cats.error)
-  const [sort, setSort] = useState<string>(() => localStorage.getItem('sc_stock_sort') || 'recent')
+  /* Produits et catégories viennent du cache partagé (outils/requetes) :
+     revenir de Vendre ne les retélécharge plus. Voir le staleTime là-bas. */
+  const requeteProduits = useProduits()
+  const requeteCategories = useCategories()
+  const clientRequetes = useQueryClient()
+  const produits = requeteProduits.data ?? LISTE_VIDE
+  const categories = requeteCategories.data ?? LISTE_VIDE
+  const [filtre, definirFiltre] = useState<number | 'tous'>('tous')
+  const [recherche, definirRecherche] = useState('')
+  const [fenetreOuverte, definirFenetreOuverte] = useState(false)
+  const [enEdition, definirEnEdition] = useState<Produit | null>(null)
+  const [scan, definirScan] = useState(false)
+  const chargement = requeteProduits.isPending
+  /* react-query CONSERVE les dernières données valides quand un simple
+     RAFRAÎCHISSEMENT échoue. Une requête ratée (API endormie une fois) laissait
+     donc l'erreur enregistrée, et le grand bandeau s'affichait par-dessus une
+     liste pourtant correcte — l'utilisateur croyait à une panne alors que ses
+     produits étaient sous ses yeux.
+     Règle : on n'alerte QUE si l'on n'a RIEN à montrer. Si des données sont
+     affichées, l'échec devient un bandeau discret avec « Réessayer ». */
+  const aDesDonnees = requeteProduits.data !== undefined
+  const erreur = decrireErreur(requeteProduits.error ?? requeteCategories.error)
+  const [tri, definirTri] = useState<string>(() => localStorage.getItem(CLE_TRI) || 'recents')
 
-  const load = useRafraichirCatalogue()
-  useEffect(() => { localStorage.setItem('sc_stock_sort', sort) }, [sort])
+  const recharger = useRafraichirCatalogue()
+  useEffect(() => { localStorage.setItem(CLE_TRI, tri) }, [tri])
 
-  const catName = (id: number | null) => categories.find((c) => c.id === id)?.name
-  const catEmoji = (id: number | null) => categories.find((c) => c.id === id)?.emoji
-  const filtered = products
-    .filter((p) => filter === 'tous' || p.category_id === filter)
-    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search))
+  const nomCategorie = (id: number | null) => categories.find((c) => c.id === id)?.nom
+  const emojiCategorie = (id: number | null) => categories.find((c) => c.id === id)?.emoji
+  const filtres = produits
+    .filter((p) => filtre === 'tous' || p.categorie_id === filtre)
+    .filter((p) => p.nom.toLowerCase().includes(recherche.toLowerCase()) || (p.code_barres || '').includes(recherche))
     .sort((a, b) => {
-      if (sort === 'nom') return a.name.localeCompare(b.name)
-      if (sort === 'stock-asc') return a.stock - b.stock
-      if (sort === 'stock-desc') return b.stock - a.stock
-      if (sort === 'prix-desc') return b.price - a.price
-      return b.id - a.id // récent
+      if (tri === 'nom') return a.nom.localeCompare(b.nom)
+      if (tri === 'stock-croissant') return a.stock - b.stock
+      if (tri === 'stock-decroissant') return b.stock - a.stock
+      if (tri === 'prix-decroissant') return b.prix_vente - a.prix_vente
+      return b.id - a.id // récents
     })
 
-  const remove = async (p: Product) => { if (await confirmAsync(`Supprimer « ${p.name} » ?`, 'Supprimer')) { haptic.warn(); await Products.remove(p.id); load() } }
-  const adjustStock = async (p: Product, delta: number) => {
-    haptic.tap()
-    const next = Math.max(0, p.stock + delta)
-    // Retour immediat : on corrige le cache partage, pas un etat local — sinon
+  const supprimer = async (p: Produit) => { if (await demanderConfirmation(`Supprimer « ${p.nom} » ?`, 'Supprimer')) { vibration.avertissement(); await Produits.supprimer(p.id); recharger() } }
+  const ajusterStock = async (p: Produit, ecart: number) => {
+    vibration.toucher()
+    const suivant = Math.max(0, p.stock + ecart)
+    // Retour immédiat : on corrige le cache partagé, pas un état local — sinon
     // Vendre continuerait d'afficher l'ancien stock.
-    queryClient.setQueryData<Product[]>(CLES.produits, (ps) =>
-      (ps ?? []).map((x) => x.id === p.id ? { ...x, stock: next } : x))
-    await Products.update(p.id, { stock: next })
+    clientRequetes.setQueryData<Produit[]>(CLES.produits, (liste) =>
+      (liste ?? []).map((x) => x.id === p.id ? { ...x, stock: suivant } : x))
+    await Produits.modifier(p.id, { stock: suivant })
   }
 
-  const stockClass = (s: number) => s <= 0 ? 'stock-critical' : s <= 5 ? 'stock-low' : 'stock-ok'
-  const pillClass = (s: number) => s <= 0 ? 'pill-critical' : s <= 5 ? 'pill-low' : 'pill-ok'
+  const classeStock = (s: number) => s <= 0 ? 'stock-critique' : s <= 5 ? 'stock-bas' : 'stock-ok'
+  const classePilule = (s: number) => s <= 0 ? 'pilule-critique' : s <= 5 ? 'pilule-bas' : 'pilule-ok'
 
   /* Exports : le stock est le document que l'on montre au fournisseur ou au
      comptable. On exporte ce qui est À L'ÉCRAN (filtre et tri compris). */
-  const exportRows = () => filtered.map((p) => {
-    const [dl, dfac] = DISPLAY_UNIT[p.unite_base || 'piece'] || DISPLAY_UNIT.piece
-    return { p, dl, ds: p.stock / dfac }
+  const lignesExport = () => filtres.map((p) => {
+    const [libelle, facteur] = UNITE_AFFICHAGE[p.unite_base || 'piece'] || UNITE_AFFICHAGE.piece
+    return { p, libelle, stockAffiche: p.stock / facteur }
   })
-  const valeurStock = filtered.reduce((a, p) => a + Number(p.price_achat) * p.stock, 0)
+  const valeurStock = filtres.reduce((a, p) => a + Number(p.prix_achat) * p.stock, 0)
 
-  const exportExcel = () => exportXlsx('stock-samacommerce', {
-    sheet: 'Stock',
-    title: '📦 Inventaire du stock',
-    subtitle: `${boutiqueIdentity().nom} — ${filtered.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`,
-    columns: [
-      { header: 'Produit', width: 30 }, { header: 'Catégorie', width: 18 },
-      { header: 'Unité', width: 10 }, { header: 'Stock', width: 12, type: 'number' },
-      { header: "Prix d'achat", width: 14, type: 'money' }, { header: 'Prix de vente', width: 14, type: 'money' },
-      { header: 'Valeur stock', width: 15, type: 'money' }, { header: 'Code-barres', width: 18 },
+  const exporterExcel = () => exporterClasseur('stock-samacommerce', {
+    onglet: 'Stock',
+    titre: '📦 Inventaire du stock',
+    sousTitre: `${identiteBoutique().nom} — ${filtres.length} référence(s) — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    colonnes: [
+      { entete: 'Produit', largeur: 30 }, { entete: 'Catégorie', largeur: 18 },
+      { entete: 'Unité', largeur: 10 }, { entete: 'Stock', largeur: 12, type: 'nombre' },
+      { entete: "Prix d'achat", largeur: 14, type: 'montant' }, { entete: 'Prix de vente', largeur: 14, type: 'montant' },
+      { entete: 'Valeur stock', largeur: 15, type: 'montant' }, { entete: 'Code-barres', largeur: 18 },
     ],
-    rows: exportRows().map(({ p, dl, ds }) => [
-      p.name, catName(p.category_id) || 'Sans catégorie', dl, ds,
-      Number(p.price_achat), Number(p.price), Number(p.price_achat) * p.stock, p.barcode || '',
+    lignes: lignesExport().map(({ p, libelle, stockAffiche }) => [
+      p.nom, nomCategorie(p.categorie_id) || 'Sans catégorie', libelle, stockAffiche,
+      Number(p.prix_achat), Number(p.prix_vente), Number(p.prix_achat) * p.stock, p.code_barres || '',
     ]),
-    totals: ['TOTAL', '', '', null, null, null, valeurStock, ''],
+    totaux: ['TOTAL', '', '', null, null, null, valeurStock, ''],
   })
 
-  const exportListePdf = () => exportPdf('stock-samacommerce', {
-    title: 'Stock',
-    subtitle: `${filtered.length} référence(s)${filter !== 'tous' ? ` — ${catName(filter as number) || ''}` : ''}`,
-    boutique: boutiqueIdentity(),
-    summary: [
-      { label: 'Références', value: String(filtered.length) },
-      { label: 'Valeur du stock', value: money(valeurStock), tone: 'green' },
-      { label: 'Ruptures', value: String(filtered.filter((p) => p.stock <= 0).length), tone: 'red' },
+  const exporterListePdf = () => exporterPdf('stock-samacommerce', {
+    titre: 'Stock',
+    sousTitre: `${filtres.length} référence(s)${filtre !== 'tous' ? ` — ${nomCategorie(filtre as number) || ''}` : ''}`,
+    boutique: identiteBoutique(),
+    synthese: [
+      { libelle: 'Références', valeur: String(filtres.length) },
+      { libelle: 'Valeur du stock', valeur: montant(valeurStock), teinte: 'vert' },
+      { libelle: 'Ruptures', valeur: String(filtres.filter((p) => p.stock <= 0).length), teinte: 'rouge' },
     ],
-    columns: ['Produit', 'Catégorie', 'Stock', 'Achat', 'Vente'],
-    rows: exportRows().map(({ p, dl, ds }) => [
-      p.name, catName(p.category_id) || '—', `${ds} ${dl}`, money(Number(p.price_achat)), money(Number(p.price)),
+    colonnes: ['Produit', 'Catégorie', 'Stock', 'Achat', 'Vente'],
+    lignes: lignesExport().map(({ p, libelle, stockAffiche }) => [
+      p.nom, nomCategorie(p.categorie_id) || '—', `${stockAffiche} ${libelle}`, montant(Number(p.prix_achat)), montant(Number(p.prix_vente)),
     ]),
-    foot: ['TOTAL', '', '', money(valeurStock), ''],
-    rightAlign: [2, 3, 4],
+    pied: ['TOTAL', '', '', montant(valeurStock), ''],
+    alignesADroite: [2, 3, 4],
   })
 
   return (
     <>
-      <div className="page-header">
+      <div className="page-entete">
         <h2>📦 Mon Stock</h2>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn-pdf" style={{ background: '#ECFDF5', color: 'var(--green)' }} onClick={exportExcel} disabled={filtered.length === 0}>📊 Excel</button>
-          <button className="btn-pdf" onClick={exportListePdf} disabled={filtered.length === 0}>📄 PDF</button>
-          <button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button>
+          <button className="bouton-pdf" style={{ background: '#ECFDF5', color: 'var(--vert)' }} onClick={exporterExcel} disabled={filtres.length === 0}>📊 Excel</button>
+          <button className="bouton-pdf" onClick={exporterListePdf} disabled={filtres.length === 0}>📄 PDF</button>
+          <button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <input className="search-bar" style={{ flex: 1 }} placeholder="🔍 Rechercher (nom ou code-barres)..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <button className="btn-primary" style={{ padding: '0 14px' }} onClick={() => setScanning(true)}>📷</button>
+        <input className="barre-recherche" style={{ flex: 1 }} placeholder="🔍 Rechercher (nom ou code-barres)..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
+        <button className="bouton-principal" style={{ padding: '0 14px' }} onClick={() => definirScan(true)}>📷</button>
       </div>
 
-      <div className="chips">
-        <button className={`chip ${filter === 'tous' ? 'active' : ''}`} onClick={() => setFilter('tous')}>Tous</button>
+      <div className="puces">
+        <button className={`puce ${filtre === 'tous' ? 'actif' : ''}`} onClick={() => definirFiltre('tous')}>Tous</button>
         {categories.map((c) => (
-          <button key={c.id} className={`chip ${filter === c.id ? 'active' : ''}`} onClick={() => setFilter(c.id)}>{c.emoji} {c.name}</button>
+          <button key={c.id} className={`puce ${filtre === c.id ? 'actif' : ''}`} onClick={() => definirFiltre(c.id)}>{c.emoji} {c.nom}</button>
         ))}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Trier :</label>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--line)', borderRadius: 11, background: 'var(--bg)', color: 'var(--ink)' }} aria-label="Trier les produits">
-          <option value="recent">Plus récents</option>
+        <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--attenue)' }}>Trier :</label>
+        <select value={tri} onChange={(e) => definirTri(e.target.value)} style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--trait)', borderRadius: 11, background: 'var(--fond)', color: 'var(--encre)' }} aria-label="Trier les produits">
+          <option value="recents">Plus récents</option>
           <option value="nom">Nom (A→Z)</option>
-          <option value="stock-asc">Stock (croissant)</option>
-          <option value="stock-desc">Stock (décroissant)</option>
-          <option value="prix-desc">Prix (décroissant)</option>
+          <option value="stock-croissant">Stock (croissant)</option>
+          <option value="stock-decroissant">Stock (décroissant)</option>
+          <option value="prix-decroissant">Prix (décroissant)</option>
         </select>
       </div>
 
-      {loading && <SkeletonList count={5} />}
-      {!loading && error && <LoadError error={error} onRetry={load} compact={aDesDonnees} />}
-      {!loading && !error && filtered.length === 0 && <div className="empty-state"><div className="empty-icon">📦</div><div className="empty-text">Aucun produit</div><div className="empty-sub">Ajoutez votre premier produit</div></div>}
+      {chargement && <ListeSquelette nombre={5} />}
+      {!chargement && erreur && <ErreurChargement erreur={erreur} surReessai={recharger} compacte={aDesDonnees} />}
+      {!chargement && !erreur && filtres.length === 0 && <div className="etat-vide"><div className="vide-icone">📦</div><div className="vide-texte">Aucun produit</div><div className="vide-sous-titre">Ajoutez votre premier produit</div></div>}
 
-      {!loading && filtered.map((p) => {
-        const [dl, dfac] = DISPLAY_UNIT[p.unite_base || 'piece'] || DISPLAY_UNIT.piece
-        const ds = p.stock / dfac
-        const dsStr = Number.isInteger(ds) ? String(ds) : ds.toFixed(2)
+      {!chargement && filtres.map((p) => {
+        const [libelle, facteur] = UNITE_AFFICHAGE[p.unite_base || 'piece'] || UNITE_AFFICHAGE.piece
+        const stockAffiche = p.stock / facteur
+        const texteStockAffiche = Number.isInteger(stockAffiche) ? String(stockAffiche) : stockAffiche.toFixed(2)
         const pesable = (p.unite_base || 'piece') !== 'piece'
-        const stockTxt = pesable ? `${dsStr} ${dl}` : dsStr
+        const texteStock = pesable ? `${texteStockAffiche} ${libelle}` : texteStockAffiche
         return (
-        <div key={p.id} className={`produit-card ${stockClass(ds)}`}>
-          <div className="produit-card-header">
-            <span className="produit-cat-badge">{catName(p.category_id) || 'Sans catégorie'}</span>
-            <span className={`produit-stock-pill ${pillClass(ds)}`}>{stockTxt} en stock</span>
+        <div key={p.id} className={`produit-carte ${classeStock(stockAffiche)}`}>
+          <div className="produit-carte-entete">
+            <span className="produit-cat-pastille">{nomCategorie(p.categorie_id) || 'Sans catégorie'}</span>
+            <span className={`produit-stock-pilule ${classePilule(stockAffiche)}`}>{texteStock} en stock</span>
           </div>
-          <div className="produit-card-body produit-card-body--icon">
+          <div className="produit-carte-corps produit-carte-corps--icone">
             {/* Photo du produit si le commerçant en a pris une, sinon le même
                 pictogramme qu'au point de vente : l'article se reconnaît à
                 l'identique dans tout l'outil. */}
-            <Avatar photo={p.photo} icon={productIcon(p.name, catEmoji(p.category_id))} name={p.name}
-              size={52} radius={15} tint={productTint(p.name)} className="produit-icon-av" />
+            <Avatar photo={p.photo} icone={iconeProduit(p.nom, emojiCategorie(p.categorie_id))} nom={p.nom}
+              taille={52} rayon={15} fond={fondProduit(p.nom)} className="produit-icone-vignette" />
             <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="produit-name">{p.name}{(p.units?.length ?? 0) > 0 && <span className="produit-cat-badge" style={{ marginLeft: 6 }}>+ gros</span>}</div>
-            {p.scent && <div className="produit-desc">{p.scent}</div>}
-            <div className="produit-prices">
-              <span className="produit-price-main">{fcfa(p.price)}{pesable && <span style={{ fontSize: 12, fontWeight: 500 }}> /{dl}</span>}</span>
-              <span className="produit-price-achat">achat {fcfa(p.price_achat)}{pesable ? ` /${dl}` : ''}</span>
-              {p.prix_min != null && <span className="produit-price-achat" style={{ color: 'var(--warning)' }}>plancher {fcfa(p.prix_min)}</span>}
+            <div className="produit-nom">{p.nom}{(p.conditionnements?.length ?? 0) > 0 && <span className="produit-cat-pastille" style={{ marginLeft: 6 }}>+ gros</span>}</div>
+            {p.description && <div className="produit-description">{p.description}</div>}
+            <div className="produit-prix">
+              <span className="produit-prix-principal">{fcfa(p.prix_vente)}{pesable && <span style={{ fontSize: 12, fontWeight: 500 }}> /{libelle}</span>}</span>
+              <span className="produit-prix-achat">achat {fcfa(p.prix_achat)}{pesable ? ` /${libelle}` : ''}</span>
+              {p.prix_min != null && <span className="produit-prix-achat" style={{ color: 'var(--attention)' }}>plancher {fcfa(p.prix_min)}</span>}
             </div>
             </div>
           </div>
-          <div className="produit-card-actions">
-            <div className="stock-controls">
-              <button className="stock-btn minus" aria-label="Diminuer" onClick={() => adjustStock(p, -dfac)}>−</button>
-              <span className="stock-count">{stockTxt}</span>
-              <button className="stock-btn plus" aria-label="Augmenter" onClick={() => adjustStock(p, +dfac)}>+</button>
+          <div className="produit-carte-actions">
+            <div className="stock-reglage">
+              <button className="stock-bouton moins" aria-label="Diminuer" onClick={() => ajusterStock(p, -facteur)}>−</button>
+              <span className="stock-nombre">{texteStock}</span>
+              <button className="stock-bouton plus" aria-label="Augmenter" onClick={() => ajusterStock(p, +facteur)}>+</button>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button className="prd-btn prd-btn-edit" onClick={() => { setEditing(p); setShowModal(true) }}>✏️ Modifier</button>
-              <button className="prd-btn prd-btn-del" onClick={() => remove(p)}>🗑️</button>
+              <button className="bouton-compact bouton-compact-modifier" onClick={() => { definirEnEdition(p); definirFenetreOuverte(true) }}>✏️ Modifier</button>
+              <button className="bouton-compact bouton-compact-supprimer" onClick={() => supprimer(p)}>🗑️</button>
             </div>
           </div>
         </div>
         )
       })}
 
-      {showModal && <ProductModal product={editing} categories={categories} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load() }} />}
-      {scanning && <Suspense fallback={null}><BarcodeScanner onScan={(code) => { setSearch(code); setScanning(false) }} onClose={() => setScanning(false)} /></Suspense>}
+      {fenetreOuverte && <FenetreProduit produit={enEdition} categories={categories} surFermeture={() => definirFenetreOuverte(false)} surEnregistrement={() => { definirFenetreOuverte(false); recharger() }} />}
+      {scan && <Suspense fallback={null}><ScannerCodeBarres surLecture={(code) => { definirRecherche(code); definirScan(false) }} surFermeture={() => definirScan(false)} /></Suspense>}
     </>
   )
 }
 
-function ProductModal({ product, categories, onClose, onSaved }: {
-  product: Product | null; categories: Category[]; onClose: () => void; onSaved: () => void
+function FenetreProduit({ produit, categories, surFermeture, surEnregistrement }: {
+  produit: Produit | null; categories: Categorie[]; surFermeture: () => void; surEnregistrement: () => void
 }) {
-  const initBase = product?.unite_base ?? 'piece'
-  const initDf = (DISPLAY_UNIT[initBase] || DISPLAY_UNIT.piece)[1]
-  const [name, setName] = useState(product?.name ?? '')
-  const [categoryId, setCategoryId] = useState(product?.category_id?.toString() ?? '')
-  const [uniteBase, setUniteBase] = useState<string>(initBase)
-  const [priceAchat, setPriceAchat] = useState(product?.price_achat?.toString() ?? '')
-  const [price, setPrice] = useState(product?.price?.toString() ?? '')
-  const [stock, setStock] = useState(product ? String(product.stock / initDf) : '')
-  const [prixMin, setPrixMin] = useState(product?.prix_min?.toString() ?? '')
-  const [negociable, setNegociable] = useState<string>(product?.negociable === true ? 'oui' : product?.negociable === false ? 'non' : 'herit')
-  const [units, setUnits] = useState<{ libelle: string; qte: string; prix: string }[]>(
-    product?.units?.map((u) => ({ libelle: u.libelle, qte: String(u.facteur / initDf), prix: String(u.prix) })) ?? [],
+  const baseInitiale = produit?.unite_base ?? 'piece'
+  const facteurInitial = (UNITE_AFFICHAGE[baseInitiale] || UNITE_AFFICHAGE.piece)[1]
+  const [nom, definirNom] = useState(produit?.nom ?? '')
+  const [categorieId, definirCategorieId] = useState(produit?.categorie_id?.toString() ?? '')
+  const [uniteBase, definirUniteBase] = useState<string>(baseInitiale)
+  const [prixAchat, definirPrixAchat] = useState(produit?.prix_achat?.toString() ?? '')
+  const [prixVente, definirPrixVente] = useState(produit?.prix_vente?.toString() ?? '')
+  const [stock, definirStock] = useState(produit ? String(produit.stock / facteurInitial) : '')
+  const [prixMin, definirPrixMin] = useState(produit?.prix_min?.toString() ?? '')
+  const [negociable, definirNegociable] = useState<string>(produit?.negociable === true ? 'oui' : produit?.negociable === false ? 'non' : 'herite')
+  const [conditionnements, definirConditionnements] = useState<{ libelle: string; quantite: string; prix: string }[]>(
+    produit?.conditionnements?.map((c) => ({ libelle: c.libelle, quantite: String(c.facteur / facteurInitial), prix: String(c.prix) })) ?? [],
   )
-  const [scent, setScent] = useState(product?.scent ?? '')
-  const [barcode, setBarcode] = useState(product?.barcode ?? '')
-  const [photo, setPhoto] = useState<string | null>(product?.photo ?? null)
-  const [scanning, setScanning] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [description, definirDescription] = useState(produit?.description ?? '')
+  const [codeBarres, definirCodeBarres] = useState(produit?.code_barres ?? '')
+  const [photo, definirPhoto] = useState<string | null>(produit?.photo ?? null)
+  const [scan, definirScan] = useState(false)
+  const [envoi, definirEnvoi] = useState(false)
 
-  const [dlabel, dfactor] = DISPLAY_UNIT[uniteBase] || DISPLAY_UNIT.piece
+  const [libelleUnite, facteurUnite] = UNITE_AFFICHAGE[uniteBase] || UNITE_AFFICHAGE.piece
 
-  const save = async () => {
-    if (!name.trim()) return alert('Le nom est requis')
-    setSaving(true)
-    const payload = {
-      name: name.trim(), category_id: categoryId ? Number(categoryId) : null, barcode: barcode || null,
-      price_achat: Number(priceAchat) || 0, price: Number(price) || 0,
-      stock: Math.round((Number(stock) || 0) * dfactor),
+  const enregistrer = async () => {
+    if (!nom.trim()) return alert('Le nom est requis')
+    definirEnvoi(true)
+    const charge = {
+      nom: nom.trim(), categorie_id: categorieId ? Number(categorieId) : null, code_barres: codeBarres || null,
+      prix_achat: Number(prixAchat) || 0, prix_vente: Number(prixVente) || 0,
+      stock: Math.round((Number(stock) || 0) * facteurUnite),
       unite_base: uniteBase, prix_min: prixMin ? Number(prixMin) : null,
       negociable: negociable === 'oui' ? true : negociable === 'non' ? false : null,
-      units: units.filter((u) => u.libelle.trim() && Number(u.qte) > 0).map((u) => ({ libelle: u.libelle.trim(), facteur: Math.round(Number(u.qte) * dfactor), prix: Number(u.prix) || 0 })),
-      scent: scent || null,
+      conditionnements: conditionnements.filter((c) => c.libelle.trim() && Number(c.quantite) > 0).map((c) => ({ libelle: c.libelle.trim(), facteur: Math.round(Number(c.quantite) * facteurUnite), prix: Number(c.prix) || 0 })),
+      description: description || null,
       photo,
     }
-    try { if (product) await Products.update(product.id, payload as any); else await Products.create(payload as any); onSaved() }
-    catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
+    try { if (produit) await Produits.modifier(produit.id, charge as any); else await Produits.creer(charge as any); surEnregistrement() }
+    catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
 
-  const addUnit = () => setUnits((u) => [...u, { libelle: '', qte: '', prix: '' }])
-  const setUnit = (i: number, k: string, v: string) => setUnits((u) => u.map((x, j) => j === i ? { ...x, [k]: v } : x))
+  const ajouterConditionnement = () => definirConditionnements((c) => [...c, { libelle: '', quantite: '', prix: '' }])
+  const modifierConditionnement = (i: number, champ: string, valeur: string) => definirConditionnements((c) => c.map((x, j) => j === i ? { ...x, [champ]: valeur } : x))
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">{product ? '✏️ Modifier le produit' : '📦 Nouveau produit'}</div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">{produit ? '✏️ Modifier le produit' : '📦 Nouveau produit'}</div>
         {/* Photo de l'article : c'est elle que le vendeur cherche des yeux au
             comptoir. Le pictogramme déduit du nom reste le repli. */}
-        <PhotoPicker value={photo} onChange={setPhoto} name={name} icon={productIcon(name)} label="📷 Photo du produit (facultatif)" />
-        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du produit" /></div>
-        <div className="form-group"><label>Catégorie</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <ChoixPhoto valeur={photo} surChangement={definirPhoto} nom={nom} icone={iconeProduit(nom)} libelle="📷 Photo du produit (facultatif)" />
+        <div className="groupe-champ"><label>Nom</label><input value={nom} onChange={(e) => definirNom(e.target.value)} placeholder="Nom du produit" /></div>
+        <div className="groupe-champ"><label>Catégorie</label>
+          <select value={categorieId} onChange={(e) => definirCategorieId(e.target.value)}>
             <option value="">Choisir une catégorie</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}{c.negociable ? ' · négociable' : ''}</option>)}
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.nom}{c.negociable ? ' · négociable' : ''}</option>)}
           </select>
         </div>
-        <div className="form-group"><label>Mode de vente</label>
-          <select value={uniteBase} onChange={(e) => setUniteBase(e.target.value)}>
+        <div className="groupe-champ"><label>Mode de vente</label>
+          <select value={uniteBase} onChange={(e) => definirUniteBase(e.target.value)}>
             <option value="piece">À la pièce</option>
             <option value="g">Au poids (kg, g…)</option>
             <option value="ml">Au volume (litre, ml…)</option>
           </select>
         </div>
-        <div className="form-group"><label>Prix d'achat (FCFA / {dlabel})</label><input type="number" inputMode="numeric" value={priceAchat} onChange={(e) => setPriceAchat(e.target.value)} /></div>
-        <div className="form-group"><label>Prix de vente (FCFA / {dlabel})</label><input type="number" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
-        <div className="form-group"><label>Stock (en {dlabel})</label><input type="number" inputMode="decimal" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
+        <div className="groupe-champ"><label>Prix d'achat (FCFA / {libelleUnite})</label><input type="number" inputMode="numeric" value={prixAchat} onChange={(e) => definirPrixAchat(e.target.value)} /></div>
+        <div className="groupe-champ"><label>Prix de vente (FCFA / {libelleUnite})</label><input type="number" inputMode="numeric" value={prixVente} onChange={(e) => definirPrixVente(e.target.value)} /></div>
+        <div className="groupe-champ"><label>Stock (en {libelleUnite})</label><input type="number" inputMode="decimal" value={stock} onChange={(e) => definirStock(e.target.value)} /></div>
 
-        <div className="form-group"><label>Négociation (marchandage)</label>
-          <select value={negociable} onChange={(e) => setNegociable(e.target.value)}>
-            <option value="herit">Hériter de la catégorie</option>
+        <div className="groupe-champ"><label>Négociation (marchandage)</label>
+          <select value={negociable} onChange={(e) => definirNegociable(e.target.value)}>
+            <option value="herite">Hériter de la catégorie</option>
             <option value="oui">Oui — prix négociable</option>
             <option value="non">Non — prix fixe</option>
           </select>
         </div>
-        <div className="form-group"><label>Prix plancher / {dlabel} (employés, optionnel)</label><input type="number" inputMode="numeric" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} placeholder="Vide = pas de plancher" /></div>
+        <div className="groupe-champ"><label>Prix plancher / {libelleUnite} (employés, optionnel)</label><input type="number" inputMode="numeric" value={prixMin} onChange={(e) => definirPrixMin(e.target.value)} placeholder="Vide = pas de plancher" /></div>
 
-        <div className="form-group">
+        <div className="groupe-champ">
           <label>Conditionnements de gros (optionnel)</label>
-          {units.map((u, i) => (
+          {conditionnements.map((c, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-              <input style={{ flex: 2 }} value={u.libelle} onChange={(e) => setUnit(i, 'libelle', e.target.value)} placeholder={`Sac, carton…`} />
-              <input style={{ flex: 1 }} type="number" inputMode="decimal" value={u.qte} onChange={(e) => setUnit(i, 'qte', e.target.value)} placeholder={dlabel} title={`Contient combien de ${dlabel}`} />
-              <input style={{ flex: 1 }} type="number" inputMode="numeric" value={u.prix} onChange={(e) => setUnit(i, 'prix', e.target.value)} placeholder="Prix" />
-              <button type="button" className="prd-btn prd-btn-del" onClick={() => setUnits((arr) => arr.filter((_, j) => j !== i))}>✕</button>
+              <input style={{ flex: 2 }} value={c.libelle} onChange={(e) => modifierConditionnement(i, 'libelle', e.target.value)} placeholder={`Sac, carton…`} />
+              <input style={{ flex: 1 }} type="number" inputMode="decimal" value={c.quantite} onChange={(e) => modifierConditionnement(i, 'quantite', e.target.value)} placeholder={libelleUnite} title={`Contient combien de ${libelleUnite}`} />
+              <input style={{ flex: 1 }} type="number" inputMode="numeric" value={c.prix} onChange={(e) => modifierConditionnement(i, 'prix', e.target.value)} placeholder="Prix" />
+              <button type="button" className="bouton-compact bouton-compact-supprimer" onClick={() => definirConditionnements((liste) => liste.filter((_, j) => j !== i))}>✕</button>
             </div>
           ))}
-          <button type="button" className="badge-soft" onClick={addUnit}>＋ Ajouter un conditionnement</button>
+          <button type="button" className="pastille-douce" onClick={ajouterConditionnement}>＋ Ajouter un conditionnement</button>
         </div>
 
-        <div className="form-group"><label>Code-barres (optionnel)</label>
+        <div className="groupe-champ"><label>Code-barres (optionnel)</label>
           <div style={{ display: 'flex', gap: 8 }}>
-            <input style={{ flex: 1 }} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Scanner ou saisir" />
-            <button type="button" className="btn-primary" style={{ padding: '0 14px' }} onClick={() => setScanning(true)}>📷</button>
+            <input style={{ flex: 1 }} value={codeBarres} onChange={(e) => definirCodeBarres(e.target.value)} placeholder="Scanner ou saisir" />
+            <button type="button" className="bouton-principal" style={{ padding: '0 14px' }} onClick={() => definirScan(true)}>📷</button>
           </div>
         </div>
-        <div className="form-group"><label>Description (optionnel)</label><textarea value={scent} onChange={(e) => setScent(e.target.value)} /></div>
-        <div className="modal-actions">
-          <button className="btn-cancel" onClick={onClose}>Annuler</button>
-          <button className="btn-confirm" onClick={save} disabled={saving}>{product ? 'Mettre à jour' : 'Ajouter'}</button>
+        <div className="groupe-champ"><label>Description (optionnel)</label><textarea value={description} onChange={(e) => definirDescription(e.target.value)} /></div>
+        <div className="fenetre-actions">
+          <button className="bouton-annuler" onClick={surFermeture}>Annuler</button>
+          <button className="bouton-valider" onClick={enregistrer} disabled={envoi}>{produit ? 'Mettre à jour' : 'Ajouter'}</button>
         </div>
       </div>
-      {scanning && <Suspense fallback={null}><BarcodeScanner onScan={(code) => { setBarcode(code); setScanning(false) }} onClose={() => setScanning(false)} /></Suspense>}
+      {scan && <Suspense fallback={null}><ScannerCodeBarres surLecture={(code) => { definirCodeBarres(code); definirScan(false) }} surFermeture={() => definirScan(false)} /></Suspense>}
     </div>
   )
 }

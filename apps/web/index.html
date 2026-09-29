@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/logo-64.png" sizes="64x64" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icone-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#7C3AED" />
     <title>SamaCommerce</title>
@@ -14,20 +14,23 @@
   </head>
   <body>
     <!-- Thème appliqué AVANT le premier rendu : sans ça, un téléphone en mode
-         nuit affiche un grand flash blanc le temps que le bundle se charge.
-         Même règle que src/lib/theme.ts : préférence enregistrée, sinon appareil. -->
+         nuit affiche un grand flash blanc le temps que le paquet se charge.
+         Même règle que src/outils/theme.ts : préférence enregistrée, sinon
+         appareil. Les valeurs `dark` / `light` sont celles de l'ancienne
+         version : ce script tourne AVANT la reprise du stockage (retrait prévu
+         avec elle, cf. glossaire, section 3). -->
     <script>
       (function () {
         try {
           var p = localStorage.getItem('samacommerce_theme')
-          var dark = p === 'dark' || (p !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          document.documentElement.classList.toggle('dark', dark)
-          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
-          if (dark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#13111F')
-        } catch (e) { /* mode privé : on reste en clair */ }
+          var sombre = p === 'sombre' || p === 'dark' || (p !== 'clair' && p !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('sombre', sombre)
+          document.documentElement.style.colorScheme = sombre ? 'dark' : 'light'
+          if (sombre) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#13111F')
+        } catch (e) { /* navigation privée : on reste en clair */ }
       })()
     </script>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/demarrage.tsx"></script>
   </body>
 </html>

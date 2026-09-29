@@ -1,212 +1,214 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
-import { Clients, Products, Sales, Ia, boutiqueIdentity, fcfa, getUser, displayInfo, type Category, type CreditScore, type Product } from '../lib/api'
-import { autoPrintEnabled } from '../lib/modules'
-import ScoreRing from '../components/ScoreRing'
+import { Clients, Produits, Ventes, Ia, identiteBoutique, fcfa, lireUtilisateur, infosAffichage, type Categorie, type ClientPourVente, type ScoreCredit, type Produit } from '../outils/api'
+import { impressionAutoActive } from '../outils/modules'
+import AnneauScore from '../composants/AnneauScore'
 // Le scanner (html5-qrcode, ~370 Ko) n'est chargé qu'à l'ouverture de la caméra.
-const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'))
+const ScannerCodeBarres = lazy(() => import('../composants/ScannerCodeBarres'))
 
 /** Client rattaché à la vente : fiche existante, nouveau nom, ou personne. */
-type SaleClient = { id: number | null; name: string; phone: string | null }
-import { promptAsync, toast } from '../lib/toast'
-import { haptic } from '../lib/haptics'
-import { SkeletonGrid } from '../components/Skeleton'
-import ReceiptModal from '../components/ReceiptModal'
-import { confetti } from '../lib/celebrate'
-import { enqueueSale, uuid, type PendingSale } from '../lib/offlineQueue'
-import { productIcon, productTint } from '../lib/productIcon'
-import { flyToCart } from '../lib/flyToCart'
-import Avatar from '../components/Avatar'
-import { openWhatsapp, receiptMessage } from '../lib/whatsapp'
+type ClientVente = { id: number | null; nom: string; telephone: string | null }
+/** Données d'une vente à crédit. */
+type DonneesCredit = { client_id: number | null; nom_client: string; telephone_client: string | null; date_echeance: string }
+import { demanderSaisie, bulle } from '../outils/bulles'
+import { vibration } from '../outils/vibrations'
+import { GrilleSquelette } from '../composants/Squelette'
+import FenetreRecu from '../composants/FenetreRecu'
+import { pluieDeConfettis } from '../outils/celebrer'
+import { mettreEnFile, uuid, type VenteEnAttente } from '../outils/fileHorsLigne'
+import { iconeProduit, fondProduit } from '../outils/iconeProduit'
+import { envolVersPanier } from '../outils/envolVersPanier'
+import Avatar from '../composants/Avatar'
+import { ouvrirWhatsapp, messageRecu } from '../outils/whatsapp'
 import {
-  type CartLine, lFactor, lCount, lTotal, lRefTotal, lCogs, lLabel, lPerDisplay, qtyStr, cartTotal,
-} from '../lib/cart'
-import LoadError from '../components/LoadError'
-import { describeError } from '../lib/loadError'
-import { useProduits, useCategories, useRafraichirCatalogue, LISTE_VIDE } from '../lib/queries'
+  type LignePanier, facteurLigne, nombreLigne, totalLigne, totalReferenceLigne, coutLigne, libelleLigne, prixParAffichage, texteQuantite, totalPanier,
+} from '../outils/panier'
+import ErreurChargement from '../composants/ErreurChargement'
+import { decrireErreur } from '../outils/erreursChargement'
+import { useProduits, useCategories, useRafraichirCatalogue, LISTE_VIDE } from '../outils/requetes'
 
 export default function Vente() {
-  /* Catalogue partage avec Stock (lib/queries) : l'aller-retour Vendre <->
-     Stock, la boucle la plus frequente du comptoir, ne recharge plus rien. */
-  const produits = useProduits()
-  const cats = useCategories()
-  const products = produits.data ?? LISTE_VIDE
-  const categories = cats.data ?? LISTE_VIDE
-  const [activeCat, setActiveCat] = useState<number | 'tous'>('tous')
-  const [search, setSearch] = useState('')
-  const [cart, setCart] = useState<CartLine[]>([])
-  const [showPay, setShowPay] = useState(false)
-  const [showCredit, setShowCredit] = useState(false)
-  const [lastSale, setLastSale] = useState<CartLine[] | null>(null)
-  const [lastMethod, setLastMethod] = useState<string | null>(null)
-  const [showReceipt, setShowReceipt] = useState(false)
-  const [showAdd, setShowAdd] = useState(false)
-  const loading = produits.isPending
-  /* Meme piege que dans Stock, en PIRE ici : l'erreur REMPLACAIT la grille,
-     donc un rafraichissement rate rendait le catalogue invisible au comptoir
-     alors qu'il etait charge. react-query garde les dernieres donnees valides —
-     on les affiche, et l'echec se signale par un bandeau discret au-dessus. */
-  const aDesDonnees = produits.data !== undefined
-  const error = describeError(produits.error ?? cats.error)
-  const [client, setClient] = useState<SaleClient | null>(null)
-  const [showClient, setShowClient] = useState(false)
-  const [clients, setClients] = useState<{ id: number; name: string; phone: string | null }[]>([])
-  const [scanning, setScanning] = useState(false)
+  /* Catalogue partagé avec Stock (outils/requetes) : l'aller-retour Vendre <->
+     Stock, la boucle la plus fréquente du comptoir, ne recharge plus rien. */
+  const requeteProduits = useProduits()
+  const requeteCategories = useCategories()
+  const produits = requeteProduits.data ?? LISTE_VIDE
+  const categories = requeteCategories.data ?? LISTE_VIDE
+  const [categorieActive, definirCategorieActive] = useState<number | 'tous'>('tous')
+  const [recherche, definirRecherche] = useState('')
+  const [panier, definirPanier] = useState<LignePanier[]>([])
+  const [paiementOuvert, definirPaiementOuvert] = useState(false)
+  const [creditOuvert, definirCreditOuvert] = useState(false)
+  const [derniereVente, definirDerniereVente] = useState<LignePanier[] | null>(null)
+  const [dernierMoyen, definirDernierMoyen] = useState<string | null>(null)
+  const [recuOuvert, definirRecuOuvert] = useState(false)
+  const [ajoutOuvert, definirAjoutOuvert] = useState(false)
+  const chargement = requeteProduits.isPending
+  /* Même piège que dans Stock, en PIRE ici : l'erreur REMPLAÇAIT la grille,
+     donc un rafraîchissement raté rendait le catalogue invisible au comptoir
+     alors qu'il était chargé. react-query garde les dernières données valides —
+     on les affiche, et l'échec se signale par un bandeau discret au-dessus. */
+  const aDesDonnees = requeteProduits.data !== undefined
+  const erreur = decrireErreur(requeteProduits.error ?? requeteCategories.error)
+  const [client, definirClient] = useState<ClientVente | null>(null)
+  const [choixClientOuvert, definirChoixClientOuvert] = useState(false)
+  const [clients, definirClients] = useState<ClientPourVente[]>([])
+  const [scan, definirScan] = useState(false)
 
-  /* Rappele apres CHAQUE vente : un stock perime au comptoir ferait vendre
+  /* Rappelé après CHAQUE vente : un stock périmé au comptoir ferait vendre
      un article qui n'existe plus. */
-  const load = useRafraichirCatalogue()
+  const recharger = useRafraichirCatalogue()
   // Fichier clients allégé : sert à rattacher la vente à un habitué.
-  useEffect(() => { Clients.forSale().then(setClients).catch(() => {}) }, [])
+  useEffect(() => { Clients.pourVente().then(definirClients).catch(() => {}) }, [])
 
   /* Scan au comptoir : le code-barres identifie le produit à coup sûr, même
      quand deux articles se ressemblent. S'il est inconnu, on retombe sur la
      recherche textuelle plutôt que de ne rien faire. */
-  const onScan = (code: string) => {
-    setScanning(false)
-    const found = products.find((p) => (p.barcode || '') === code)
-    if (found) { addToCart(found); toast(`${found.name} ajouté 🛒`, 'success') }
-    else { setSearch(code); toast('Code inconnu — produit non trouvé', 'error') }
+  const surLecture = (code: string) => {
+    definirScan(false)
+    const trouve = produits.find((p) => (p.code_barres || '') === code)
+    if (trouve) { ajouterAuPanier(trouve); bulle(`${trouve.nom} ajouté 🛒`, 'succes') }
+    else { definirRecherche(code); bulle('Code inconnu — produit non trouvé', 'erreur') }
   }
 
-  const isEmp = !!getUser()?.is_employee
-  const negoOf = (p: Product) => p.negociable ?? categories.find((c) => c.id === p.category_id)?.negociable ?? false
+  const estEmploye = !!lireUtilisateur()?.est_employe
+  const negociableDe = (p: Produit) => p.negociable ?? categories.find((c) => c.id === p.categorie_id)?.negociable ?? false
   /** Emoji de la catégorie : sert de repli quand le nom n'est pas reconnu. */
-  const catEmoji = (p: Product) => categories.find((c) => c.id === p.category_id)?.emoji
+  const emojiCategorie = (p: Produit) => categories.find((c) => c.id === p.categorie_id)?.emoji
 
-  const visible = (activeCat === 'tous' ? products : products.filter((p) => p.category_id === activeCat))
-    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search))
-  const total = useMemo(() => cartTotal(cart), [cart])
+  const visibles = (categorieActive === 'tous' ? produits : produits.filter((p) => p.categorie_id === categorieActive))
+    .filter((p) => p.nom.toLowerCase().includes(recherche.toLowerCase()) || (p.code_barres || '').includes(recherche))
+  const total = useMemo(() => totalPanier(panier), [panier])
 
-  const addToCart = (p: Product, e?: React.MouseEvent) => {
+  const ajouterAuPanier = (p: Produit, e?: React.MouseEvent) => {
     if (p.stock <= 0) return alert('Stock épuisé')
-    haptic.tap()
-    flyToCart((e?.currentTarget as HTMLElement) ?? null, '.card-title') // 3.4 — ajout balistique
-    setCart((c) => {
-      const f = c.find((l) => l.product.id === p.id && l.unit === null)
-      if (f) return c.map((l) => l === f ? { ...l, qtyBase: l.qtyBase + displayInfo(p)[1] } : l)
-      return [...c, { product: p, unit: null, qtyBase: displayInfo(p)[1], prixReel: Math.round(Number(p.price)) }]
+    vibration.toucher()
+    envolVersPanier((e?.currentTarget as HTMLElement) ?? null, '.carte-titre') // 3.4 — ajout balistique
+    definirPanier((liste) => {
+      const existante = liste.find((l) => l.produit.id === p.id && l.conditionnement === null)
+      if (existante) return liste.map((l) => l === existante ? { ...l, quantiteBase: l.quantiteBase + infosAffichage(p)[1] } : l)
+      return [...liste, { produit: p, conditionnement: null, quantiteBase: infosAffichage(p)[1], prixReel: Math.round(Number(p.prix_vente)) }]
     })
   }
-  const patchLine = (idx: number, patch: Partial<CartLine>) => setCart((c) => c.map((l, i) => i === idx ? { ...l, ...patch } : l))
-  const removeLine = (idx: number) => setCart((c) => c.filter((_, i) => i !== idx))
+  const modifierLigne = (indice: number, modification: Partial<LignePanier>) => definirPanier((liste) => liste.map((l, i) => i === indice ? { ...l, ...modification } : l))
+  const retirerLigne = (indice: number) => definirPanier((liste) => liste.filter((_, i) => i !== indice))
 
   /** Champs client envoyés avec chaque ligne de vente. */
-  const clientPayload = (credit?: any) => ({
+  const champsClient = (credit?: DonneesCredit) => ({
     client_id: credit?.client_id ?? client?.id ?? null,
-    client_name: credit?.client_name ?? client?.name ?? null,
-    client_phone: credit?.client_phone ?? client?.phone ?? null,
+    nom_client: credit?.nom_client ?? client?.nom ?? null,
+    telephone_client: credit?.telephone_client ?? client?.telephone ?? null,
   })
 
-  // T11 — enregistre le panier dans la file hors-ligne (IndexedDB).
-  const queueOffline = async (method: string, credit?: any) => {
-    for (const line of cart) {
-      const sale: PendingSale = {
-        client_uuid: uuid(),
-        product_id: line.product.id,
-        unit_id: line.unit?.id ?? null,
-        quantite_base: line.qtyBase,
-        prix_reel: line.prixReel,
-        payment_method: method,
-        ...clientPayload(credit),
-        created_at: new Date().toISOString(),
-        label: `${line.product.name} ${qtyStr(line)} — ${fcfa(lTotal(line))}`,
+  // T11 — enregistre le panier dans la file hors ligne (IndexedDB).
+  const mettreEnFileHorsLigne = async (moyen: string, credit?: DonneesCredit) => {
+    for (const ligne of panier) {
+      const vente: VenteEnAttente = {
+        uuid_appareil: uuid(),
+        produit_id: ligne.produit.id,
+        conditionnement_id: ligne.conditionnement?.id ?? null,
+        quantite_base: ligne.quantiteBase,
+        prix_reel: ligne.prixReel,
+        moyen_paiement: moyen,
+        ...champsClient(credit),
+        cree_le: new Date().toISOString(),
+        libelle: `${ligne.produit.nom} ${texteQuantite(ligne)} — ${fcfa(totalLigne(ligne))}`,
         ...(credit ?? {}),
       }
-      await enqueueSale(sale)
+      await mettreEnFile(vente)
     }
-    haptic.success()
-    setLastSale(cart); setLastMethod(method); setCart([]); setShowPay(false); setShowCredit(false)
-    toast('📴 Vente enregistrée hors-ligne — sera synchronisée au retour du réseau', 'info')
+    vibration.reussite()
+    definirDerniereVente(panier); definirDernierMoyen(moyen); definirPanier([]); definirPaiementOuvert(false); definirCreditOuvert(false)
+    bulle('📴 Vente enregistrée hors-ligne — sera synchronisée au retour du réseau', 'info')
   }
 
-  const finaliser = async (method: string, credit?: any) => {
-    // Hors-ligne d'emblée → file d'attente locale (aucune vente perdue).
-    if (!navigator.onLine) return queueOffline(method, credit)
+  const finaliser = async (moyen: string, credit?: DonneesCredit) => {
+    // Hors ligne d'emblée → file d'attente locale (aucune vente perdue).
+    if (!navigator.onLine) return mettreEnFileHorsLigne(moyen, credit)
     try {
-      for (const line of cart) {
-        await Sales.create({ product_id: line.product.id, unit_id: line.unit?.id ?? null, quantite_base: line.qtyBase, prix_reel: line.prixReel, payment_method: method, ...clientPayload(credit), due_date: credit?.due_date ?? null } as any)
+      for (const ligne of panier) {
+        await Ventes.creer({ produit_id: ligne.produit.id, conditionnement_id: ligne.conditionnement?.id ?? null, quantite_base: ligne.quantiteBase, prix_reel: ligne.prixReel, moyen_paiement: moyen, ...champsClient(credit), date_echeance: credit?.date_echeance ?? null })
       }
-      haptic.success()
-      confetti() // Design 3.4 — célébration d'encaissement
-      setLastSale(cart); setLastMethod(method); setCart([]); setShowPay(false); setShowCredit(false); load()
+      vibration.reussite()
+      pluieDeConfettis() // Design 3.4 — célébration d'encaissement
+      definirDerniereVente(panier); definirDernierMoyen(moyen); definirPanier([]); definirPaiementOuvert(false); definirCreditOuvert(false); recharger()
       /* Impression automatique (option) : le reçu s'ouvre et part à
          l'imprimante sans un geste de plus — utile aux boutiques équipées,
          invisible pour les autres. */
-      if (autoPrintEnabled()) {
-        setShowReceipt(true)
+      if (impressionAutoActive()) {
+        definirRecuOuvert(true)
         setTimeout(() => window.print(), 350)
       }
     } catch (e: any) {
-      // Erreur RÉSEAU (pas de réponse serveur) → on bascule en file hors-ligne.
-      if (!e?.response) return queueOffline(method, credit)
-      setShowPay(false); setShowCredit(false)
-      toast(e?.response?.data?.error || 'Erreur lors de la vente', 'error')
+      // Erreur RÉSEAU (pas de réponse du serveur) → on bascule en file hors ligne.
+      if (!e?.response) return mettreEnFileHorsLigne(moyen, credit)
+      definirPaiementOuvert(false); definirCreditOuvert(false)
+      bulle(e?.response?.data?.erreur || 'Erreur lors de la vente', 'erreur')
     }
   }
 
-  /* Reçu WhatsApp : gabarit commun (lib/whatsapp.ts) — en-tête boutique avec
+  /* Reçu WhatsApp : gabarit commun (outils/whatsapp.ts) — en-tête boutique avec
      son numéro, lignes pictogrammées, total en gras, moyen de paiement. Le
      numéro du client est normalisé au format international, sinon WhatsApp
-     répond « numéro invalide » et le commerçant croit l'appli cassée. */
-  const whatsappReceipt = async () => {
-    if (!lastSale) return
-    const phone = await promptAsync('Numéro WhatsApp du client (ex: 77 123 45 67) :', '')
-    if (!phone) return
-    openWhatsapp(phone, receiptMessage(boutiqueIdentity(), {
-      lignes: lastSale.map((l) => ({ label: `${l.product.name} ${qtyStr(l)}`, total: lTotal(l) })),
-      total: lastSale.reduce((s, l) => s + lTotal(l), 0),
-      paiement: lastMethod,
+     répond « numéro invalide » et le commerçant croit l'application cassée. */
+  const recuWhatsapp = async () => {
+    if (!derniereVente) return
+    const telephone = await demanderSaisie('Numéro WhatsApp du client (ex: 77 123 45 67) :', '')
+    if (!telephone) return
+    ouvrirWhatsapp(telephone, messageRecu(identiteBoutique(), {
+      lignes: derniereVente.map((l) => ({ libelle: `${l.produit.nom} ${texteQuantite(l)}`, total: totalLigne(l) })),
+      total: derniereVente.reduce((s, l) => s + totalLigne(l), 0),
+      paiement: dernierMoyen,
     }))
   }
 
   return (
     <>
-      <div className="page-header"><h2>💳 Vendre</h2></div>
+      <div className="page-entete"><h2>💳 Vendre</h2></div>
 
-      <div className="vente-layout">
-        <div className="vente-col-main">
-          <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="vente-disposition">
+        <div className="vente-col-principale">
+          <div className="section-libelle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             Choisir produits
-            <button className="badge-soft" style={{ background: 'var(--brand-tint)', color: 'var(--brand-dark)' }} onClick={() => setShowAdd(true)}>＋ Produit</button>
+            <button className="pastille-douce" style={{ background: 'var(--marque-teinte)', color: 'var(--marque-fonce)' }} onClick={() => definirAjoutOuvert(true)}>＋ Produit</button>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <input className="search-bar" style={{ flex: 1 }} placeholder="🔍 Chercher un produit" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className="barre-recherche" style={{ flex: 1 }} placeholder="🔍 Chercher un produit" value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
             {/* Scanner : ajoute directement l'article au panier. */}
-            <button className="btn-primary" style={{ padding: '0 14px' }} aria-label="Scanner un code-barres" onClick={() => setScanning(true)}>📷</button>
+            <button className="bouton-principal" style={{ padding: '0 14px' }} aria-label="Scanner un code-barres" onClick={() => definirScan(true)}>📷</button>
           </div>
-          {error && aDesDonnees && <LoadError error={error} onRetry={load} compact />}
-          <div className="chips">
-            <button className={`chip ${activeCat === 'tous' ? 'active' : ''}`} onClick={() => setActiveCat('tous')}>Tous</button>
-            {categories.map((c) => <button key={c.id} className={`chip ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>{c.emoji} {c.name}</button>)}
+          {erreur && aDesDonnees && <ErreurChargement erreur={erreur} surReessai={recharger} compacte />}
+          <div className="puces">
+            <button className={`puce ${categorieActive === 'tous' ? 'actif' : ''}`} onClick={() => definirCategorieActive('tous')}>Tous</button>
+            {categories.map((c) => <button key={c.id} className={`puce ${categorieActive === c.id ? 'actif' : ''}`} onClick={() => definirCategorieActive(c.id)}>{c.emoji} {c.nom}</button>)}
           </div>
-          {loading
-            ? <SkeletonGrid count={6} />
-            : error && !aDesDonnees
-              ? <LoadError error={error} onRetry={load} />
-            : visible.length === 0
-              ? <div className="empty-state"><div className="empty-icon">🔍</div><div className="empty-sub">Aucun produit trouvé</div></div>
+          {chargement
+            ? <GrilleSquelette nombre={6} />
+            : erreur && !aDesDonnees
+              ? <ErreurChargement erreur={erreur} surReessai={recharger} />
+            : visibles.length === 0
+              ? <div className="etat-vide"><div className="vide-icone">🔍</div><div className="vide-sous-titre">Aucun produit trouvé</div></div>
               : (
-                <div className="vente-grid">
-                  {visible.map((p) => {
-                    const [dl, df] = displayInfo(p)
+                <div className="vente-grille">
+                  {visibles.map((p) => {
+                    const [libelle, facteur] = infosAffichage(p)
                     const pesable = (p.unite_base || 'piece') !== 'piece'
-                    const ds = p.stock / df
+                    const stockAffiche = p.stock / facteur
                     return (
-                    <button key={p.id} className="vente-card" disabled={p.stock <= 0} onClick={(e) => addToCart(p, e)}
-                      title={`${p.name} — ${fcfa(p.price)}`}>
+                    <button key={p.id} className="vente-carte" disabled={p.stock <= 0} onClick={(e) => ajouterAuPanier(p, e)}
+                      title={`${p.nom} — ${fcfa(p.prix_vente)}`}>
                       {/* Le pictogramme domine : on reconnaît la marchandise sans lire. */}
-                      <Avatar photo={p.photo} icon={productIcon(p.name, catEmoji(p))} name={p.name}
-                        size={62} radius={18} tint={productTint(p.name)} className="v-icon-av" />
-                      <span className="v-body">
-                        <span className="vn">{p.name}</span>
-                        <span className="vp">{fcfa(p.price)}{pesable && <small> /{dl}</small>}</span>
+                      <Avatar photo={p.photo} icone={iconeProduit(p.nom, emojiCategorie(p))} nom={p.nom}
+                        taille={62} rayon={18} fond={fondProduit(p.nom)} className="v-icone-vignette" />
+                      <span className="v-corps">
+                        <span className="v-nom">{p.nom}</span>
+                        <span className="v-prix">{fcfa(p.prix_vente)}{pesable && <small> /{libelle}</small>}</span>
                       </span>
                       {/* Pastille de stock : la COULEUR porte l'information, le
                           nombre la précise. Rouge = il n'y en a presque plus. */}
-                      <span className={`v-stock ${ds <= 0 ? 'is-out' : ds <= 5 ? 'is-low' : 'is-ok'}`}>
-                        {p.stock <= 0 ? '✕' : Number.isInteger(ds) ? ds : ds.toFixed(1)}
+                      <span className={`v-stock ${stockAffiche <= 0 ? 'est-epuise' : stockAffiche <= 5 ? 'est-bas' : 'est-ok'}`}>
+                        {p.stock <= 0 ? '✕' : Number.isInteger(stockAffiche) ? stockAffiche : stockAffiche.toFixed(1)}
                       </span>
-                      {negoOf(p) && <span className="v-tag" title="Prix négociable">💬</span>}
+                      {negociableDe(p) && <span className="v-etiquette" title="Prix négociable">💬</span>}
                     </button>
                     )
                   })}
@@ -214,125 +216,125 @@ export default function Vente() {
               )}
         </div>
 
-        <div className="vente-col-side">
+        <div className="vente-col-cote">
           {/* Client de la vente : facultatif au comptant, il donne l'historique
               d'achat et rend le score de crédit fiable. */}
-          <button className={`client-chip ${client ? 'on' : ''}`} onClick={() => setShowClient(true)}>
-            <span className="client-chip-icon">{client ? '👤' : '🙋'}</span>
-            <span className="client-chip-body">
-              <b>{client ? client.name : 'Client de passage'}</b>
-              <small>{client ? (client.phone || 'Touchez pour changer') : 'Touchez pour choisir un client'}</small>
+          <button className={`puce-client ${client ? 'allume' : ''}`} onClick={() => definirChoixClientOuvert(true)}>
+            <span className="puce-client-icone">{client ? '👤' : '🙋'}</span>
+            <span className="puce-client-corps">
+              <b>{client ? client.nom : 'Client de passage'}</b>
+              <small>{client ? (client.telephone || 'Touchez pour changer') : 'Touchez pour choisir un client'}</small>
             </span>
-            <span className="client-chip-go">›</span>
+            <span className="puce-client-aller">›</span>
           </button>
 
-          <div className="card" style={{ marginTop: 0 }}>
-            <div className="card-title">🛒 Panier {cart.length > 0 && <span className="produit-cat-badge" style={{ marginLeft: 'auto' }}>{cart.length}</span>}</div>
-            {cart.length === 0
-              ? <div className="empty-state" style={{ padding: '16px' }}><div className="empty-icon">🛒</div><div className="empty-sub">Votre panier est vide</div></div>
-              : cart.map((l, idx) => (
-                <CartLineRow key={idx} line={l} negociable={negoOf(l.product)} isEmp={isEmp} onPatch={(patch) => patchLine(idx, patch)} onRemove={() => removeLine(idx)} />
+          <div className="carte" style={{ marginTop: 0 }}>
+            <div className="carte-titre">🛒 Panier {panier.length > 0 && <span className="produit-cat-pastille" style={{ marginLeft: 'auto' }}>{panier.length}</span>}</div>
+            {panier.length === 0
+              ? <div className="etat-vide" style={{ padding: '16px' }}><div className="vide-icone">🛒</div><div className="vide-sous-titre">Votre panier est vide</div></div>
+              : panier.map((l, indice) => (
+                <LigneDuPanier key={indice} ligne={l} negociable={negociableDe(l.produit)} estEmploye={estEmploye} surModification={(m) => modifierLigne(indice, m)} surRetrait={() => retirerLigne(indice)} />
               ))}
           </div>
 
-          {lastSale && (
-            <button className="btn-confirm" style={{ width: '100%', marginBottom: 10 }} onClick={() => setShowReceipt(true)}>🧾 Voir le reçu</button>
+          {derniereVente && (
+            <button className="bouton-valider" style={{ width: '100%', marginBottom: 10 }} onClick={() => definirRecuOuvert(true)}>🧾 Voir le reçu</button>
           )}
 
-          <div className="vente-sticky">
-            <div className="total-bar"><span className="tbl">TOTAL</span><span className="tba">{fcfa(total)}</span></div>
-            <button className="btn-encaisser" disabled={cart.length === 0} style={{ opacity: cart.length === 0 ? 0.5 : 1 }} onClick={() => setShowPay(true)}>💰 ENCAISSER</button>
+          <div className="vente-collante">
+            <div className="barre-total"><span className="barre-total-libelle">TOTAL</span><span className="barre-total-montant">{fcfa(total)}</span></div>
+            <button className="bouton-encaisser" disabled={panier.length === 0} style={{ opacity: panier.length === 0 ? 0.5 : 1 }} onClick={() => definirPaiementOuvert(true)}>💰 ENCAISSER</button>
           </div>
         </div>
       </div>
 
-      {showAdd && <QuickProductModal categories={categories} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load() }} />}
-      {showReceipt && lastSale && <ReceiptModal items={lastSale.map((l) => ({ name: `${l.product.name} ${qtyStr(l)}`, qty: 1, price: lTotal(l) }))} onClose={() => setShowReceipt(false)} onWhatsapp={whatsappReceipt} />}
-      {showPay && <PayModal total={total} onClose={() => setShowPay(false)} onPay={(m) => finaliser(m)} onCredit={() => { setShowPay(false); setShowCredit(true) }} />}
-      {showCredit && (
-        <CreditModal
+      {ajoutOuvert && <FenetreProduitRapide categories={categories} surFermeture={() => definirAjoutOuvert(false)} surCreation={() => { definirAjoutOuvert(false); recharger() }} />}
+      {recuOuvert && derniereVente && <FenetreRecu lignes={derniereVente.map((l) => ({ nom: `${l.produit.nom} ${texteQuantite(l)}`, quantite: 1, prix: totalLigne(l) }))} surFermeture={() => definirRecuOuvert(false)} surWhatsapp={recuWhatsapp} />}
+      {paiementOuvert && <FenetrePaiement total={total} surFermeture={() => definirPaiementOuvert(false)} surPaiement={(m) => finaliser(m)} surCredit={() => { definirPaiementOuvert(false); definirCreditOuvert(true) }} />}
+      {creditOuvert && (
+        <FenetreCredit
           total={total}
           client={client}
           clients={clients}
-          onPickClient={() => { setShowCredit(false); setShowClient(true) }}
-          onClose={() => setShowCredit(false)}
-          onConfirm={(i) => finaliser('credit', i)}
+          surChoixClient={() => { definirCreditOuvert(false); definirChoixClientOuvert(true) }}
+          surFermeture={() => definirCreditOuvert(false)}
+          surValidation={(donnees) => finaliser('credit', donnees)}
         />
       )}
-      {showClient && (
-        <ClientPicker
+      {choixClientOuvert && (
+        <ChoixClient
           clients={clients}
-          current={client}
-          onClose={() => setShowClient(false)}
-          onPick={(c) => { setClient(c); setShowClient(false) }}
+          actuel={client}
+          surFermeture={() => definirChoixClientOuvert(false)}
+          surChoix={(c) => { definirClient(c); definirChoixClientOuvert(false) }}
         />
       )}
-      {scanning && <Suspense fallback={null}><BarcodeScanner onScan={onScan} onClose={() => setScanning(false)} /></Suspense>}
+      {scan && <Suspense fallback={null}><ScannerCodeBarres surLecture={surLecture} surFermeture={() => definirScan(false)} /></Suspense>}
     </>
   )
 }
 
-function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
-  line: CartLine; negociable: boolean; isEmp: boolean; onPatch: (p: Partial<CartLine>) => void; onRemove: () => void
+function LigneDuPanier({ ligne, negociable, estEmploye, surModification, surRetrait }: {
+  ligne: LignePanier; negociable: boolean; estEmploye: boolean; surModification: (m: Partial<LignePanier>) => void; surRetrait: () => void
 }) {
-  const [mode, setMode] = useState<'unitaire' | 'total'>('unitaire')
-  const p = line.product
-  const [dl, df] = displayInfo(p)
-  const factor = lFactor(line)
-  const weighable = !line.unit && (p.unite_base || 'piece') !== 'piece'
-  const total = lTotal(line)
-  const marge = total - lCogs(line)
-  const remise = lRefTotal(line) - total
-  const sousPlancher = p.prix_min != null && lPerDisplay(line) < p.prix_min
+  const [mode, definirMode] = useState<'unitaire' | 'total'>('unitaire')
+  const p = ligne.produit
+  const [libelle, facteurAffichage] = infosAffichage(p)
+  const facteur = facteurLigne(ligne)
+  const pesable = !ligne.conditionnement && (p.unite_base || 'piece') !== 'piece'
+  const total = totalLigne(ligne)
+  const marge = total - coutLigne(ligne)
+  const remise = totalReferenceLigne(ligne) - total
+  const sousLePlancher = p.prix_min != null && prixParAffichage(ligne) < p.prix_min
   const aPerte = marge < 0
 
-  const setUnit = (val: string) => {
-    const u = val ? (p.units || []).find((x) => String(x.id) === val) || null : null
-    onPatch({ unit: u, qtyBase: u ? u.facteur : df, prixReel: u ? u.prix : Math.round(Number(p.price)) })
+  const choisirConditionnement = (valeur: string) => {
+    const c = valeur ? (p.conditionnements || []).find((x) => String(x.id) === valeur) || null : null
+    surModification({ conditionnement: c, quantiteBase: c ? c.facteur : facteurAffichage, prixReel: c ? c.prix : Math.round(Number(p.prix_vente)) })
   }
-  const setCount = (n: number) => { if (n <= 0) return onRemove(); onPatch({ qtyBase: n * factor }) }
-  const setWeight = (v: string) => onPatch({ qtyBase: Math.round(Math.max(0, Number(v) || 0) * df) })
-  const setPrice = (v: string) => {
+  const definirNombre = (n: number) => { if (n <= 0) return surRetrait(); surModification({ quantiteBase: n * facteur }) }
+  const definirPoids = (v: string) => surModification({ quantiteBase: Math.round(Math.max(0, Number(v) || 0) * facteurAffichage) })
+  const definirPrix = (v: string) => {
     const n = Math.max(0, Number(v) || 0)
-    if (mode === 'unitaire') onPatch({ prixReel: Math.round(n) })
-    else onPatch({ prixReel: line.qtyBase > 0 ? Math.round(n * factor / line.qtyBase) : line.prixReel })
+    if (mode === 'unitaire') surModification({ prixReel: Math.round(n) })
+    else surModification({ prixReel: ligne.quantiteBase > 0 ? Math.round(n * facteur / ligne.quantiteBase) : ligne.prixReel })
   }
 
   return (
-    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--line-soft)' }}>
+    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--trait-doux)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* Le pictogramme suit le produit jusque dans le panier. */}
-        <Avatar photo={p.photo} icon={productIcon(p.name)} name={p.name} size={34} radius={11} tint={productTint(p.name)} />
-        <div className="sora" style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{p.name}</div>
-        <div className="sora" style={{ fontWeight: 800, color: 'var(--green-dark)' }}>{fcfa(total)}</div>
-        <button className="prd-btn prd-btn-del" style={{ padding: '4px 8px' }} aria-label="Retirer" onClick={onRemove}>✕</button>
+        <Avatar photo={p.photo} icone={iconeProduit(p.nom)} nom={p.nom} taille={34} rayon={11} fond={fondProduit(p.nom)} />
+        <div className="police-titre" style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{p.nom}</div>
+        <div className="police-titre" style={{ fontWeight: 800, color: 'var(--vert-fonce)' }}>{fcfa(total)}</div>
+        <button className="bouton-compact bouton-compact-supprimer" style={{ padding: '4px 8px' }} aria-label="Retirer" onClick={surRetrait}>✕</button>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-        {(p.units?.length ?? 0) > 0 && (
-          <select value={line.unit ? String(line.unit.id) : ''} onChange={(e) => setUnit(e.target.value)} style={{ padding: '6px 8px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontSize: 12.5 }}>
-            <option value="">Détail ({dl})</option>
-            {(p.units || []).map((u) => <option key={u.id} value={u.id}>{u.libelle}</option>)}
+        {(p.conditionnements?.length ?? 0) > 0 && (
+          <select value={ligne.conditionnement ? String(ligne.conditionnement.id) : ''} onChange={(e) => choisirConditionnement(e.target.value)} style={{ padding: '6px 8px', borderRadius: 9, border: '1px solid var(--trait)', background: 'var(--fond)', color: 'var(--encre)', fontSize: 12.5 }}>
+            <option value="">Détail ({libelle})</option>
+            {(p.conditionnements || []).map((c) => <option key={c.id} value={c.id}>{c.libelle}</option>)}
           </select>
         )}
-        {weighable ? (
+        {pesable ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input type="number" inputMode="decimal" step="0.05" value={lCount(line)} onChange={(e) => setWeight(e.target.value)} style={{ width: 84, padding: '6px 8px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }} />
-            <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{dl}</span>
+            <input type="number" inputMode="decimal" step="0.05" value={nombreLigne(ligne)} onChange={(e) => definirPoids(e.target.value)} style={{ width: 84, padding: '6px 8px', borderRadius: 9, border: '1px solid var(--trait)', background: 'var(--fond)', color: 'var(--encre)' }} />
+            <span style={{ fontSize: 12.5, color: 'var(--attenue)' }}>{libelle}</span>
           </div>
         ) : (
-          <div className="stock-controls">
-            <button className="stock-btn minus" aria-label="Diminuer" onClick={() => setCount(lCount(line) - 1)}>−</button>
-            <span className="stock-count">{lCount(line)}</span>
-            <button className="stock-btn plus" aria-label="Augmenter" onClick={() => setCount(lCount(line) + 1)}>+</button>
+          <div className="stock-reglage">
+            <button className="stock-bouton moins" aria-label="Diminuer" onClick={() => definirNombre(nombreLigne(ligne) - 1)}>−</button>
+            <span className="stock-nombre">{nombreLigne(ligne)}</span>
+            <button className="stock-bouton plus" aria-label="Augmenter" onClick={() => definirNombre(nombreLigne(ligne) + 1)}>+</button>
           </div>
         )}
       </div>
 
       {negociable && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-          <button className="badge-soft" style={{ fontSize: 11, padding: '5px 8px' }} onClick={() => setMode(mode === 'unitaire' ? 'total' : 'unitaire')}>{mode === 'unitaire' ? `Prix / ${lLabel(line)}` : 'Prix total'}</button>
-          <input type="number" inputMode="numeric" value={mode === 'unitaire' ? line.prixReel : total} onChange={(e) => setPrice(e.target.value)} style={{ width: 92, padding: '6px 8px', borderRadius: 9, border: `1px solid ${sousPlancher || aPerte ? 'var(--danger)' : 'var(--line)'}`, background: 'var(--bg)', color: 'var(--ink)' }} />
+          <button className="pastille-douce" style={{ fontSize: 11, padding: '5px 8px' }} onClick={() => definirMode(mode === 'unitaire' ? 'total' : 'unitaire')}>{mode === 'unitaire' ? `Prix / ${libelleLigne(ligne)}` : 'Prix total'}</button>
+          <input type="number" inputMode="numeric" value={mode === 'unitaire' ? ligne.prixReel : total} onChange={(e) => definirPrix(e.target.value)} style={{ width: 92, padding: '6px 8px', borderRadius: 9, border: `1px solid ${sousLePlancher || aPerte ? 'var(--danger)' : 'var(--trait)'}`, background: 'var(--fond)', color: 'var(--encre)' }} />
           {remise > 0 && <span style={{ fontSize: 11.5, color: 'var(--accent)' }}>remise {fcfa(remise)}</span>}
         </div>
       )}
@@ -341,15 +343,15 @@ function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
           qui pulse quand elle fond, rouge qui tremble sous le plancher. */}
       {(() => {
         const ratio = total > 0 ? marge / total : 0
-        const level = sousPlancher || aPerte ? 'danger' : ratio < 0.12 ? 'warn' : 'ok'
+        const niveau = sousLePlancher || aPerte ? 'danger' : ratio < 0.12 ? 'attention' : 'ok'
         return (
-          <div className={`marge-gauge marge-${level}`}>
-            <div className="marge-track"><div className="marge-fill" style={{ width: `${Math.max(4, Math.min(100, ratio * 100))}%` }} /></div>
-            <div className="marge-meta">
+          <div className={`marge-jauge marge-${niveau}`}>
+            <div className="marge-piste"><div className="marge-remplissage" style={{ width: `${Math.max(4, Math.min(100, ratio * 100))}%` }} /></div>
+            <div className="marge-infos">
               <span>marge {fcfa(marge)}</span>
-              {sousPlancher
-                ? <span className="marge-alert">⚠ sous plancher{isEmp ? ' — refus à l’encaisse' : ''}</span>
-                : aPerte ? <span className="marge-alert">⚠ vente à perte</span> : null}
+              {sousLePlancher
+                ? <span className="marge-alerte">⚠ sous plancher{estEmploye ? ' — refus à l’encaisse' : ''}</span>
+                : aPerte ? <span className="marge-alerte">⚠ vente à perte</span> : null}
             </div>
           </div>
         )
@@ -358,108 +360,108 @@ function CartLineRow({ line, negociable, isEmp, onPatch, onRemove }: {
   )
 }
 
-function PayModal({ total, onClose, onPay, onCredit }: { total: number; onClose: () => void; onPay: (m: string) => void; onCredit: () => void }) {
+function FenetrePaiement({ total, surFermeture, surPaiement, surCredit }: { total: number; surFermeture: () => void; surPaiement: (m: string) => void; surCredit: () => void }) {
   // Le montant est affiché en grand : au comptoir, c'est l'information que le
   // commerçant annonce au client avant de choisir le moyen de paiement.
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Encaisser</div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">Encaisser</div>
 
-        <div className="pay-amount">
-          <span className="pay-amount-label">Montant à encaisser</span>
-          <span className="pay-amount-value">{fcfa(total)}</span>
+        <div className="paiement-montant">
+          <span className="paiement-montant-libelle">Montant à encaisser</span>
+          <span className="paiement-montant-valeur">{fcfa(total)}</span>
         </div>
 
         {/* Damier 2×2 : les quatre moyens tiennent sous le montant, sans faire
             défiler. Un pouce les atteint tous sans déplacer la main. */}
-        <div className="paymode-grid">
-          <button className="paymode paymode-cash" onClick={() => onPay('especes')}>
-            <span className="pm-ico" aria-hidden="true">💵</span>
-            <span className="pm-body"><span className="pm-t">Espèces</span><span className="pm-s">Liquide</span></span>
+        <div className="modes-paiement-grille">
+          <button className="mode-paiement mode-paiement-especes" onClick={() => surPaiement('especes')}>
+            <span className="mode-paiement-icone" aria-hidden="true">💵</span>
+            <span className="mode-paiement-corps"><span className="mode-paiement-titre">Espèces</span><span className="mode-paiement-sous-titre">Liquide</span></span>
           </button>
 
-          <button className="paymode" onClick={() => onPay('wave')}>
-            <img src="/pay/wave.png" alt="" width={30} height={30} loading="lazy" />
-            <span className="pm-body"><span className="pm-t">Wave</span><span className="pm-s">Mobile</span></span>
+          <button className="mode-paiement" onClick={() => surPaiement('wave')}>
+            <img src="/paiement/wave.png" alt="" width={30} height={30} loading="lazy" />
+            <span className="mode-paiement-corps"><span className="mode-paiement-titre">Wave</span><span className="mode-paiement-sous-titre">Mobile</span></span>
           </button>
 
-          <button className="paymode" onClick={() => onPay('orange')}>
-            <img src="/pay/orange-money.png" alt="" width={30} height={30} loading="lazy" />
-            <span className="pm-body"><span className="pm-t">Orange Money</span><span className="pm-s">Mobile</span></span>
+          <button className="mode-paiement" onClick={() => surPaiement('orange')}>
+            <img src="/paiement/orange-money.png" alt="" width={30} height={30} loading="lazy" />
+            <span className="mode-paiement-corps"><span className="mode-paiement-titre">Orange Money</span><span className="mode-paiement-sous-titre">Mobile</span></span>
           </button>
 
-          <button className="paymode paymode-credit" onClick={onCredit}>
-            <span className="pm-ico" aria-hidden="true">📝</span>
-            <span className="pm-body"><span className="pm-t">Crédit</span><span className="pm-s">Plus tard</span></span>
+          <button className="mode-paiement mode-paiement-credit" onClick={surCredit}>
+            <span className="mode-paiement-icone" aria-hidden="true">📝</span>
+            <span className="mode-paiement-corps"><span className="mode-paiement-titre">Crédit</span><span className="mode-paiement-sous-titre">Plus tard</span></span>
           </button>
         </div>
 
-        <button className="btn-cancel" style={{ width: '100%', marginTop: 10 }} onClick={onClose}>Annuler</button>
+        <button className="bouton-annuler" style={{ width: '100%', marginTop: 10 }} onClick={surFermeture}>Annuler</button>
       </div>
     </div>
   )
 }
 
 /** Choix du client de la vente : habitué du fichier, nouveau nom, ou personne. */
-function ClientPicker({ clients, current, onClose, onPick }: {
-  clients: { id: number; name: string; phone: string | null }[]
-  current: SaleClient | null
-  onClose: () => void
-  onPick: (c: SaleClient | null) => void
+function ChoixClient({ clients, actuel, surFermeture, surChoix }: {
+  clients: ClientPourVente[]
+  actuel: ClientVente | null
+  surFermeture: () => void
+  surChoix: (c: ClientVente | null) => void
 }) {
-  const [q, setQ] = useState('')
-  const [nouveau, setNouveau] = useState(false)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [recherche, definirRecherche] = useState('')
+  const [nouveau, definirNouveau] = useState(false)
+  const [nom, definirNom] = useState('')
+  const [telephone, definirTelephone] = useState('')
 
-  const found = clients.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()) || (c.phone || '').includes(q))
+  const trouves = clients.filter((c) => c.nom.toLowerCase().includes(recherche.toLowerCase()) || (c.telephone || '').includes(recherche))
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">👤 Client de la vente</div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">👤 Client de la vente</div>
 
         {nouveau ? (
           <>
-            <div className="form-group"><label>Nom du client</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Awa Ndiaye" autoFocus /></div>
-            <div className="form-group"><label>📞 Téléphone</label><input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="77 123 45 67" /></div>
-            <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: -4 }}>
+            <div className="groupe-champ"><label>Nom du client</label><input value={nom} onChange={(e) => definirNom(e.target.value)} placeholder="Ex. Awa Ndiaye" autoFocus /></div>
+            <div className="groupe-champ"><label>📞 Téléphone</label><input type="tel" inputMode="tel" value={telephone} onChange={(e) => definirTelephone(e.target.value)} placeholder="77 123 45 67" /></div>
+            <p style={{ fontSize: 12, color: 'var(--attenue)', marginTop: -4 }}>
               Une fiche client sera créée automatiquement si la vente se fait à crédit.
             </p>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setNouveau(false)}>Retour</button>
-              <button className="btn-confirm" disabled={!name.trim()} onClick={() => onPick({ id: null, name: name.trim(), phone: phone || null })}>Choisir</button>
+            <div className="fenetre-actions">
+              <button className="bouton-annuler" onClick={() => definirNouveau(false)}>Retour</button>
+              <button className="bouton-valider" disabled={!nom.trim()} onClick={() => surChoix({ id: null, nom: nom.trim(), telephone: telephone || null })}>Choisir</button>
             </div>
           </>
         ) : (
           <>
-            <input className="search-bar" placeholder="🔍 Chercher un client..." value={q} onChange={(e) => setQ(e.target.value)} />
+            <input className="barre-recherche" placeholder="🔍 Chercher un client..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
-            <button className="sheet-item" onClick={() => onPick(null)}>
-              <span className="sheet-icon" style={{ background: '#F3F4F6' }}>🙋</span>
+            <button className="volet-element" onClick={() => surChoix(null)}>
+              <span className="volet-icone" style={{ background: '#F3F4F6' }}>🙋</span>
               <div><h3>Client de passage</h3><p>Vente sans fiche client</p></div>
-              {!current && <span className="sheet-chevron">✅</span>}
+              {!actuel && <span className="volet-chevron">✅</span>}
             </button>
 
-            <button className="sheet-item" onClick={() => setNouveau(true)}>
-              <span className="sheet-icon" style={{ background: '#EDE9FE' }}>➕</span>
+            <button className="volet-element" onClick={() => definirNouveau(true)}>
+              <span className="volet-icone" style={{ background: '#EDE9FE' }}>➕</span>
               <div><h3>Nouveau client</h3><p>Saisir un nom et un téléphone</p></div>
-              <span className="sheet-chevron">›</span>
+              <span className="volet-chevron">›</span>
             </button>
 
-            <div className="section-label" style={{ marginTop: 12 }}>Mes clients ({found.length})</div>
+            <div className="section-libelle" style={{ marginTop: 12 }}>Mes clients ({trouves.length})</div>
             <div style={{ maxHeight: 260, overflowY: 'auto' }}>
-              {found.length === 0 && <div className="empty-sub" style={{ padding: '10px 4px' }}>Aucun client enregistré</div>}
-              {found.map((c) => (
-                <button key={c.id} className="sheet-item" onClick={() => onPick({ id: c.id, name: c.name, phone: c.phone })}>
-                  <Avatar name={c.name} size={40} radius={13} />
-                  <div><h3>{c.name}</h3><p>{c.phone || 'sans téléphone'}</p></div>
-                  {current?.id === c.id && <span className="sheet-chevron">✅</span>}
+              {trouves.length === 0 && <div className="vide-sous-titre" style={{ padding: '10px 4px' }}>Aucun client enregistré</div>}
+              {trouves.map((c) => (
+                <button key={c.id} className="volet-element" onClick={() => surChoix({ id: c.id, nom: c.nom, telephone: c.telephone })}>
+                  <Avatar nom={c.nom} taille={40} rayon={13} />
+                  <div><h3>{c.nom}</h3><p>{c.telephone || 'sans téléphone'}</p></div>
+                  {actuel?.id === c.id && <span className="volet-chevron">✅</span>}
                 </button>
               ))}
             </div>
-            <button className="btn-cancel" style={{ width: '100%', marginTop: 10 }} onClick={onClose}>Fermer</button>
+            <button className="bouton-annuler" style={{ width: '100%', marginTop: 10 }} onClick={surFermeture}>Fermer</button>
           </>
         )}
       </div>
@@ -475,70 +477,70 @@ function ClientPicker({ clients, current, onClose, onPick }: {
  * (choisi dans le fichier ou créé au vol) et on affiche le score de risque
  * calculé sur SES achats passés avant de valider.
  */
-function CreditModal({ total, client, clients, onPickClient, onClose, onConfirm }: {
+function FenetreCredit({ total, client, clients, surChoixClient, surFermeture, surValidation }: {
   total: number
-  client: SaleClient | null
-  clients: { id: number; name: string; phone: string | null }[]
-  onPickClient: () => void
-  onClose: () => void
-  onConfirm: (i: { client_id: number | null; client_name: string; client_phone: string | null; due_date: string }) => void
+  client: ClientVente | null
+  clients: ClientPourVente[]
+  surChoixClient: () => void
+  surFermeture: () => void
+  surValidation: (d: DonneesCredit) => void
 }) {
-  const [due, setDue] = useState('')
-  const [score, setScore] = useState<CreditScore | null>(null)
+  const [echeance, definirEcheance] = useState('')
+  const [score, definirScore] = useState<ScoreCredit | null>(null)
 
-  const RISK = {
-    green: { c: 'var(--green)', bg: 'var(--success-bg)', t: 'Risque faible' },
-    amber: { c: 'var(--warning)', bg: 'var(--warning-bg)', t: 'Risque moyen' },
-    red: { c: 'var(--danger)', bg: 'var(--danger-bg)', t: 'Risque élevé' },
+  const RISQUE = {
+    vert: { couleur: 'var(--vert)', fond: 'var(--succes-fond)', texte: 'Risque faible' },
+    orange: { couleur: 'var(--attention)', fond: 'var(--attention-fond)', texte: 'Risque moyen' },
+    rouge: { couleur: 'var(--danger)', fond: 'var(--danger-fond)', texte: 'Risque élevé' },
   } as const
 
   // Score dès qu'un client est choisi : on ne prête pas à l'aveugle.
   useEffect(() => {
-    if (!client || total <= 0) { setScore(null); return }
-    const t = setTimeout(() => {
-      Ia.creditScore({ amount: total, due_date: due || null, client_id: client.id, client_name: client.name })
-        .then(setScore).catch(() => setScore(null))
+    if (!client || total <= 0) { definirScore(null); return }
+    const minuterie = setTimeout(() => {
+      Ia.scoreCredit({ montant: total, date_echeance: echeance || null, client_id: client.id, nom_client: client.nom })
+        .then(definirScore).catch(() => definirScore(null))
     }, 350)
-    return () => clearTimeout(t)
-  }, [client, total, due])
+    return () => clearTimeout(minuterie)
+  }, [client, total, echeance])
 
   const connu = client?.id != null && clients.some((c) => c.id === client.id)
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">📝 Vente à crédit</div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">📝 Vente à crédit</div>
 
-        <div className="pay-amount">
-          <span className="pay-amount-label">Montant à crédit</span>
-          <span className="pay-amount-value">{fcfa(total)}</span>
+        <div className="paiement-montant">
+          <span className="paiement-montant-libelle">Montant à crédit</span>
+          <span className="paiement-montant-valeur">{fcfa(total)}</span>
         </div>
 
-        <button className={`client-chip ${client ? 'on' : ''}`} onClick={onPickClient} style={{ marginBottom: 12 }}>
-          <span className="client-chip-icon">{client ? '👤' : '⚠️'}</span>
-          <span className="client-chip-body">
-            <b>{client ? client.name : 'Choisir le client'}</b>
+        <button className={`puce-client ${client ? 'allume' : ''}`} onClick={surChoixClient} style={{ marginBottom: 12 }}>
+          <span className="puce-client-icone">{client ? '👤' : '⚠️'}</span>
+          <span className="puce-client-corps">
+            <b>{client ? client.nom : 'Choisir le client'}</b>
             <small>{client ? (connu ? 'Client enregistré' : 'Nouveau client — fiche créée à la validation') : 'Obligatoire pour un crédit'}</small>
           </span>
-          <span className="client-chip-go">›</span>
+          <span className="puce-client-aller">›</span>
         </button>
 
         {score && (
-          <div className="score-card" style={{ background: RISK[score.risk].bg, border: `1px solid ${RISK[score.risk].c}33` }}>
-            <ScoreRing score={score.score} color={RISK[score.risk].c} label={RISK[score.risk].t} />
+          <div className="score-carte" style={{ background: RISQUE[score.risque].fond, border: `1px solid ${RISQUE[score.risque].couleur}33` }}>
+            <AnneauScore score={score.score} couleur={RISQUE[score.risque].couleur} libelle={RISQUE[score.risque].texte} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 13.5, color: RISK[score.risk].c, marginBottom: 4 }}>🤖 {RISK[score.risk].t}</div>
-              {score.reasons.map((r, i) => <div key={i} style={{ fontSize: 11.5, color: 'var(--muted)' }}>• {r}</div>)}
+              <div style={{ fontWeight: 700, fontSize: 13.5, color: RISQUE[score.risque].couleur, marginBottom: 4 }}>🤖 {RISQUE[score.risque].texte}</div>
+              {score.raisons.map((r, i) => <div key={i} style={{ fontSize: 11.5, color: 'var(--attenue)' }}>• {r}</div>)}
             </div>
           </div>
         )}
 
-        <div className="form-group"><label>🗓️ À rembourser avant le</label><input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
+        <div className="groupe-champ"><label>🗓️ À rembourser avant le</label><input type="date" value={echeance} onChange={(e) => definirEcheance(e.target.value)} /></div>
 
-        <div className="modal-actions">
-          <button className="btn-cancel" onClick={onClose}>Annuler</button>
-          <button className="btn-confirm" disabled={!client}
-            onClick={() => client && onConfirm({ client_id: client.id, client_name: client.name, client_phone: client.phone, due_date: due })}>
+        <div className="fenetre-actions">
+          <button className="bouton-annuler" onClick={surFermeture}>Annuler</button>
+          <button className="bouton-valider" disabled={!client}
+            onClick={() => client && surValidation({ client_id: client.id, nom_client: client.nom, telephone_client: client.telephone, date_echeance: echeance })}>
             Enregistrer
           </button>
         </div>
@@ -547,35 +549,35 @@ function CreditModal({ total, client, clients, onPickClient, onClose, onConfirm 
   )
 }
 
-function QuickProductModal({ categories, onClose, onCreated }: { categories: Category[]; onClose: () => void; onCreated: () => void }) {
-  const [name, setName] = useState(''); const [price, setPrice] = useState(''); const [stock, setStock] = useState('')
-  const [categoryId, setCategoryId] = useState(''); const [saving, setSaving] = useState(false)
+function FenetreProduitRapide({ categories, surFermeture, surCreation }: { categories: Categorie[]; surFermeture: () => void; surCreation: () => void }) {
+  const [nom, definirNom] = useState(''); const [prix, definirPrix] = useState(''); const [stock, definirStock] = useState('')
+  const [categorieId, definirCategorieId] = useState(''); const [envoi, definirEnvoi] = useState(false)
 
-  const save = async () => {
-    if (!name.trim() || !price) return alert('Nom et prix requis')
-    setSaving(true)
+  const enregistrer = async () => {
+    if (!nom.trim() || !prix) return alert('Nom et prix requis')
+    definirEnvoi(true)
     try {
-      await Products.create({ name: name.trim(), price: Number(price), stock: Number(stock) || 0, category_id: categoryId ? Number(categoryId) : null } as any)
-      onCreated()
-    } catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
+      await Produits.creer({ nom: nom.trim(), prix_vente: Number(prix), stock: Number(stock) || 0, categorie_id: categorieId ? Number(categorieId) : null })
+      surCreation()
+    } catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">➕ Nouveau produit</div>
-        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du produit" autoFocus /></div>
-        <div className="form-group"><label>Prix de vente (FCFA)</label><input type="number" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
-        <div className="form-group"><label>Stock initial</label><input type="number" inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" /></div>
-        <div className="form-group"><label>Catégorie</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">➕ Nouveau produit</div>
+        <div className="groupe-champ"><label>Nom</label><input value={nom} onChange={(e) => definirNom(e.target.value)} placeholder="Nom du produit" autoFocus /></div>
+        <div className="groupe-champ"><label>Prix de vente (FCFA)</label><input type="number" inputMode="numeric" value={prix} onChange={(e) => definirPrix(e.target.value)} /></div>
+        <div className="groupe-champ"><label>Stock initial</label><input type="number" inputMode="numeric" value={stock} onChange={(e) => definirStock(e.target.value)} placeholder="0" /></div>
+        <div className="groupe-champ"><label>Catégorie</label>
+          <select value={categorieId} onChange={(e) => definirCategorieId(e.target.value)}>
             <option value="">Sans catégorie</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.nom}</option>)}
           </select>
         </div>
-        <div className="modal-actions">
-          <button className="btn-cancel" onClick={onClose}>Annuler</button>
-          <button className="btn-confirm" onClick={save} disabled={saving}>{saving ? '…' : 'Ajouter'}</button>
+        <div className="fenetre-actions">
+          <button className="bouton-annuler" onClick={surFermeture}>Annuler</button>
+          <button className="bouton-valider" onClick={enregistrer} disabled={envoi}>{envoi ? '…' : 'Ajouter'}</button>
         </div>
       </div>
     </div>

@@ -1,157 +1,156 @@
 import { useEffect, useState } from 'react'
-import { Caisse as Api, fcfa } from '../lib/api'
-import { confirmAsync } from '../lib/toast'
-import ClotureScene from '../components/ClotureScene'
-import { boutiqueIdentity } from '../lib/api'
-import { exportPdf, money } from '../lib/pdf'
-import { exportXlsx } from '../lib/xlsx'
-import { SkeletonList } from '../components/Skeleton'
-import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { Caisse as ApiCaisse, fcfa, identiteBoutique } from '../outils/api'
+import { demanderConfirmation } from '../outils/bulles'
+import SceneCloture from '../composants/SceneCloture'
+import { exporterPdf, montant } from '../outils/pdf'
+import { exporterClasseur } from '../outils/xlsx'
+import { ListeSquelette } from '../composants/Squelette'
+import ErreurChargement from '../composants/ErreurChargement'
+import { useErreurChargement } from '../outils/erreursChargement'
 
 export default function Caisse() {
-  const [today, setToday] = useState<any>(null)
-  const [history, setHistory] = useState<any[]>([])
-  const [weekly, setWeekly] = useState<any[]>([])
-  const [closing, setClosing] = useState(false)
-  const [scene, setScene] = useState<any>(null) // Design 3.4 — séquence de clôture
-  const { error, watch, reset } = useLoadError()
+  const [jour, definirJour] = useState<any>(null)
+  const [historique, definirHistorique] = useState<any[]>([])
+  const [semaine, definirSemaine] = useState<any[]>([])
+  const [cloture, definirCloture] = useState(false)
+  const [scene, definirScene] = useState<any>(null) // Design 3.4 — séquence de clôture
+  const { erreur, surveiller, effacer } = useErreurChargement()
 
-  const load = () => {
-    reset()
-    watch(Api.today().then(setToday))
-    watch(Api.history().then(setHistory))
-    watch(Api.weekly().then(setWeekly))
+  const charger = () => {
+    effacer()
+    surveiller(ApiCaisse.aujourdhui().then(definirJour))
+    surveiller(ApiCaisse.historique().then(definirHistorique))
+    surveiller(ApiCaisse.semaine().then(definirSemaine))
   }
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Somme d'une colonne de l'historique (ligne de totaux des exports). */
-  const sumHist = (key: string) => history.reduce((a, h) => a + Number(h[key] || 0), 0)
+  const sommeHistorique = (cle: string) => historique.reduce((a, h) => a + Number(h[cle] || 0), 0)
 
-  const close = async () => {
-    if (!await confirmAsync('Clôturer la caisse pour aujourd\'hui ?')) return
-    setClosing(true)
+  const cloturer = async () => {
+    if (!await demanderConfirmation('Clôturer la caisse pour aujourd\'hui ?')) return
+    definirCloture(true)
     try {
-      const snapshot = { ...today }
-      await Api.close()
-      setScene(snapshot) // déclenche la séquence cinématique de fin de journée
-      load()
-    } finally { setClosing(false) }
+      const instantane = { ...jour }
+      await ApiCaisse.cloturer()
+      definirScene(instantane) // déclenche la séquence de fin de journée
+      charger()
+    } finally { definirCloture(false) }
   }
 
   /* Le PDF de caisse est LE document de fin de journée : on le montre au
      patron, on le classe, parfois on le porte à la banque. */
-  const exportCaissePdf = () => exportPdf('caisse-samacommerce', {
-    title: 'Caisse',
-    subtitle: `Journée du ${new Date().toLocaleDateString('fr-FR')}`,
-    boutique: boutiqueIdentity(),
-    summary: [
-      { label: 'Espèces', value: money(today.especes), tone: 'green' },
-      { label: 'Wave', value: money(today.wave) },
-      { label: 'Orange Money', value: money(today.orange), tone: 'orange' },
-      { label: 'Net du jour', value: money(today.net), tone: 'brand' },
+  const exporterCaissePdf = () => exporterPdf('caisse-samacommerce', {
+    titre: 'Caisse',
+    sousTitre: `Journée du ${new Date().toLocaleDateString('fr-FR')}`,
+    boutique: identiteBoutique(),
+    synthese: [
+      { libelle: 'Espèces', valeur: montant(jour.especes), teinte: 'vert' },
+      { libelle: 'Wave', valeur: montant(jour.wave) },
+      { libelle: 'Orange Money', valeur: montant(jour.orange), teinte: 'orange' },
+      { libelle: 'Net du jour', valeur: montant(jour.net), teinte: 'marque' },
     ],
-    columns: ['Date', 'Espèces', 'Wave', 'Orange', 'Net'],
-    rows: history.map((h) => [(h.date || '').slice(0, 10), money(Number(h.total_especes)), money(Number(h.total_wave)), money(Number(h.total_orange)), money(Number(h.total_net))]),
-    foot: ['TOTAL', money(sumHist('total_especes')), money(sumHist('total_wave')), money(sumHist('total_orange')), money(sumHist('total_net'))],
-    rightAlign: [1, 2, 3, 4],
+    colonnes: ['Date', 'Espèces', 'Wave', 'Orange', 'Net'],
+    lignes: historique.map((h) => [(h.date || '').slice(0, 10), montant(Number(h.total_especes)), montant(Number(h.total_wave)), montant(Number(h.total_orange)), montant(Number(h.total_net))]),
+    pied: ['TOTAL', montant(sommeHistorique('total_especes')), montant(sommeHistorique('total_wave')), montant(sommeHistorique('total_orange')), montant(sommeHistorique('total_net'))],
+    alignesADroite: [1, 2, 3, 4],
     note: 'Historique des clôtures de caisse enregistrées.',
   })
 
-  const exportCaisseExcel = () => exportXlsx('caisse-samacommerce', {
-    sheet: 'Caisse',
-    title: '💰 Clôtures de caisse',
-    subtitle: `${boutiqueIdentity().nom} — édité le ${new Date().toLocaleDateString('fr-FR')}`,
-    columns: [
-      { header: 'Date', width: 14 },
-      { header: 'Espèces', width: 14, type: 'money' }, { header: 'Wave', width: 14, type: 'money' },
-      { header: 'Orange', width: 14, type: 'money' }, { header: 'Net', width: 14, type: 'money' },
+  const exporterCaisseExcel = () => exporterClasseur('caisse-samacommerce', {
+    onglet: 'Caisse',
+    titre: '💰 Clôtures de caisse',
+    sousTitre: `${identiteBoutique().nom} — édité le ${new Date().toLocaleDateString('fr-FR')}`,
+    colonnes: [
+      { entete: 'Date', largeur: 14 },
+      { entete: 'Espèces', largeur: 14, type: 'montant' }, { entete: 'Wave', largeur: 14, type: 'montant' },
+      { entete: 'Orange', largeur: 14, type: 'montant' }, { entete: 'Net', largeur: 14, type: 'montant' },
     ],
-    rows: history.map((h) => [(h.date || '').slice(0, 10), Number(h.total_especes), Number(h.total_wave), Number(h.total_orange), Number(h.total_net)]),
-    totals: ['TOTAL', sumHist('total_especes'), sumHist('total_wave'), sumHist('total_orange'), sumHist('total_net')],
+    lignes: historique.map((h) => [(h.date || '').slice(0, 10), Number(h.total_especes), Number(h.total_wave), Number(h.total_orange), Number(h.total_net)]),
+    totaux: ['TOTAL', sommeHistorique('total_especes'), sommeHistorique('total_wave'), sommeHistorique('total_orange'), sommeHistorique('total_net')],
   })
 
   // Écran de chargement : des cadres qui « respirent » plutôt qu'un mot seul.
-  if (!today) {
+  if (!jour) {
     return (
       <>
-        <div className="page-header"><h2>💰 Caisse du jour</h2></div>
-        {error && <LoadError error={error} onRetry={load} />}
-        {!error && (<>
-        <div className="stat-2x2">
-          {[0, 1, 2, 3].map((i) => <div className="st" key={i}><div className="skeleton" style={{ height: 22, width: '70%' }} /><div className="skeleton" style={{ height: 11, width: '50%', marginTop: 6 }} /></div>)}
+        <div className="page-entete"><h2>💰 Caisse du jour</h2></div>
+        {erreur && <ErreurChargement erreur={erreur} surReessai={charger} />}
+        {!erreur && (<>
+        <div className="grille-stats">
+          {[0, 1, 2, 3].map((i) => <div className="stat" key={i}><div className="squelette" style={{ height: 22, width: '70%' }} /><div className="squelette" style={{ height: 11, width: '50%', marginTop: 6 }} /></div>)}
         </div>
-        <SkeletonList count={3} />
+        <ListeSquelette nombre={3} />
         </>)}
       </>
     )
   }
-  const maxW = Math.max(1, ...weekly.map((d) => Number(d.total_encaisse)))
+  const maxSemaine = Math.max(1, ...semaine.map((j) => Number(j.total_encaisse)))
 
   return (
     <>
-      {scene && <ClotureScene today={scene} onClose={() => setScene(null)} />}
-      <div className="page-header"><h2>💰 Caisse du jour</h2></div>
+      {scene && <SceneCloture jour={scene} surFermeture={() => definirScene(null)} />}
+      <div className="page-entete"><h2>💰 Caisse du jour</h2></div>
 
       {/* Le net du jour et le geste de clôture sont réunis : c'est une seule
           question (« combien j'ai fait, je ferme ? »), elle tient sur un
           panneau. Auparavant le chiffre et le bouton étaient séparés par
           quatre encadrés. */}
-      <div className="hero-panel hero-teal">
-        <div className="hero-top">
+      <div className="panneau panneau-sarcelle">
+        <div className="panneau-haut">
           <div style={{ minWidth: 0 }}>
-            <div className="hero-label">🔒 Clôture · {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</div>
-            <div className="hero-value">{fcfa(today.net)}</div>
-            <div className="hero-sub">Net de la journée · {today.nb_ventes} vente(s)</div>
+            <div className="panneau-libelle">🔒 Clôture · {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</div>
+            <div className="panneau-valeur">{fcfa(jour.net)}</div>
+            <div className="panneau-sous-titre">Net de la journée · {jour.nb_ventes} vente(s)</div>
           </div>
-          <div className="hero-top-actions">
-            <button className="hero-btn" onClick={exportCaisseExcel} disabled={history.length === 0} title="Exporter en Excel">📊</button>
-            <button className="hero-btn" onClick={exportCaissePdf} title="Exporter en PDF">📄</button>
+          <div className="panneau-haut-actions">
+            <button className="panneau-bouton" onClick={exporterCaisseExcel} disabled={historique.length === 0} title="Exporter en Excel">📊</button>
+            <button className="panneau-bouton" onClick={exporterCaissePdf} title="Exporter en PDF">📄</button>
           </div>
         </div>
-        <div className="hero-stats">
-          <div className="hero-stat"><b>{fcfa(today.especes)}</b><span>💵 espèces</span></div>
-          <div className="hero-stat"><b>{fcfa(today.wave)}</b><span>📱 Wave</span></div>
-          <div className="hero-stat"><b>{fcfa(today.orange)}</b><span>📞 Orange</span></div>
+        <div className="panneau-chiffres">
+          <div className="panneau-chiffre"><b>{fcfa(jour.especes)}</b><span>💵 espèces</span></div>
+          <div className="panneau-chiffre"><b>{fcfa(jour.wave)}</b><span>📱 Wave</span></div>
+          <div className="panneau-chiffre"><b>{fcfa(jour.orange)}</b><span>📞 Orange</span></div>
         </div>
-        <button className="hero-cta" onClick={close} disabled={closing}>
-          {closing ? 'Clôture en cours…' : '🔒 Clôturer la journée'}
+        <button className="panneau-appel" onClick={cloturer} disabled={cloture}>
+          {cloture ? 'Clôture en cours…' : '🔒 Clôturer la journée'}
         </button>
       </div>
 
-      {Number(today.credits) > 0 && (
-        <div className="stat-strip">
-          <div className="ss ss-p"><b>{fcfa(today.credits)}</b><span>📝 vendu à crédit</span></div>
-          <div className="ss ss-g"><b>{fcfa(today.net)}</b><span>💰 encaissé</span></div>
-          <div className="ss ss-b"><b>{today.nb_ventes}</b><span>🧾 ventes</span></div>
+      {Number(jour.credits) > 0 && (
+        <div className="bande-compteurs">
+          <div className="compteur compteur-violet"><b>{fcfa(jour.credits)}</b><span>📝 vendu à crédit</span></div>
+          <div className="compteur compteur-vert"><b>{fcfa(jour.net)}</b><span>💰 encaissé</span></div>
+          <div className="compteur compteur-bleu"><b>{jour.nb_ventes}</b><span>🧾 ventes</span></div>
         </div>
       )}
 
-      <div className="card" style={{ marginTop: 16 }}>
-        <div className="card-title">📅 7 derniers jours</div>
+      <div className="carte" style={{ marginTop: 16 }}>
+        <div className="carte-titre">📅 7 derniers jours</div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120, padding: '8px 0' }}>
-          {weekly.map((d, i) => (
+          {semaine.map((j, i) => (
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: '100%', background: 'var(--primary)', borderRadius: 6, height: `${(Number(d.total_encaisse) / maxW) * 90}px`, minHeight: 2 }} />
-              <span style={{ fontSize: 9, color: 'var(--muted)' }}>{(d.date || '').slice(8, 10)}/{(d.date || '').slice(5, 7)}</span>
+              <div style={{ width: '100%', background: 'var(--principal)', borderRadius: 6, height: `${(Number(j.total_encaisse) / maxSemaine) * 90}px`, minHeight: 2 }} />
+              <span style={{ fontSize: 9, color: 'var(--attenue)' }}>{(j.date || '').slice(8, 10)}/{(j.date || '').slice(5, 7)}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="card" style={{ overflowX: 'auto' }}>
-        <div className="card-title">🗂️ Clôtures récentes</div>
-        <table className="hist-table">
+      <div className="carte" style={{ overflowX: 'auto' }}>
+        <div className="carte-titre">🗂️ Clôtures récentes</div>
+        <table className="tableau-historique">
           <thead><tr><th>Date</th><th>Espèces</th><th>Wave</th><th>Orange</th><th>Net</th></tr></thead>
           <tbody>
-            {history.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--muted)', padding: 16 }}>Aucune clôture</td></tr>}
-            {history.map((h) => (
+            {historique.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--attenue)', padding: 16 }}>Aucune clôture</td></tr>}
+            {historique.map((h) => (
               <tr key={h.id}>
                 <td>{(h.date || '').slice(0, 10)}</td>
                 <td>{fcfa(Number(h.total_especes))}</td>
                 <td>{fcfa(Number(h.total_wave))}</td>
                 <td>{fcfa(Number(h.total_orange))}</td>
-                <td style={{ fontWeight: 700, color: 'var(--green)' }}>{fcfa(Number(h.total_net))}</td>
+                <td style={{ fontWeight: 700, color: 'var(--vert)' }}>{fcfa(Number(h.total_net))}</td>
               </tr>
             ))}
           </tbody>

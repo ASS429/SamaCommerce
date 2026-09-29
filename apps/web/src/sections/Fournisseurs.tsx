@@ -1,90 +1,90 @@
 import { useEffect, useState } from 'react'
-import { Fournisseurs as Api, Commandes, fcfa, type Fournisseur } from '../lib/api'
-import { confirmAsync, toast } from '../lib/toast'
-import { SkeletonList } from '../components/Skeleton'
-import Avatar from '../components/Avatar'
-import PhotoPicker from '../components/PhotoPicker'
-import { telLink } from '../lib/whatsapp'
-import LoadError from '../components/LoadError'
-import { useLoadError } from '../lib/loadError'
+import { Fournisseurs as ApiFournisseurs, Commandes, fcfa, type Fournisseur } from '../outils/api'
+import { demanderConfirmation, bulle } from '../outils/bulles'
+import { ListeSquelette } from '../composants/Squelette'
+import Avatar from '../composants/Avatar'
+import ChoixPhoto from '../composants/ChoixPhoto'
+import { lienAppel } from '../outils/whatsapp'
+import ErreurChargement from '../composants/ErreurChargement'
+import { useErreurChargement } from '../outils/erreursChargement'
 
 export default function Fournisseurs() {
-  const [list, setList] = useState<Fournisseur[]>([])
-  const [commandes, setCommandes] = useState<any[]>([])
-  const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<Fournisseur | null>(null)
-  const [loading, setLoading] = useState(true)
-  const { error, watch, reset } = useLoadError()
-  const [preview, setPreview] = useState<{ f: Fournisseur; message: string; url: string } | null>(null)
+  const [liste, definirListe] = useState<Fournisseur[]>([])
+  const [commandes, definirCommandes] = useState<any[]>([])
+  const [recherche, definirRecherche] = useState('')
+  const [fenetreOuverte, definirFenetreOuverte] = useState(false)
+  const [enEdition, definirEnEdition] = useState<Fournisseur | null>(null)
+  const [chargement, definirChargement] = useState(true)
+  const { erreur, surveiller, effacer } = useErreurChargement()
+  const [apercu, definirApercu] = useState<{ fournisseur: Fournisseur; message: string; lien: string } | null>(null)
 
-  const load = () => {
-    reset()
-    watch(Api.list().then(setList)).finally(() => setLoading(false))
-    Commandes.list().then(setCommandes).catch(() => {}) // secondaire : ne bloque pas la liste
+  const charger = () => {
+    effacer()
+    surveiller(ApiFournisseurs.lister().then(definirListe)).finally(() => definirChargement(false))
+    Commandes.lister().then(definirCommandes).catch(() => {}) // secondaire : ne bloque pas la liste
   }
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const remove = async (f: Fournisseur) => { if (await confirmAsync(`Supprimer « ${f.name} » ?`)) { await Api.remove(f.id); load() } }
+  const supprimer = async (f: Fournisseur) => { if (await demanderConfirmation(`Supprimer « ${f.nom} » ?`)) { await ApiFournisseurs.supprimer(f.id); charger() } }
 
   /* La relance part APRÈS relecture : le commerçant voit le message tel qu'il
      sera envoyé (et peut annuler s'il s'est trompé de fournisseur). */
-  const relance = async (f: Fournisseur) => {
+  const relancer = async (f: Fournisseur) => {
     try {
-      const d = await Api.reappro(f.id)
-      setPreview({ f, message: d.message, url: d.whatsapp_url })
-    } catch { toast('Impossible de préparer la relance', 'error') }
+      const d = await ApiFournisseurs.messageReappro(f.id)
+      definirApercu({ fournisseur: f, message: d.message, lien: d.url_whatsapp })
+    } catch { bulle('Impossible de préparer la relance', 'erreur') }
   }
 
-  const stats = (f: Fournisseur) => {
-    const mine = commandes.filter((c) => c.fournisseur_id === f.id)
-    return { nb: mine.length, total: mine.reduce((s, c) => s + Number(c.total || 0), 0) }
+  const chiffresDe = (f: Fournisseur) => {
+    const siennes = commandes.filter((c) => c.fournisseur_id === f.id)
+    return { nb: siennes.length, total: siennes.reduce((s, c) => s + Number(c.total || 0), 0) }
   }
 
-  const filtered = list.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()) || (f.phone || '').includes(search))
+  const filtres = liste.filter((f) => f.nom.toLowerCase().includes(recherche.toLowerCase()) || (f.telephone || '').includes(recherche))
 
   return (
     <>
-      <div className="page-header"><h2>🚚 Fournisseurs</h2><button className="btn-primary" onClick={() => { setEditing(null); setShowModal(true) }}>+ Ajouter</button></div>
-      <input className="search-bar" placeholder="🔍 Rechercher un fournisseur..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="page-entete"><h2>🚚 Fournisseurs</h2><button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
+      <input className="barre-recherche" placeholder="🔍 Rechercher un fournisseur..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
-      {loading && <SkeletonList count={3} />}
-      {!loading && error && <LoadError error={error} onRetry={load} />}
-      {!loading && !error && filtered.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">🚚</div>
-          <div className="empty-text">{list.length === 0 ? 'Aucun fournisseur' : 'Aucun résultat'}</div>
-          <div className="empty-sub">{list.length === 0 ? 'Ajoutez celui qui vous livre le plus souvent' : 'Essayez un autre nom'}</div>
+      {chargement && <ListeSquelette nombre={3} />}
+      {!chargement && erreur && <ErreurChargement erreur={erreur} surReessai={charger} />}
+      {!chargement && !erreur && filtres.length === 0 && (
+        <div className="etat-vide">
+          <div className="vide-icone">🚚</div>
+          <div className="vide-texte">{liste.length === 0 ? 'Aucun fournisseur' : 'Aucun résultat'}</div>
+          <div className="vide-sous-titre">{liste.length === 0 ? 'Ajoutez celui qui vous livre le plus souvent' : 'Essayez un autre nom'}</div>
         </div>
       )}
 
-      {!loading && filtered.map((f) => {
-        const s = stats(f)
-        const tel = telLink(f.phone)
+      {!chargement && filtres.map((f) => {
+        const chiffres = chiffresDe(f)
+        const appel = lienAppel(f.telephone)
         return (
-          <div key={f.id} className="card fiche">
-            <div className="fiche-head">
-              <Avatar photo={f.photo} icon={f.photo ? undefined : '🚚'} name={f.name} size={52} />
-              <div className="fiche-id">
-                <div className="fiche-name">{f.name}</div>
-                {f.phone && <div className="fiche-sub">📞 {f.phone}</div>}
-                {f.address && <div className="fiche-sub">📍 {f.address}</div>}
+          <div key={f.id} className="carte fiche">
+            <div className="fiche-entete">
+              <Avatar photo={f.photo} icone={f.photo ? undefined : '🚚'} nom={f.nom} taille={52} />
+              <div className="fiche-identite">
+                <div className="fiche-nom">{f.nom}</div>
+                {f.telephone && <div className="fiche-sous-titre">📞 {f.telephone}</div>}
+                {f.adresse && <div className="fiche-sous-titre">📍 {f.adresse}</div>}
               </div>
-              <div className="fiche-tools">
-                <button className="prd-btn prd-btn-edit" aria-label="Modifier" onClick={() => { setEditing(f); setShowModal(true) }}>✏️</button>
-                <button className="prd-btn prd-btn-del" aria-label="Supprimer" onClick={() => remove(f)}>🗑️</button>
+              <div className="fiche-outils">
+                <button className="bouton-compact bouton-compact-modifier" aria-label="Modifier" onClick={() => { definirEnEdition(f); definirFenetreOuverte(true) }}>✏️</button>
+                <button className="bouton-compact bouton-compact-supprimer" aria-label="Supprimer" onClick={() => supprimer(f)}>🗑️</button>
               </div>
             </div>
 
-            <div className="fiche-stats">
-              <span className="fst fst-b"><b>{s.nb}</b><span>📋 commandes</span></span>
-              <span className="fst fst-p"><b>{fcfa(s.total)}</b><span>💰 total achats</span></span>
+            <div className="fiche-chiffres">
+              <span className="chiffre chiffre-bleu"><b>{chiffres.nb}</b><span>📋 commandes</span></span>
+              <span className="chiffre chiffre-violet"><b>{fcfa(chiffres.total)}</b><span>💰 total achats</span></span>
             </div>
 
-            {f.phone && (
+            {f.telephone && (
               <div className="fiche-actions">
-                {tel && <a className="fa-btn fa-call" href={tel}>📞 Appeler</a>}
-                <button className="fa-btn fa-wa" onClick={() => relance(f)}>📲 Relance réappro</button>
+                {appel && <a className="fa-bouton fa-appeler" href={appel}>📞 Appeler</a>}
+                <button className="fa-bouton fa-whatsapp" onClick={() => relancer(f)}>📲 Relance réappro</button>
               </div>
             )}
             {f.notes && <div className="fiche-note">📝 {f.notes}</div>}
@@ -92,52 +92,52 @@ export default function Fournisseurs() {
         )
       })}
 
-      {preview && (
-        <div className="modal-overlay" onClick={() => setPreview(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-title">📲 Relance à {preview.f.name}</div>
-            <div className="wa-preview">{preview.message}</div>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setPreview(null)}>Annuler</button>
-              <button className="btn-confirm" onClick={() => { window.open(preview.url, '_blank', 'noopener'); setPreview(null) }}>💬 Envoyer</button>
+      {apercu && (
+        <div className="fenetre-calque" onClick={() => definirApercu(null)}>
+          <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+            <div className="fenetre-titre">📲 Relance à {apercu.fournisseur.nom}</div>
+            <div className="apercu-whatsapp">{apercu.message}</div>
+            <div className="fenetre-actions">
+              <button className="bouton-annuler" onClick={() => definirApercu(null)}>Annuler</button>
+              <button className="bouton-valider" onClick={() => { window.open(apercu.lien, '_blank', 'noopener'); definirApercu(null) }}>💬 Envoyer</button>
             </div>
           </div>
         </div>
       )}
 
-      {showModal && <FournisseurModal item={editing} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); load() }} />}
+      {fenetreOuverte && <FenetreFournisseur fournisseur={enEdition} surFermeture={() => definirFenetreOuverte(false)} surEnregistrement={() => { definirFenetreOuverte(false); charger() }} />}
     </>
   )
 }
 
-function FournisseurModal({ item, onClose, onSaved }: { item: Fournisseur | null; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(item?.name ?? '')
-  const [phone, setPhone] = useState(item?.phone ?? '')
-  const [email, setEmail] = useState(item?.email ?? '')
-  const [address, setAddress] = useState(item?.address ?? '')
-  const [notes, setNotes] = useState(item?.notes ?? '')
-  const [photo, setPhoto] = useState<string | null>(item?.photo ?? null)
-  const [saving, setSaving] = useState(false)
+function FenetreFournisseur({ fournisseur, surFermeture, surEnregistrement }: { fournisseur: Fournisseur | null; surFermeture: () => void; surEnregistrement: () => void }) {
+  const [nom, definirNom] = useState(fournisseur?.nom ?? '')
+  const [telephone, definirTelephone] = useState(fournisseur?.telephone ?? '')
+  const [email, definirEmail] = useState(fournisseur?.email ?? '')
+  const [adresse, definirAdresse] = useState(fournisseur?.adresse ?? '')
+  const [notes, definirNotes] = useState(fournisseur?.notes ?? '')
+  const [photo, definirPhoto] = useState<string | null>(fournisseur?.photo ?? null)
+  const [envoi, definirEnvoi] = useState(false)
 
-  const save = async () => {
-    if (!name.trim()) return alert('Le nom est requis')
-    setSaving(true)
-    const payload = { name: name.trim(), phone: phone || null, email: email || null, address: address || null, notes: notes || null, photo }
-    try { if (item) await Api.update(item.id, payload); else await Api.create(payload); onSaved() }
-    catch (e: any) { alert(e?.response?.data?.error || 'Erreur') } finally { setSaving(false) }
+  const enregistrer = async () => {
+    if (!nom.trim()) return alert('Le nom est requis')
+    definirEnvoi(true)
+    const charge = { nom: nom.trim(), telephone: telephone || null, email: email || null, adresse: adresse || null, notes: notes || null, photo }
+    try { if (fournisseur) await ApiFournisseurs.modifier(fournisseur.id, charge); else await ApiFournisseurs.creer(charge); surEnregistrement() }
+    catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">{item ? '✏️ Modifier le fournisseur' : '🚚 Nouveau fournisseur'}</div>
-        <PhotoPicker value={photo} onChange={setPhoto} name={name} icon="🚚" label="📷 Photo / logo (facultatif)" />
-        <div className="form-group"><label>Nom</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du fournisseur" /></div>
-        <div className="form-group"><label>📞 Téléphone (WhatsApp)</label><input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="77 123 45 67" /></div>
-        <div className="form-group"><label>✉️ Email</label><input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-        <div className="form-group"><label>📍 Adresse</label><input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
-        <div className="form-group"><label>📝 Notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Jours de livraison, conditions de paiement…" /></div>
-        <div className="modal-actions"><button className="btn-cancel" onClick={onClose}>Annuler</button><button className="btn-confirm" onClick={save} disabled={saving}>{item ? 'Mettre à jour' : 'Ajouter'}</button></div>
+    <div className="fenetre-calque" onClick={surFermeture}>
+      <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
+        <div className="fenetre-titre">{fournisseur ? '✏️ Modifier le fournisseur' : '🚚 Nouveau fournisseur'}</div>
+        <ChoixPhoto valeur={photo} surChangement={definirPhoto} nom={nom} icone="🚚" libelle="📷 Photo / logo (facultatif)" />
+        <div className="groupe-champ"><label>Nom</label><input value={nom} onChange={(e) => definirNom(e.target.value)} placeholder="Nom du fournisseur" /></div>
+        <div className="groupe-champ"><label>📞 Téléphone (WhatsApp)</label><input type="tel" inputMode="tel" value={telephone} onChange={(e) => definirTelephone(e.target.value)} placeholder="77 123 45 67" /></div>
+        <div className="groupe-champ"><label>✉️ Email</label><input value={email} onChange={(e) => definirEmail(e.target.value)} /></div>
+        <div className="groupe-champ"><label>📍 Adresse</label><input value={adresse} onChange={(e) => definirAdresse(e.target.value)} /></div>
+        <div className="groupe-champ"><label>📝 Notes</label><textarea value={notes} onChange={(e) => definirNotes(e.target.value)} placeholder="Jours de livraison, conditions de paiement…" /></div>
+        <div className="fenetre-actions"><button className="bouton-annuler" onClick={surFermeture}>Annuler</button><button className="bouton-valider" onClick={enregistrer} disabled={envoi}>{fournisseur ? 'Mettre à jour' : 'Ajouter'}</button></div>
       </div>
     </div>
   )

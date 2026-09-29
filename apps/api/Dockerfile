@@ -35,10 +35,15 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
+# Droits d'écriture rétablis EXPLICITEMENT : une image construite depuis un
+# poste Windows reçoit des dossiers en lecture seule (dr-xr-xr-x), et
+# l'écriture du journal de connexion échouait alors en erreur 500. Sans effet
+# sur Render, qui construit depuis un clone Linux.
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
 
 ENV APP_ENV=production
 
 # Migrations/seed puis Apache sur le port fourni par Render ($PORT).
-CMD ["sh", "start.sh"]
+CMD ["sh", "demarrer.sh"]

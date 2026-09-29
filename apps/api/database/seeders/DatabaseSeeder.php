@@ -2,19 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Point d'entrée que `php artisan db:seed` appelle par défaut (nom imposé par
+ * Laravel) : il délègue au jeu de démonstration.
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Remplit la base de démonstration.
      */
     public function run(): void
     {
-        $this->call(DemoSeeder::class);
+        $this->call(AmorceurDemo::class);
     }
 }

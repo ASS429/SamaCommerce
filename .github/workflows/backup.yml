@@ -111,13 +111,23 @@ jobs:
             echo "::error::Dump suspect (< 10 Ko) — sauvegarde refusée."
             exit 1
           fi
-          for table in users products sales clients boutiques; do
-            if ! grep -q "CREATE TABLE public.$table" "$fichier"; then
-              echo "::error::Table « $table » absente du dump — sauvegarde refusée."
-              exit 1
-            fi
-          done
-          echo "✅ Tables métier présentes."
+          # Tables métier sous leur nom français (depuis le 29/09/2026). Pendant
+          # la transition, une base encore en anglais reste acceptée : si le
+          # déploiement de la francisation échouait, la sauvegarde de la nuit
+          # ne doit pas échouer avec lui. (À retirer à l'étape 5 du glossaire.)
+          presentes() {
+            for table in $1; do
+              grep -q "CREATE TABLE public.$table (" "$fichier" || return 1
+            done
+          }
+          if presentes "utilisateurs produits ventes clients boutiques"; then
+            echo "✅ Tables métier présentes."
+          elif presentes "users products sales clients boutiques"; then
+            echo "✅ Tables métier présentes (anciens noms anglais)."
+          else
+            echo "::error::Tables métier absentes du dump — sauvegarde refusée."
+            exit 1
+          fi
 
       - name: Chiffrer
         env:
@@ -138,7 +148,7 @@ jobs:
           fichier="samacommerce_${HORODATAGE}.sql"
           gpg --batch --yes --decrypt --passphrase "$PASSPHRASE" \
             --output /tmp/controle.sql "$fichier.gpg"
-          grep -q "CREATE TABLE public.sales" /tmp/controle.sql
+          grep -qE "CREATE TABLE public\.(ventes|sales) \(" /tmp/controle.sql
           echo "✅ Archive déchiffrable et complète."
           rm -f /tmp/controle.sql
 

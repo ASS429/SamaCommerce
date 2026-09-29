@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Utilisateur;
 
 return [
 
@@ -64,7 +64,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', Utilisateur::class),
         ],
 
         // 'users' => [
@@ -95,7 +95,10 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            // Le courtier de réinitialisation de Laravel n'est pas utilisé : les
+            // codes sont gérés par ControleurAuthentification (table
+            // codes_reinitialisation).
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'codes_reinitialisation'),
             'expire' => 60,
             'throttle' => 60,
         ],

@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Fournisseur extends Model
+class Fournisseur extends Modele
 {
     protected $table = 'fournisseurs';
 
-    protected $fillable = ['user_id', 'boutique_id', 'name', 'phone', 'email', 'address', 'notes', 'photo'];
+    protected $fillable = ['utilisateur_id', 'boutique_id', 'nom', 'telephone', 'email', 'adresse', 'notes', 'photo'];
 
-    public function user(): BelongsTo
+    public function utilisateur(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Utilisateur::class);
     }
 }

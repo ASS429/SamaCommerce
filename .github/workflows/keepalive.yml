@@ -37,8 +37,8 @@ jobs:
         run: |
           reveil() {
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
-              https://samacommerce-api.onrender.com/api/health || echo 000)
-            echo "$(date -u +%H:%M:%S) health -> $code"
+              https://samacommerce-api.onrender.com/api/sante || echo 000)
+            echo "$(date -u +%H:%M:%S) sante -> $code"
           }
           reveil
           sleep 300

@@ -2,27 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Retour extends Model
+class Retour extends Modele
 {
-    protected $table = 'returns';
+    protected $table = 'retours';
 
     protected $fillable = [
-        'sale_id', 'product_id', 'user_id', 'boutique_id',
-        'quantity', 'reason', 'refund_method', 'refund_amount',
+        'vente_id', 'produit_id', 'utilisateur_id', 'boutique_id',
+        'quantite', 'motif', 'moyen_remboursement', 'montant_rembourse',
     ];
 
-    protected $casts = ['quantity' => 'integer', 'refund_amount' => 'decimal:2'];
+    protected $casts = ['quantite' => 'integer', 'montant_rembourse' => 'decimal:2'];
 
-    public function sale(): BelongsTo
+    public function vente(): BelongsTo
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(Vente::class);
     }
 
-    public function product(): BelongsTo
+    public function produit(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Produit::class);
     }
 }

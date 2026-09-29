@@ -74,7 +74,7 @@ le nouveau. Ils sont isolés, commentés, et retirés à la date indiquée.
 | Élément | Rôle | Retrait prévu |
 |---|---|---|
 | Couche de compatibilité de l'API | Une application restée ouverte sur l'ancienne version continue de fonctionner. | Quand l'API n'a reçu **aucun appel** à l'ancien format pendant 14 jours (compteur visible sur `/api/sante`). |
-| Vues de compatibilité en base | Si un déploiement échoue à mi-chemin, l'ancien code continue de tourner sur la base renommée. | Quelques jours après un passage stable. |
+| Migration inverse, prête à l'emploi | Retour arrière de la base en un seul envoi si le nouveau code devait être retiré. | Quelques semaines après un passage stable. |
 | Migration du stockage du navigateur | Recopie jeton, réglages et **ventes hors ligne en attente** sous les nouveaux noms. | Trois mois après la bascule. |
 | Harmonisation des noms de migrations | Permet de restaurer une ancienne sauvegarde sur le nouveau code. | Quand la dernière sauvegarde anglaise a expiré (90 jours). |
 
@@ -476,9 +476,17 @@ jeux de routes répondent, avec `methode: "modele"`.
 - Migration de renommage : tables, colonnes, index, séquences, valeurs.
   **Renommer ne déplace aucune donnée** : PostgreSQL change une étiquette, les
   lignes ne bougent pas.
-- **Vues de compatibilité** portant les anciens noms : pendant la minute où
-  l'ancien serveur tourne encore sur la base renommée, il continue de répondre.
-  Elles permettent aussi un **retour arrière** par simple annulation du commit.
+- **Une seule transaction** : PostgreSQL sait annuler un changement de
+  structure. Soit tout est renommé, soit rien ne l'est ; une base à moitié
+  traduite est impossible. Si la migration échoue, le nouveau serveur ne
+  démarre pas et Render garde l'ancien, sur une base intacte.
+- **Migration inverse préparée et testée à l'avance** : si le nouveau code
+  devait être retiré, un seul envoi remet la base en anglais.
+
+  *Écartée après examen : des « vues SQL » portant les anciens noms. Une vue ne
+  peut pas porter le nom d'une table existante ; or `categories`, `clients`,
+  `fournisseurs`, `boutiques` et `tontines` gardent leur nom tout en changeant
+  de colonnes. La protection n'aurait été que partielle.*
 - **Anciennes routes maintenues** et traduites au vol : le site encore en
   anglais continue de fonctionner, **y compris la file des ventes hors ligne**.
 - Mise à jour, **dans le même envoi**, de la sauvegarde nocturne : elle
@@ -493,10 +501,10 @@ Vérifications **avant** d'envoyer :
    créée par le nouveau code : **aucune différence tolérée**.
 3. Même base : nombre de lignes et contenu comparés avant et après, table par
    table.
-4. L'**ancien** code lancé sur la base renommée : il doit fonctionner (preuve
-   que le retour arrière est possible).
+4. La migration inverse jouée sur la base renommée : l'**ancien** code doit
+   ensuite fonctionner (preuve que le retour arrière est possible).
 5. L'image Docker de production démarrée localement, exactement comme Render
-   la lance.
+   la lance, sur une base remplie par l'ancien code.
 6. Les anciennes routes rejouées : réponses comparées aux empreintes de
    l'étape 0.
 

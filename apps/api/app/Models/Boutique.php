@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Boutique extends Model
+class Boutique extends Modele
 {
-    protected $fillable = ['owner_id', 'name', 'phone', 'address', 'emoji', 'is_primary', 'photo'];
+    protected $table = 'boutiques';
 
-    protected $casts = ['is_primary' => 'boolean'];
+    protected $fillable = ['proprietaire_id', 'nom', 'telephone', 'adresse', 'emoji', 'est_principale', 'photo'];
 
-    public function owner(): BelongsTo
+    protected $casts = ['est_principale' => 'boolean'];
+
+    public function proprietaire(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsTo(Utilisateur::class, 'proprietaire_id');
     }
 }

@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Tontine extends Model
+class Tontine extends Modele
 {
-    protected $fillable = ['name', 'type', 'amount', 'members', 'created_date'];
+    protected $table = 'tontines';
+
+    protected $fillable = ['nom', 'type', 'montant', 'membres', 'date_creation'];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'members' => 'integer',
-        'created_date' => 'datetime',
+        'montant' => 'decimal:2',
+        'membres' => 'integer',
+        'date_creation' => 'datetime',
     ];
 }

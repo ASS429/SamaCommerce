@@ -110,7 +110,7 @@ permettrait de garder l'IA éveillée.
 ### Variables à connaître
 
 Sur **Render** (service API) : `ADMIN_PASSWORD`, `RESEND_API_KEY`,
-`IA_SERVICE_URL`, `SANCTUM_EXPIRATION` (30 jours), `SENTRY_LARAVEL_DSN` (vide).
+`URL_SERVICE_IA`, `SANCTUM_EXPIRATION` (30 jours), `SENTRY_LARAVEL_DSN` (vide).
 
 Sur **GitHub** (secrets) : `SUPABASE_DB_URL`, `BACKUP_PASSPHRASE`.
 
@@ -135,10 +135,10 @@ l'usage de l'**API HTTP** de Resend, sur le port 443.
 suffit pas : il faut appeler `/usr/lib/postgresql/17/bin/pg_dump` explicitement,
 sinon c'est la version 16 qui répond et le dump échoue.
 
-**Render inscrit le NOM d'un service lié**, pas son adresse. `IA_SERVICE_URL`
+**Render inscrit le NOM d'un service lié**, pas son adresse. `URL_SERVICE_IA`
 contenait `samacommerce-ia` au lieu de `https://samacommerce-ia.onrender.com`.
 
-**`/api/health` sert de sonde de diagnostic.** La latence dit tout :
+**`/api/sante` sert de sonde de diagnostic.** La latence dit tout :
 **0 ms** = aucun appel tenté (URL vide) · **~2 ms** = échec DNS (adresse
 invalide) · **~40 ms** = tout va bien.
 

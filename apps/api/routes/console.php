@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+/*
+ * Commandes Artisan déclarées par fonction anonyme : aucune à ce jour.
+ * Les commandes de l'application sont des classes (app/Console/Commands) :
+ * ventes:reconstituer, admin:securiser, base:amorcer-si-vide,
+ * base:harmoniser-migrations.
+ */

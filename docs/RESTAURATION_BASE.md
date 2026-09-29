@@ -17,7 +17,7 @@ Le dépôt étant public, l'archive est chiffrée : sans la phrase secrète
 > sauvegardes deviennent définitivement illisibles.
 
 Chaque sauvegarde n'est publiée qu'après trois contrôles : taille minimale,
-présence des tables métier (`users`, `products`, `sales`, `clients`,
+présence des tables métier (`utilisateurs`, `produits`, `ventes`, `clients`,
 `boutiques`), et **déchiffrement de contrôle**. Un dump vide ou corrompu fait
 échouer le job au lieu d'être publié — on ne découvre pas le problème le jour
 du sinistre.
@@ -42,7 +42,7 @@ Vérifiez avant d'aller plus loin :
 
 ```bash
 grep -c 'CREATE TABLE' base.sql   # doit renvoyer une vingtaine de tables
-grep 'INSERT INTO public.sales' base.sql | wc -l   # vos ventes sont là
+grep 'INSERT INTO public.ventes' base.sql | wc -l   # vos ventes sont là
 ```
 
 ## Restaurer
@@ -70,15 +70,21 @@ vous laisse une base à moitié restaurée en croyant que tout s'est bien passé
 ### 3. Vérifier avant de basculer
 
 ```sql
-SELECT count(*) FROM sales;      -- comparez à ce que vous attendez
-SELECT count(*) FROM products;
-SELECT max(created_at) FROM sales;  -- jusqu'où va la sauvegarde ?
+SELECT count(*) FROM ventes;      -- comparez à ce que vous attendez
+SELECT count(*) FROM produits;
+SELECT max(cree_le) FROM ventes;  -- jusqu'où va la sauvegarde ?
 ```
+
+> **Sauvegarde antérieure au 29 septembre 2026 ?** Elle porte les anciens noms
+> anglais (`sales`, `products`, `created_at`…) : remplacez-les dans les
+> requêtes ci-dessus. Pas d'autre précaution — au premier démarrage sur cette
+> base, l'API reconnaît ses migrations et la traduit elle-même en français
+> (migration `franciser_le_schema`, testée dans les deux sens).
 
 ### 4. Basculer l'application
 
 Dans Render → service API → variable `DB_URL` → chaîne de la nouvelle base
-(**Session pooler**, pas Direct connection : voir `DEPLOY.md`). Le service
+(**Session pooler**, pas Direct connection : voir `DEPLOIEMENT.md`). Le service
 redémarre et applique les migrations automatiquement.
 
 ## Ce que la sauvegarde ne couvre PAS

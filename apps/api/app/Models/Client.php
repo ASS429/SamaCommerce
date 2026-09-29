@@ -2,24 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Client extends Model
+class Client extends Modele
 {
     use SoftDeletes; // T4 — corbeille + restauration
 
-    protected $fillable = ['user_id', 'boutique_id', 'name', 'phone', 'email', 'address', 'notes', 'photo'];
+    protected $table = 'clients';
 
-    public function user(): BelongsTo
+    protected $fillable = ['utilisateur_id', 'boutique_id', 'nom', 'telephone', 'email', 'adresse', 'notes', 'photo'];
+
+    public function utilisateur(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Utilisateur::class);
     }
 
-    public function sales(): HasMany
+    public function ventes(): HasMany
     {
-        return $this->hasMany(Sale::class);
+        return $this->hasMany(Vente::class);
     }
 }

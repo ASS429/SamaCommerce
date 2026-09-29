@@ -2,6 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-// API-only : la racine renvoie vers le healthcheck. `Route::redirect` est
-// « cacheable » (pas de closure) → compatible avec `php artisan route:cache`.
-Route::redirect('/', '/api/health');
+// API seule : la racine renvoie vers l'état de santé. `Route::redirect` est
+// « cachable » (pas de fonction anonyme) → compatible avec `php artisan route:cache`.
+Route::redirect('/', '/api/sante');

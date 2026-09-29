@@ -2,29 +2,30 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Mail\CodeReinitialisation;
+use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use App\Mail\CodeReinitialisation;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /**
- * « Mot de passe oublie ».
+ * « Mot de passe oublié ».
  *
- * Regression corrigee : le code etait genere et n'allait NULLE PART (aucun
- * mailer configure). L'utilisateur lisait « un code a ete envoye », ne recevait
- * rien, et restait enferme dehors avec son stock et ses ventes a l'interieur.
+ * Régression corrigée : le code était généré et n'allait NULLE PART (aucun
+ * expéditeur configuré). L'utilisateur lisait « un code a été envoyé », ne
+ * recevait rien, et restait enfermé dehors avec son stock et ses ventes à
+ * l'intérieur.
  */
 class MotDePasseOublieTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function commercant(string $email = 'awa@boutique.sn'): User
+    private function commercant(string $identifiant = 'awa@boutique.sn'): Utilisateur
     {
-        return User::create([
-            'username' => $email, 'password' => Hash::make('AncienMotDePasse1'),
-            'company_name' => 'Boutique Awa', 'role' => 'user', 'status' => 'Actif', 'plan' => 'Free',
+        return Utilisateur::create([
+            'identifiant' => $identifiant, 'mot_de_passe' => Hash::make('AncienMotDePasse1'),
+            'nom_commerce' => 'Boutique Awa', 'role' => 'commercant', 'statut' => 'Actif', 'plan' => 'Gratuit',
         ]);
     }
 
@@ -33,7 +34,7 @@ class MotDePasseOublieTest extends TestCase
         Mail::fake();
         $u = $this->commercant();
 
-        $this->postJson('/api/auth/forgot-password', ['username' => $u->username])
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant])
             ->assertOk()->assertJson(['envoye' => true]);
 
         Mail::assertSent(CodeReinitialisation::class);
@@ -41,28 +42,28 @@ class MotDePasseOublieTest extends TestCase
 
     public function test_le_message_contient_le_code_en_clair(): void
     {
-        // Le code doit etre LISIBLE dans le mail : c'est tout l'objet de l'envoi.
+        // Le code doit être LISIBLE dans le courriel : c'est tout l'objet de l'envoi.
         Mail::fake();
         $u = $this->commercant();
 
-        $this->postJson('/api/auth/forgot-password', ['username' => $u->username]);
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant]);
 
-        Mail::assertSent(function (CodeReinitialisation $mail) {
-            // Deux verifications : le code fait bien 6 chiffres, ET il apparait
+        Mail::assertSent(function (CodeReinitialisation $courriel) {
+            // Deux vérifications : le code fait bien 6 chiffres, ET il apparaît
             // dans le message rendu — sans la seconde, on pourrait envoyer un
-            // corps vide sans que le test s'en apercoive.
-            return preg_match('/^\d{6}$/', $mail->code) === 1
-                && str_contains($mail->render(), $mail->code);
+            // corps vide sans que le test s'en aperçoive.
+            return preg_match('/^\d{6}$/', $courriel->code) === 1
+                && str_contains($courriel->render(), $courriel->code);
         });
     }
 
     public function test_n_envoie_rien_si_l_identifiant_n_est_pas_une_adresse(): void
     {
-        // Comptes crees a la main : inutile de pretendre avoir envoye.
+        // Comptes créés à la main : inutile de prétendre avoir envoyé.
         Mail::fake();
         $u = $this->commercant('boutique-awa');
 
-        $this->postJson('/api/auth/forgot-password', ['username' => $u->username])
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant])
             ->assertOk()->assertJson(['envoye' => false]);
 
         Mail::assertNothingSent();
@@ -72,7 +73,7 @@ class MotDePasseOublieTest extends TestCase
     {
         Mail::fake();
 
-        $this->postJson('/api/auth/forgot-password', ['username' => 'inconnu@nulle-part.sn'])
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => 'inconnu@nulle-part.sn'])
             ->assertOk()
             ->assertJsonMissing(['envoye' => true]);
 
@@ -81,22 +82,22 @@ class MotDePasseOublieTest extends TestCase
 
     public function test_le_code_permet_reellement_de_changer_le_mot_de_passe(): void
     {
-        // Sans ce parcours complet, on testerait un envoi qui ne sert a rien.
+        // Sans ce parcours complet, on testerait un envoi qui ne sert à rien.
         Mail::fake();
         $u = $this->commercant();
-        $this->postJson('/api/auth/forgot-password', ['username' => $u->username])->assertOk();
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant])->assertOk();
 
         $code = null;
-        Mail::assertSent(CodeReinitialisation::class, function (CodeReinitialisation $mail) use (&$code) {
-            $code = $mail->code;
+        Mail::assertSent(CodeReinitialisation::class, function (CodeReinitialisation $courriel) use (&$code) {
+            $code = $courriel->code;
 
             return true;
         });
 
-        $this->postJson('/api/auth/reset-password', [
-            'username' => $u->username, 'code' => $code, 'password' => 'NouveauMdp2026',
+        $this->postJson('/api/auth/reinitialiser-mot-de-passe', [
+            'identifiant' => $u->identifiant, 'code' => $code, 'mot_de_passe' => 'NouveauMdp2026',
         ])->assertOk();
 
-        $this->assertTrue(Hash::check('NouveauMdp2026', $u->fresh()->password));
+        $this->assertTrue(Hash::check('NouveauMdp2026', $u->fresh()->mot_de_passe));
     }
 }

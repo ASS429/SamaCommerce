@@ -22,24 +22,24 @@ return [
     |
     | Désactivé par défaut : à l'échelle d'une boutique les statistiques se
     | calculent en quelques millisecondes, alors qu'un store de cache en défaut
-    | provoquait des erreurs 500 en production. Activer avec STATS_CACHE=true
-    | seulement si le volume de données le justifie.
+    | provoquait des erreurs 500 en production. Activer avec
+    | CACHE_STATISTIQUES=true seulement si le volume de données le justifie.
     |
     */
 
-    'stats_cache' => env('STATS_CACHE', false),
+    'cache_statistiques' => env('CACHE_STATISTIQUES', false),
 
     /*
     |--------------------------------------------------------------------------
     | Version applicative
     |--------------------------------------------------------------------------
     |
-    | Exposée par /api/health : permet de vérifier quel build est réellement en
-    | ligne (indispensable pour diagnostiquer après un déploiement).
+    | Exposée par /api/sante : permet de vérifier quelle version est réellement
+    | en ligne (indispensable pour diagnostiquer après un déploiement).
     |
     */
 
-    'version' => env('APP_VERSION', '3.1.0'),
+    'version' => env('VERSION_APPLICATION', '3.2.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -86,7 +86,7 @@ return [
     | doivent être absolus et cliquables depuis WhatsApp, y compris quand la
     | requête ne porte pas d'en-tête `Origin` (client mobile, script, webhook).
     */
-    'frontend_url' => env('FRONTEND_URL'),
+    'url_site_web' => env('URL_SITE_WEB'),
 
     /*
     |--------------------------------------------------------------------------

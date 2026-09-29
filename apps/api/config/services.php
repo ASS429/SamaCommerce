@@ -37,7 +37,7 @@ return [
 
     // Micro-service IA (Modules A & B)
     'ia' => [
-        'url' => env('IA_SERVICE_URL', 'http://localhost:8001'),
+        'url' => env('URL_SERVICE_IA', 'http://localhost:8001'),
     ],
 
 ];

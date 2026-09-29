@@ -6,7 +6,7 @@
 # l'app fonctionne sans lui (à ajouter plus tard si besoin).
 #
 # Les variables `sync: false` sont à renseigner dans le dashboard Render
-# (secrets Supabase, APP_KEY, URLs croisées). Voir DEPLOY.md.
+# (secrets Supabase, APP_KEY, URLs croisées). Voir DEPLOIEMENT.md.
 # ─────────────────────────────────────────────────────────────
 services:
   # ─── API Laravel (Docker) ───
@@ -17,6 +17,10 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     region: frankfurt        # région Render la plus proche du Sénégal
+    # Ancienne adresse, encore servie par la couche de compatibilité : on ne
+    # change JAMAIS le chemin de santé dans le déploiement qui crée le nouveau
+    # (le conteneur encore en service ne le connaît pas). Passage à /api/sante
+    # au déploiement suivant.
     healthCheckPath: /api/health
     envVars:
       - key: APP_NAME
@@ -33,7 +37,7 @@ services:
         value: stderr        # les logs remontent dans Render
       - key: PHP_CLI_SERVER_WORKERS
         value: "8"           # multi-workers pour le serveur PHP (rafales SPA : stats, nav rapide)
-      # ─ Base Supabase (utiliser le CONNECTION POOLER, IPv4 — cf. DEPLOY.md) ─
+      # ─ Base Supabase (utiliser le CONNECTION POOLER, IPv4 — cf. DEPLOIEMENT.md) ─
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_URL
@@ -54,7 +58,7 @@ services:
       # Remontee d'erreurs. VIDE = totalement inerte : ni appel reseau, ni
       # surcout. Renseigner le DSN d'un projet Sentry (offre gratuite) pour
       # recevoir les alertes par mail. Couvre les erreurs de l'API ET celles du
-      # navigateur, relayees par POST /api/client-errors.
+      # navigateur, relayees par POST /api/erreurs-navigateur.
       # Mot de passe du panneau d'administration. VIDE = compte NEUTRALISE
       # (personne ne peut se connecter) : en cas d'oubli, on ferme plutot que
       # d'ouvrir. 12 caracteres minimum.
@@ -87,17 +91,20 @@ services:
         # jours (fêtes, Magal, déplacement) : il retrouvait une session morte.
         # Le jeton reste révocable à tout moment (« Déconnecter tous les appareils »).
         value: "43200"       # 30 jours
-      - key: CORS_ALLOWED_ORIGINS
-        sync: false          # ex: https://samacommerce-web.onrender.com
+      # Adresses publiques : ecrites EN CLAIR (rien de secret), pour qu'une
+      # resynchronisation du blueprint ne puisse pas les effacer. Le nom
+      # francais remplace CORS_ALLOWED_ORIGINS / FRONTEND_URL (29/09/2026).
+      - key: ORIGINES_CORS_AUTORISEES
+        value: https://samacommerce-web.onrender.com
       # Base des liens envoyés aux gens (invitation d'un employe par WhatsApp).
-      # Facultatif : a defaut, on retombe sur CORS_ALLOWED_ORIGINS.
-      - key: FRONTEND_URL
-        sync: false          # ex: https://samacommerce-web.onrender.com
+      # Facultatif : a defaut, on retombe sur ORIGINES_CORS_AUTORISEES.
+      - key: URL_SITE_WEB
+        value: https://samacommerce-web.onrender.com
       # ─ IA : adresse fournie automatiquement par Render depuis le service ci-dessous.
-      #   Render renvoie l'hote SANS schema ; IaClient prefixe https:// de lui-meme.
+      #   Render renvoie l'hote SANS schema ; ClientIa prefixe https:// de lui-meme.
       #   Si le service est retire, vider la variable suffit : l'API retombe sur
       #   ses heuristiques PHP sans rien casser. ─
-      - key: IA_SERVICE_URL
+      - key: URL_SERVICE_IA
         # Adresse ECRITE EN CLAIR, et non `fromService` : Render y a injecte le
         # NOM du service (« samacommerce-ia ») et non son hote complet, ce qui
         # donnait une resolution DNS immediatement en echec — et une IA
@@ -119,7 +126,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     region: frankfurt
-    healthCheckPath: /docs
+    healthCheckPath: /sante
     envVars:
       - key: PORT
         value: "8001"

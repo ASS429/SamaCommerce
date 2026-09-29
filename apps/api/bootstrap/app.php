@@ -10,19 +10,23 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
-        health: '/up',
+        health: '/en-service',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
-            'tenant' => \App\Http\Middleware\ResolveTenant::class,
-            'perm' => \App\Http\Middleware\EnsurePermission::class,
+            'admin' => \App\Http\Middleware\VerifierAdmin::class,
+            'proprietaire' => \App\Http\Middleware\ResoudreProprietaire::class,
+            'perm' => \App\Http\Middleware\VerifierPermission::class,
         ]);
         // S5 — en-têtes de sécurité sur toutes les réponses de l'API.
-        $middleware->appendToGroup('api', \App\Http\Middleware\SecurityHeaders::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\EntetesSecurite::class);
+        // TEMPORAIRE — ancien format de l'API pour les téléphones restés sur
+        // l'ancienne version. Placé dans le groupe, donc AUTOUR des contrôles de
+        // droits : leurs réponses d'erreur sont traduites aussi.
+        $middleware->appendToGroup('api', \App\Http\Middleware\CompatibiliteAncienContrat::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $requete) => $requete->is('api/*'),
         );
     })->create();

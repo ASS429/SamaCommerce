@@ -1,4 +1,4 @@
-amount,due_in_days,past_credits,past_repaid_on_time,avg_days_late,repaid
+montant,jours_avant_echeance,credits_passes,rembourses_a_temps,retard_moyen_jours,rembourse
 15000,21,1,0,5.62,0
 5000,21,9,4,7.32,1
 2000,21,5,2,5.72,0

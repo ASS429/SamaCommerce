@@ -41,18 +41,20 @@ npm run dev                        # http://localhost:5173 (proxy /api -> :8000)
 cd services/ia
 python -m venv .venv && .venv\Scripts\activate   # Windows
 pip install -r requirements.txt
-uvicorn app.main:app --port 8001 --reload        # http://localhost:8001/health
+uvicorn app.main:app --port 8001 --reload        # http://localhost:8001/sante
 ```
 Le service fonctionne en mode **heuristique** tant que les modèles ne sont pas entraînés.
 
 ## Entraîner les modèles d'IA
 ```bash
-cd apps/api && php artisan ia:export      # exporte services/ia/data/*.csv depuis la DB
-cd ../../services/ia
-python train_demand.py                    # -> models/demand_forecast.joblib (Module A)
-python train_credit.py                    # -> models/credit_score.joblib   (Module B)
+cd services/ia
+python generer_donnees.py                 # -> data/*.csv (données synthétiques d'amorçage)
+python entrainer_demande.py               # -> models/prevision_demande.joblib (Module A)
+python entrainer_credit.py                # -> models/score_credit.joblib      (Module B)
+pip install -r requirements-dev.txt && python -m pytest   # vérifie le service
 ```
 Le service charge automatiquement les .joblib présents au démarrage.
+L'export des ventes réelles depuis l'API vers `data/` est prévu mais pas encore écrit.
 
 ## Passer en production sur Supabase
 Dans `apps/api/.env`, décommenter le bloc `pgsql` et renseigner les identifiants

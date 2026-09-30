@@ -416,6 +416,13 @@ employé invité la veille resterait à la porte.
 | `make_synthetic.py` · `train_credit.py` · `train_demand.py` | `generer_donnees.py` · `entrainer_credit.py` · `entrainer_demande.py` |
 | `credit_training.csv` · `demand_training.csv` | `entrainement_credit.csv` · `entrainement_demande.csv` |
 | `credit_score.joblib` · `demand_forecast.joblib` | `score_credit.joblib` · `prevision_demande.joblib` |
+| Dossiers `app/` · `models/` · `data/` | `application/` · `modeles/` · `donnees/` *(ajout de l'étape 4)* |
+| Variable FastAPI `app` (lancement `uvicorn app.main:app`) | `application` (`uvicorn application.main:application`) *(ajout de l'étape 4)* |
+
+Les deux dernières lignes avaient échappé à l'inventaire initial. La règle de
+la section 3 s'y applique : ces dossiers ont été créés par nous, pas par un
+générateur (FastAPI n'en a pas). Vérifié avant envoi : tests du service, et
+démarrage avec **uniquement** ce que copie le `Dockerfile`, modèles chargés.
 
 **Point délicat : les modèles entraînés contiennent les noms de colonnes.** Ils
 seront réentraînés avec les noms français, et on vérifiera que **leurs

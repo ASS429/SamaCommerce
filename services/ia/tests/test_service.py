@@ -18,8 +18,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app import main
-from app.main import app
+from application import main
+from application.main import application
 
 EMPREINTES = json.loads((Path(__file__).parent / "empreintes_avant_francisation.json").read_text(encoding="utf-8"))
 
@@ -47,7 +47,7 @@ VALEURS = {"model": "modele", "heuristic": "heuristique", "green": "vert", "ambe
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     warnings.filterwarnings("ignore")
-    return TestClient(app)
+    return TestClient(application)
 
 
 def _traduire(dico: dict) -> dict:

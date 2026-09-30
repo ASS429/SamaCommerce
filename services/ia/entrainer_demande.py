@@ -3,9 +3,9 @@ Entraînement du Module A — prévision de la demande.
 
 Lit un CSV de ventes quotidiennes par produit (en unité de base) et entraîne
 un régresseur prédisant la demande du jour suivant à partir d'une fenêtre
-glissante de 14 jours. Sauvegarde models/prevision_demande.joblib.
+glissante de 14 jours. Sauvegarde modeles/prevision_demande.joblib.
 
-CSV attendu (data/entrainement_demande.csv), trié par produit puis par date :
+CSV attendu (donnees/entrainement_demande.csv), trié par produit puis par date :
     produit_id, date, quantite_base
 
 Pour produire ce CSV : `python generer_donnees.py`.
@@ -26,13 +26,13 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 
 BASE = Path(__file__).resolve().parent
-DONNEES = BASE / "data" / "entrainement_demande.csv"
-MODELES = BASE / "models"
+DONNEES = BASE / "donnees" / "entrainement_demande.csv"
+MODELES = BASE / "modeles"
 FENETRE = 14
 
 
 def variables_fenetre(fenetre: list[float]) -> list[float]:
-    """Doit rester cohérent avec app/main.py:_variables_demande()."""
+    """Doit rester cohérent avec application/main.py:_variables_demande()."""
     valeurs = np.array(fenetre[-FENETRE:], dtype=float)
     sept_derniers = valeurs[-7:]
     return [valeurs.mean(), sept_derniers.mean(), valeurs.max(), valeurs.min(), float(len(valeurs))]

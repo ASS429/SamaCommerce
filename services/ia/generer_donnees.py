@@ -5,8 +5,8 @@ amorçage par données synthétiques, puis bascule progressive vers les données
 du commerçant, exportées depuis l'API — export prévu, pas encore écrit).
 
 Produit :
-  - data/entrainement_credit.csv   (Module B)
-  - data/entrainement_demande.csv  (Module A)
+  - donnees/entrainement_credit.csv   (Module B)
+  - donnees/entrainement_demande.csv  (Module A)
 
 Usage :
     python generer_donnees.py [--credits 800] [--jours 180]
@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DONNEES = Path(__file__).resolve().parent / "data"
+DONNEES = Path(__file__).resolve().parent / "donnees"
 alea = np.random.default_rng(42)
 
 

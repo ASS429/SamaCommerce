@@ -21,12 +21,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Le code et les MODÈLES ENTRAÎNÉS (versionnés dans le dépôt : sans eux, le
 # service retomberait silencieusement sur ses heuristiques).
-COPY app ./app
-COPY models ./models
+COPY application ./application
+COPY modeles ./modeles
 
 # Render fournit le port dans $PORT ; 8001 sert au lancement local.
 ENV PORT=8001
 EXPOSE 8001
 
 # `sh -c` est nécessaire pour que $PORT soit développé.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn application.main:application --host 0.0.0.0 --port ${PORT}"]

@@ -3,9 +3,9 @@ Entraînement du Module B — scoring de crédit client.
 
 Lit un CSV d'historique de crédits et entraîne un classifieur qui prédit la
 probabilité de remboursement (à temps). Sauvegarde le modèle dans
-models/score_credit.joblib, chargé automatiquement par le service (app/main.py).
+modeles/score_credit.joblib, chargé automatiquement par le service (application/main.py).
 
-CSV attendu (data/entrainement_credit.csv), une ligne par vente à crédit passée :
+CSV attendu (donnees/entrainement_credit.csv), une ligne par vente à crédit passée :
     montant, jours_avant_echeance, credits_passes, rembourses_a_temps, retard_moyen_jours, rembourse
 où `rembourse` = 1 si remboursé à temps, 0 sinon.
 
@@ -28,8 +28,8 @@ from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
 
 BASE = Path(__file__).resolve().parent
-DONNEES = BASE / "data" / "entrainement_credit.csv"
-MODELES = BASE / "models"
+DONNEES = BASE / "donnees" / "entrainement_credit.csv"
+MODELES = BASE / "modeles"
 VARIABLES = ["montant", "jours_avant_echeance", "credits_passes", "taux_rembourse", "retard_moyen_jours"]
 
 

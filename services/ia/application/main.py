@@ -6,7 +6,7 @@ Expose deux modules d'aide à la décision, appelés par l'API Laravel :
   - Module B : score de crédit client                         -> POST /score-credit
 et un état de santé                                            -> GET  /sante
 
-Tant que les modèles ne sont pas entraînés (dossier models/ vide), le service
+Tant que les modèles ne sont pas entraînés (dossier modeles/ vide), le service
 renvoie des estimations heuristiques afin que la démo fonctionne dès le départ.
 Les scripts d'entraînement (entrainer_*.py) produisent les .joblib qui
 remplacent automatiquement ces heuristiques.
@@ -19,9 +19,9 @@ import joblib
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-REPERTOIRE_MODELES = Path(__file__).resolve().parent.parent / "models"
+REPERTOIRE_MODELES = Path(__file__).resolve().parent.parent / "modeles"
 
-app = FastAPI(title="SamaCommerce IA", version="0.2.0")
+application = FastAPI(title="SamaCommerce IA", version="0.2.0")
 
 
 def _charger(nom: str):
@@ -53,7 +53,7 @@ class ReponsePrevision(BaseModel):
     methode: str
 
 
-@app.post("/prevision", response_model=ReponsePrevision)
+@application.post("/prevision", response_model=ReponsePrevision)
 def prevision(demande: DemandePrevision) -> ReponsePrevision:
     historique = [h for h in demande.historique_jour_base if h is not None]
 
@@ -97,7 +97,7 @@ class ReponseScoreCredit(BaseModel):
     methode: str
 
 
-@app.post("/score-credit", response_model=ReponseScoreCredit)
+@application.post("/score-credit", response_model=ReponseScoreCredit)
 def score_credit(demande: DemandeScoreCredit) -> ReponseScoreCredit:
     if modele_credit is not None:
         probabilite = float(modele_credit.predict_proba([_variables_credit(demande)])[0][1])
@@ -110,7 +110,7 @@ def score_credit(demande: DemandeScoreCredit) -> ReponseScoreCredit:
     return ReponseScoreCredit(score=score, risque=risque, raisons=_raisons_credit(demande), methode=methode)
 
 
-@app.get("/sante")
+@application.get("/sante")
 def sante() -> dict:
     return {
         "statut": "ok",
@@ -213,7 +213,7 @@ class _AncienneReponseScoreCredit(BaseModel):
     method: str
 
 
-@app.post("/forecast", response_model=_AncienneReponsePrevision, include_in_schema=False)
+@application.post("/forecast", response_model=_AncienneReponsePrevision, include_in_schema=False)
 def _ancienne_prevision(ancienne: _AncienneDemandePrevision) -> _AncienneReponsePrevision:
     r = prevision(DemandePrevision(
         produit_id=ancienne.product_id,
@@ -229,7 +229,7 @@ def _ancienne_prevision(ancienne: _AncienneDemandePrevision) -> _AncienneReponse
     )
 
 
-@app.post("/credit-score", response_model=_AncienneReponseScoreCredit, include_in_schema=False)
+@application.post("/credit-score", response_model=_AncienneReponseScoreCredit, include_in_schema=False)
 def _ancien_score_credit(ancienne: _AncienneDemandeScoreCredit) -> _AncienneReponseScoreCredit:
     r = score_credit(DemandeScoreCredit(
         montant=ancienne.amount,
@@ -243,7 +243,7 @@ def _ancien_score_credit(ancienne: _AncienneDemandeScoreCredit) -> _AncienneRepo
     )
 
 
-@app.get("/health", include_in_schema=False)
+@application.get("/health", include_in_schema=False)
 def _ancienne_sante() -> dict:
     s = sante()
     return {"status": s["statut"], "demand_model": s["modele_demande"], "credit_model": s["modele_credit"]}

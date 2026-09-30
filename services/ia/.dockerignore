@@ -1,7 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
-data/
+donnees/
 generer_donnees.py
 entrainer_*.py
 tests/

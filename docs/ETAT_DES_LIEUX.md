@@ -76,20 +76,34 @@ hors ligne. Pour un commerçant, la différence sera mince. La vraie raison de l
 faire est **académique** — si le sujet de mémoire annonce une application native,
 il faut la livrer.
 
-### 3.5 — Trois défauts trouvés pendant la francisation *(à corriger à part)*
+### 3.5 — Défauts trouvés pendant la francisation
 
-Antérieurs à la traduction, repérés en la vérifiant, et volontairement pas
-corrigés dans le même envoi (un envoi = un changement) :
+Antérieurs à la traduction, repérés en la vérifiant, et corrigés à part (un
+envoi = un changement) sur la branche `corrections-anterieures` — **pas encore
+en ligne** :
 
-- **Double facteur à la connexion : le code n'est jamais envoyé.** L'API le
-  crée et attend qu'on le saisisse, mais ne l'adresse à personne (il n'est
-  renvoyé qu'en développement local). Un compte qui active cette option ne peut
-  plus se connecter depuis un nouvel appareil. L'envoi par e-mail existe déjà
-  pour « mot de passe oublié » : il suffit de le réutiliser.
-- **`GET /commandes` ne renvoie jamais le nom du fournisseur** (`withCount`
-  écrase les colonnes demandées).
-- **La recherche globale charge `/clients` même pour un employé sans ce droit**
-  (refus 403 dans la console, sans effet visible).
+- **Double facteur : le code de connexion n'était jamais envoyé**, et l'option
+  s'activait d'un clic. Un compte qui l'activait ne pouvait plus se connecter
+  depuis un nouvel appareil. Corrigé : le code part par e-mail, et l'option ne
+  s'active qu'après la saisie d'un code reçu. Les activations d'avant la
+  correction (aucune n'a jamais fonctionné) sont remises à zéro.
+  ⚠️ Tant que le domaine e-mail n'est pas vérifié (3.1), seule l'adresse du
+  titulaire du compte Resend reçoit les codes : pour les autres, l'activation
+  est refusée avec un message clair — plus personne n'est enfermé dehors.
+- **`GET /commandes` ne renvoyait jamais le nom du fournisseur** (`withCount`
+  écrasait les colonnes demandées) : « Sans fournisseur » partout. Corrigé.
+- **Un employé sans droits « clients » ni « rapports » recevait des refus 403**
+  à chaque écran (recherche globale, cloche, accueil). Corrigé.
+- Au passage : l'e-mail de réinitialisation annonçait un code valable 1 heure
+  pour 30 minutes réelles, et « mot de passe oublié » affichait « Code envoyé »
+  même quand l'e-mail n'était pas parti. Corrigés.
+
+**Reste à décider** : l'interrupteur « Authentification 2FA » du panneau
+d'administration enregistre un réglage que la connexion ne lit jamais. Il
+affiche « Activée » sans rien protéger ; le compte admin ne repose que sur
+`ADMIN_PASSWORD`. Et `admin@samacommerce.sn` n'étant pas une vraie boîte, il ne
+pourrait recevoir aucun code : il faut soit retirer l'interrupteur, soit
+donner au compte admin une vraie adresse.
 
 ---
 

@@ -89,6 +89,15 @@ return [
     'url_site_web' => env('URL_SITE_WEB'),
 
     /*
+    | Adresse où partent les codes du compte administrateur (vérification en
+    | deux étapes). Son identifiant de connexion, `admin@samacommerce.sn`,
+    | n'est pas une vraie boîte : aucun code n'y arriverait. Renseignée dans
+    | Render et JAMAIS dans le dépôt, qui est public ; ainsi, seul un accès à
+    | Render permet de changer l'adresse qui reçoit ces codes.
+    */
+    'email_admin' => env('EMAIL_ADMIN'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

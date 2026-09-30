@@ -229,9 +229,11 @@ class ControleurAuthentification extends Controleur
             return response()->json(['double_facteur_actif' => $utilisateur->double_facteur_actif]);
         }
 
-        if (! filter_var($utilisateur->identifiant, FILTER_VALIDATE_EMAIL)) {
+        if ($this->adresseDesCodes($utilisateur) === null) {
             return response()->json([
-                'erreur' => "La vérification en 2 étapes envoie un code par e-mail : votre identifiant n'est pas une adresse e-mail.",
+                'erreur' => $utilisateur->role === 'admin'
+                    ? "La vérification en 2 étapes envoie un code par e-mail : renseignez l'adresse de l'administrateur (EMAIL_ADMIN) dans Render."
+                    : "La vérification en 2 étapes envoie un code par e-mail : votre identifiant n'est pas une adresse e-mail.",
             ], 422);
         }
 
@@ -297,6 +299,21 @@ class ControleurAuthentification extends Controleur
         }
 
         DB::table('codes_double_facteur')->where('id', $ligne->id)->update(['utilise' => true, 'modifie_le' => Carbon::now()]);
+    }
+
+    /**
+     * Où partent les codes d'un compte, ou `null` s'ils ne peuvent aller nulle
+     * part. D'ordinaire, l'identifiant lui-même. Le compte administrateur fait
+     * exception : son identifiant n'est pas une vraie boîte, ses codes partent
+     * à l'adresse réglée dans Render (config `app.email_admin`).
+     */
+    private function adresseDesCodes(Utilisateur $utilisateur): ?string
+    {
+        $adresse = $utilisateur->role === 'admin'
+            ? trim((string) config('app.email_admin'))
+            : (string) $utilisateur->identifiant;
+
+        return filter_var($adresse, FILTER_VALIDATE_EMAIL) ? $adresse : null;
     }
 
     /**
@@ -476,10 +493,11 @@ class ControleurAuthentification extends Controleur
      */
     private function envoyerCodeParEmail(Utilisateur $utilisateur, string $code, string $motif): bool
     {
-        // Un identifiant qui n'est pas une adresse (compte créé à la main) :
-        // rien à envoyer, inutile de faire semblant.
-        if (! filter_var($utilisateur->identifiant, FILTER_VALIDATE_EMAIL)) {
-            Log::warning("[code-{$motif}] identifiant non-email, envoi impossible");
+        // Pas d'adresse (identifiant qui n'en est pas une, compte créé à la
+        // main) : rien à envoyer, inutile de faire semblant.
+        $adresse = $this->adresseDesCodes($utilisateur);
+        if ($adresse === null) {
+            Log::warning("[code-{$motif}] aucune adresse de réception, envoi impossible");
 
             return false;
         }
@@ -487,7 +505,7 @@ class ControleurAuthentification extends Controleur
         $nom = $utilisateur->nom_commerce ?: 'Bonjour';
 
         try {
-            Mail::to($utilisateur->identifiant)->send(new \App\Mail\CodeParEmail($code, $nom, $motif));
+            Mail::to($adresse)->send(new \App\Mail\CodeParEmail($code, $nom, $motif));
 
             return true;
         } catch (\Throwable $e) {

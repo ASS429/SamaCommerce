@@ -443,6 +443,7 @@ quelque chose change, c'est un défaut, et on s'arrête.
 | `CORS_ALLOWED_ORIGINS` | `ORIGINES_CORS_AUTORISEES` | idem | automatique |
 | `VITE_API_URL` | `VITE_URL_API` (préfixe `VITE_` imposé par Vite) | `render.yaml` | automatique |
 | `ADMIN_PASSWORD` · `SUPABASE_DB_URL` · `BACKUP_PASSPHRASE` | **inchangés** (secrets, cf. section 3) | Render / GitHub | — |
+| — *(nouvelle, 30/09/2026)* | `EMAIL_ADMIN` : adresse qui reçoit les codes de vérification du compte administrateur | Render, saisie à la main (jamais dans le dépôt public) | le propriétaire |
 
 Toutes les variables renommées ont une valeur publique, écrite en clair dans
 `render.yaml` : Render les applique seul, aucune action manuelle n'est requise.
@@ -547,6 +548,12 @@ que la première nuit tourne bien sous le nouveau nom.
 ### Étape 5 — Retrait des compatibilités *(quelques semaines plus tard)*
 
 Aux dates du tableau de la section 3. Chaque retrait est un commit isolé.
+
+S'y ajoute l'ancien réglage « 2FA » du panneau d'administration (route
+`PATCH /admin/parametres/double-facteur`, colonne
+`parametres_admin.double_facteur_actif`) : il ne protégeait rien et a été
+remplacé le 30/09/2026 par la vraie vérification en deux étapes du compte.
+Il ne reste que pour l'ancienne version du site.
 
 ### Action manuelle requise
 

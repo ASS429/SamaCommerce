@@ -3,7 +3,8 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { Admin, fcfa, type Utilisateur } from '../../outils/api'
+import { Admin, fcfa, lireUtilisateur, type Utilisateur } from '../../outils/api'
+import { basculerVerificationDeuxEtapes } from '../../outils/doubleFacteur'
 import { demanderConfirmation } from '../../outils/bulles'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
@@ -249,11 +250,17 @@ function Comptes() {
   )
 }
 
+/* La VRAIE vérification en deux étapes du compte administrateur. L'ancien
+   interrupteur enregistrait un réglage que la connexion ne lisait jamais : il
+   affichait « Activée » sans rien protéger (corrigé le 30/09/2026). */
 function Parametres() {
-  const [parametres, definirParametres] = useState<any>(null)
-  useEffect(() => { Admin.parametres().then(definirParametres) }, [])
-  const basculerDouble = async () => { const r = await Admin.basculerDoubleFacteur(); definirParametres((p: any) => ({ ...p, double_facteur_actif: r.actif })) }
-  if (!parametres) return <p className="text-gray-500">Chargement…</p>
+  const [actif, definirActif] = useState(!!lireUtilisateur()?.double_facteur_actif)
+  const [occupe, definirOccupe] = useState(false)
+  const basculer = async () => {
+    definirOccupe(true)
+    definirActif(await basculerVerificationDeuxEtapes(actif))
+    definirOccupe(false)
+  }
   return (
     <div className="max-w-lg">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Paramètres</h1>
@@ -261,11 +268,15 @@ function Parametres() {
         <h2 className="font-semibold">Sécurité</h2>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-gray-700">Authentification 2FA</span>
-          <button onClick={basculerDouble} className={`px-4 py-2 rounded-lg text-white ${parametres.double_facteur_actif ? 'bg-green-600' : 'bg-gray-400'}`}>
-            {parametres.double_facteur_actif ? 'Activée' : 'Désactivée'}
+          <button onClick={basculer} disabled={occupe} role="switch" aria-checked={actif}
+            className={`px-4 py-2 rounded-lg text-white ${actif ? 'bg-green-600' : 'bg-gray-400'}`}>
+            {occupe ? '…' : actif ? 'Activée' : 'Désactivée'}
           </button>
         </div>
-        <p className="text-xs text-gray-500">Quand la 2FA est active, un code est requis à la connexion admin.</p>
+        <p className="text-xs text-gray-500">
+          Quand la 2FA est active, un code envoyé par e-mail est demandé à chaque connexion. Il part à
+          l'adresse de l'administrateur réglée dans Render (variable EMAIL_ADMIN).
+        </p>
       </div>
     </div>
   )

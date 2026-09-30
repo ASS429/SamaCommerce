@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { modifierProfil, enregistrerUtilisateur, lireUtilisateur, basculerDoubleFacteur, confirmerDoubleFacteur, deconnecterPartout, JournalActivite, type Activite, type Utilisateur } from '../outils/api'
+import { modifierProfil, enregistrerUtilisateur, lireUtilisateur, deconnecterPartout, JournalActivite, type Activite, type Utilisateur } from '../outils/api'
 import { bulle, demanderSaisie, demanderConfirmation } from '../outils/bulles'
 import { activerNotifications, desactiverNotifications, notificationsActives, notificationsPrisesEnCharge } from '../outils/notifications'
 import { aUnCode, definirCode, retirerCode } from '../outils/verrouPin'
 import { lirePreferenceTheme, definirPreferenceTheme, LIBELLES_THEME, type PreferenceTheme } from '../outils/theme'
 import { SECTIONS_MASQUABLES, sectionVisible, afficherSection, toutAfficher, impressionAutoActive, definirImpressionAuto } from '../outils/modules'
+import { basculerVerificationDeuxEtapes } from '../outils/doubleFacteur'
 import ChoixPhoto from '../composants/ChoixPhoto'
 import Avatar from '../composants/Avatar'
 
@@ -53,30 +54,8 @@ export default function Profil({ utilisateur, surDeconnexion, surPassagePremium 
     bulle(accordees ? 'Notifications activées 🔔' : 'Permission refusée par le navigateur', accordees ? 'succes' : 'erreur')
   }
 
-  const memoriserDoubleFacteur = (actif: boolean) => {
-    definirDoubleFacteur(actif)
-    const actuel = lireUtilisateur(); if (actuel) enregistrerUtilisateur({ ...actuel, double_facteur_actif: actif })
-  }
-  /* Activer demande le code reçu par e-mail : c'est la preuve que les codes
-     arrivent. Jusqu'au 30/09/2026, l'option s'activait d'un clic et aucun code
-     ne partait jamais — le compte ne pouvait plus se connecter ailleurs. */
-  const basculerDouble = async () => {
-    try {
-      if (doubleFacteur) {
-        await basculerDoubleFacteur(false); memoriserDoubleFacteur(false); bulle('2FA désactivée', 'succes'); return
-      }
-      const reponse = await basculerDoubleFacteur(true)
-      if (!reponse.double_facteur_actif) {
-        const code = await demanderSaisie(reponse.message || 'Saisissez le code reçu par e-mail',
-          reponse.code_dev ? `Code (dev) : ${reponse.code_dev}` : '123456', '', true)
-        if (!code?.trim()) { bulle('Activation annulée : la 2FA reste désactivée', 'info'); return }
-        await confirmerDoubleFacteur(code.trim())
-      }
-      memoriserDoubleFacteur(true); bulle('2FA activée 🔐', 'succes')
-    } catch (e: any) {
-      bulle(e?.response?.data?.erreur || e?.response?.data?.errors?.code?.[0] || 'Erreur', 'erreur', { duree: 8000 })
-    }
-  }
+  // Activer demande le code reçu par e-mail (cf. outils/doubleFacteur).
+  const basculerDouble = async () => definirDoubleFacteur(await basculerVerificationDeuxEtapes(doubleFacteur))
 
   useEffect(() => { JournalActivite.lister().then(definirActivites).catch(() => {}).finally(() => definirChargementActivites(false)) }, [])
 

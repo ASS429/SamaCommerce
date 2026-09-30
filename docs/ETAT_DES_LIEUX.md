@@ -98,12 +98,13 @@ en ligne** :
   pour 30 minutes réelles, et « mot de passe oublié » affichait « Code envoyé »
   même quand l'e-mail n'était pas parti. Corrigés.
 
-**Reste à décider** : l'interrupteur « Authentification 2FA » du panneau
-d'administration enregistre un réglage que la connexion ne lit jamais. Il
-affiche « Activée » sans rien protéger ; le compte admin ne repose que sur
-`ADMIN_PASSWORD`. Et `admin@samacommerce.sn` n'étant pas une vraie boîte, il ne
-pourrait recevoir aucun code : il faut soit retirer l'interrupteur, soit
-donner au compte admin une vraie adresse.
+- **L'interrupteur « Authentification 2FA » du panneau d'administration ne
+  protégeait rien** : il enregistrait un réglage que la connexion ne lit
+  jamais. Remplacé (décision du 30/09/2026) par la vraie vérification en deux
+  étapes du compte. `admin@samacommerce.sn` n'étant pas une vraie boîte, les
+  codes de l'administrateur partent à l'adresse `EMAIL_ADMIN`, **à saisir dans
+  Render** (jamais dans le dépôt public). L'ancien réglage reste lisible par
+  l'ancienne version du site, et disparaît à l'étape 5.
 
 ---
 

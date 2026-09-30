@@ -59,6 +59,12 @@ services:
       # d'ouvrir. 12 caractères minimum.
       - key: ADMIN_PASSWORD
         sync: false
+      # Adresse où partent les codes de la vérification en 2 étapes du compte
+      # administrateur (son identifiant admin@samacommerce.sn n'est pas une vraie
+      # boîte). Saisie dans le tableau de bord, JAMAIS ici : le dépôt est public.
+      # Vide = l'administrateur ne peut pas activer la vérification en 2 étapes.
+      - key: EMAIL_ADMIN
+        sync: false
 
       # ─ Envoi des e-mails (réinitialisation de mot de passe) via Resend ─
       #

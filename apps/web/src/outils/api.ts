@@ -351,8 +351,8 @@ export const Admin = {
   retirer: (montant: number, moyen: string) => api.post('/admin/retraits', { montant, moyen }),
   transferts: () => api.get('/admin/transferts').then((r) => r.data),
   transferer: (source: string, destination: string, montant: number) => api.post('/admin/transferts', { source, destination, montant }),
-  parametres: () => api.get('/admin/parametres').then((r) => r.data),
-  basculerDoubleFacteur: () => api.patch('/admin/parametres/double-facteur').then((r) => r.data),
+  // Plus de réglage « 2FA » ici : il ne protégeait rien. La vraie vérification
+  // en deux étapes passe par basculerDoubleFacteur (outils/doubleFacteur).
 }
 
 export type Boutique = { id: number; nom: string; telephone: string | null; adresse: string | null; emoji: string; est_principale: boolean; photo?: string | null; nb_produits?: number; nb_ventes?: number; nb_membres?: number }

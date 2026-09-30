@@ -65,6 +65,7 @@ Copie la sortie complète (`base64:....`). Tu la colleras dans Render.
    | `APP_URL` | `https://samacommerce-api.onrender.com` |
    | `DB_URL` | la chaîne **Session pooler** de l'étape 1 |
    | `ADMIN_PASSWORD` | mot de passe du compte `admin@samacommerce.sn`, 12 caractères minimum. **Vide = compte neutralisé** (personne ne peut s'y connecter) |
+   | `EMAIL_ADMIN` | votre adresse e-mail : les codes de la vérification en 2 étapes du compte administrateur y sont envoyés (`admin@samacommerce.sn` n'est pas une vraie boîte). Vide = l'administrateur ne peut pas activer cette vérification. Tant que votre domaine n'est pas vérifié chez Resend, mettez l'adresse du **titulaire du compte Resend**, la seule qui reçoit |
    | `RESEND_API_KEY` | clé Resend (`re_...`) pour envoyer les codes « mot de passe oublié ». Sans elle, le code n'est envoyé nulle part |
    | `SENTRY_LARAVEL_DSN` | facultatif : DSN d'un projet Sentry pour recevoir les erreurs de l'API et du navigateur. Vide = inerte |
 

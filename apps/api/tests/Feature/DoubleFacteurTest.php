@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\CodeParEmail;
 use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\Feature\Outils\CreationComptes;
 use Tests\TestCase;
@@ -36,7 +37,7 @@ class DoubleFacteurTest extends TestCase
         });
         $this->assertNotNull($code, "Aucun code « {$motif} » envoyé");
 
-        return $code;
+        return (string) $code;
     }
 
     private function activer(string $jeton): string
@@ -178,6 +179,50 @@ class DoubleFacteurTest extends TestCase
         $this->putJson('/api/auth/2fa', ['enabled' => true], ['Authorization' => 'Bearer '.$jeton])
             ->assertOk()->assertJson(['twofa_enabled' => false, 'code_envoye' => true]);
         $this->assertFalse((bool) $u->fresh()->double_facteur_actif);
+    }
+
+    /** Compte administrateur connecté : [Utilisateur, jeton]. */
+    private function administrateur(): array
+    {
+        $admin = Utilisateur::create([
+            'identifiant' => 'admin@samacommerce.sn', 'mot_de_passe' => Hash::make('MotDePasseAdmin2026'),
+            'nom_commerce' => 'Admin', 'role' => 'admin', 'plan' => 'Premium',
+        ]);
+        $jeton = $this->postJson('/api/auth/connexion', ['identifiant' => 'admin@samacommerce.sn', 'mot_de_passe' => 'MotDePasseAdmin2026'])
+            ->assertOk()->json('jeton');
+
+        return [$admin, $jeton];
+    }
+
+    public function test_les_codes_de_l_administrateur_partent_a_l_adresse_reglee_dans_render(): void
+    {
+        // `admin@samacommerce.sn` n'est pas une vraie boîte : ses codes partent
+        // à EMAIL_ADMIN, jamais à son identifiant.
+        Mail::fake();
+        config(['app.email_admin' => 'responsable@exemple.sn']);
+        [$admin, $jeton] = $this->administrateur();
+
+        $this->activer($jeton);
+        Mail::assertSent(CodeParEmail::class, fn (CodeParEmail $c) => $c->motif === 'activation'
+            && $c->hasTo('responsable@exemple.sn') && ! $c->hasTo('admin@samacommerce.sn'));
+        $this->assertTrue((bool) $admin->fresh()->double_facteur_actif);
+
+        $this->postJson('/api/auth/connexion', ['identifiant' => 'admin@samacommerce.sn', 'mot_de_passe' => 'MotDePasseAdmin2026'])
+            ->assertOk()->assertJson(['double_facteur_requis' => true, 'envoye' => true]);
+        Mail::assertSent(CodeParEmail::class, fn (CodeParEmail $c) => $c->motif === 'connexion' && $c->hasTo('responsable@exemple.sn'));
+    }
+
+    public function test_sans_adresse_reglee_l_administrateur_ne_peut_pas_activer(): void
+    {
+        Mail::fake();
+        config(['app.email_admin' => null]);
+        [$admin, $jeton] = $this->administrateur();
+
+        $this->putJson('/api/auth/double-facteur', ['actif' => true], $this->entetes($jeton))
+            ->assertStatus(422)->assertJsonPath('erreur', fn ($m) => str_contains($m, 'EMAIL_ADMIN'));
+
+        Mail::assertNothingSent();
+        $this->assertFalse((bool) $admin->fresh()->double_facteur_actif);
     }
 
     public function test_la_migration_desactive_les_activations_jamais_verifiees(): void

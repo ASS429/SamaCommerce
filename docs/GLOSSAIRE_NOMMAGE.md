@@ -559,6 +559,6 @@ Aucune : les secrets gardent leur nom (décision du 29/09/2026).
 | 0 — Empreintes de l'existant | faite le 29/09 |
 | 1 — Service IA | en production le 29/09 |
 | 2 — API et base de données | en production le 29/09 (21h01 UTC), vérifiée |
-| 3 — Site web | prête et éprouvée ; mise en ligne prévue le 30/09 au soir |
+| 3 — Site web | en production le 30/09 (21h15 UTC), vérifiée : un téléphone resté sur l'ancienne version garde sa session, et ses ventes hors ligne sont reprises et envoyées |
 | 4 — Finitions | prête ; mise en ligne après l'étape 3 |
 | 5 — Retrait des compatibilités | après 14 jours sans aucun appel à l'ancien contrat |

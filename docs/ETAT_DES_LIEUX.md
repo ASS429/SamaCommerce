@@ -36,7 +36,7 @@ plupart des choix d'exploitation ci-dessous.
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
 | IA | Modèles entraînés servis (`methode: "modele"`) |
 | Tests | PHPUnit 90/90 · Vitest 145/145 · pytest 9/9 |
-| Code en français | API, base de données et IA depuis le 29/09/2026 ; site et finitions : voir [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12 |
+| Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions : voir [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12 |
 
 ---
 

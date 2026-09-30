@@ -41,8 +41,11 @@ function Connexion({ surConnexion }: { surConnexion: () => void }) {
         surConnexion()
       } else {
         const resultat = await connecter(identifiant, motDePasse)
-        if ('double_facteur_requis' in resultat) definirCodeAttendu(true)
-        else surConnexion()
+        if ('double_facteur_requis' in resultat) {
+          definirCodeAttendu(true)
+          // Ne jamais laisser croire qu'un code est parti quand le serveur dit le contraire.
+          if (resultat.envoye === false) definirErreur(resultat.message || 'Le code n\'a pas pu être envoyé.')
+        } else surConnexion()
       }
     } catch (e) {
       definirErreur(messageErreur(e, codeAttendu ? 'Code invalide.' : 'Identifiants incorrects.'))

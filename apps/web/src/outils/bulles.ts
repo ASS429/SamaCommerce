@@ -125,8 +125,11 @@ export function demanderConfirmation(message: string, libelleValider = 'Confirme
   })
 }
 
-/** Saisie stylée — renvoie une Promise<string|null>. */
-export function demanderSaisie(message: string, indication = '', initial = ''): Promise<string | null> {
+/**
+ * Saisie stylée — renvoie une Promise<string|null>. `numerique` affiche le
+ * pavé de chiffres du téléphone (codes reçus par e-mail).
+ */
+export function demanderSaisie(message: string, indication = '', initial = '', numerique = false): Promise<string | null> {
   return new Promise((resoudre) => {
     const calque = document.createElement('div')
     calque.className = 'fenetre-calque'
@@ -146,6 +149,7 @@ export function demanderSaisie(message: string, indication = '', initial = ''): 
     const champ = document.createElement('input')
     champ.placeholder = indication // les attributs du DOM ne sont pas exécutables
     champ.value = initial
+    if (numerique) { champ.inputMode = 'numeric'; champ.autocomplete = 'one-time-code' }
     groupe.appendChild(champ)
 
     const actions = document.createElement('div')

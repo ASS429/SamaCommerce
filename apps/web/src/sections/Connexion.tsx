@@ -64,7 +64,9 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
       const resultat = await connecter(identifiant, motDePasse)
       if ('double_facteur_requis' in resultat) {
         definirDoubleFacteurEnAttente(true); definirCode('')
-        bulle(resultat.code_dev ? `Code 2FA (dev) : ${resultat.code_dev}` : 'Code de vérification envoyé', 'info')
+        // Ne jamais annoncer « envoyé » sans que le serveur l'ait confirmé.
+        if (resultat.envoye === false) definirErreur(resultat.message || 'Le code n\'a pas pu être envoyé.')
+        else bulle(resultat.code_dev ? `Code 2FA (dev) : ${resultat.code_dev}` : (resultat.message || 'Code de vérification envoyé'), 'info')
         return
       }
       surConnexion(resultat.utilisateur)
@@ -84,7 +86,8 @@ export default function Connexion({ surConnexion }: { surConnexion: (u: Utilisat
     try {
       const r = await motDePasseOublie(identifiant)
       definirCodeEnvoye(true)
-      bulle(r.code_dev ? `Code (dev) : ${r.code_dev}` : 'Code envoyé', 'info')
+      // Le serveur dit si l'e-mail est vraiment parti : son message fait foi.
+      bulle(r.code_dev ? `Code (dev) : ${r.code_dev}` : (r.message || 'Code envoyé'), r.envoye === false ? 'erreur' : 'info')
     } catch (e: any) { erreurApi(e, 'Erreur') } finally { definirChargement(false) }
   }
   const reinitialiser = async (e: React.FormEvent) => {

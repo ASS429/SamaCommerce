@@ -40,11 +40,14 @@ export type Produit = {
 /** Chiffres du jour ; `null` quand un employé n'a pas le droit de les voir. */
 export type ResumeJour = { date: string; ca: number | null; articles: number | null; stock: number | null }
 
-export type ResultatConnexion = { utilisateur: Utilisateur } | { double_facteur_requis: true }
+/** `envoye` : le code est-il vraiment parti par e-mail ? `message` le dit en clair. */
+export type ResultatConnexion =
+  | { utilisateur: Utilisateur }
+  | { double_facteur_requis: true; envoye?: boolean; message?: string }
 
 export async function connecter(identifiant: string, motDePasse: string): Promise<ResultatConnexion> {
   const { data } = await api.post('/auth/connexion', { identifiant, mot_de_passe: motDePasse, nom_appareil: NOM_APPAREIL })
-  if (data.double_facteur_requis) return { double_facteur_requis: true }
+  if (data.double_facteur_requis) return { double_facteur_requis: true, envoye: data.envoye, message: data.message }
   jeton = data.jeton
   return { utilisateur: data.utilisateur }
 }

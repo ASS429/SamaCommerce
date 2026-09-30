@@ -161,10 +161,15 @@ api.interceptors.response.use(
 )
 
 // --- Authentification ---
-export type ResultatConnexion = { utilisateur: Utilisateur } | { double_facteur_requis: true; code_dev?: string | null }
+/** `envoye` : le code est-il vraiment parti par e-mail ? `message` le dit en clair. */
+export type ResultatConnexion =
+  | { utilisateur: Utilisateur }
+  | { double_facteur_requis: true; envoye?: boolean; message?: string; code_dev?: string | null }
 export async function connecter(identifiant: string, motDePasse: string): Promise<ResultatConnexion> {
   const { data } = await api.post('/auth/connexion', { identifiant, mot_de_passe: motDePasse, nom_appareil: nomAppareil() })
-  if (data.double_facteur_requis) return { double_facteur_requis: true, code_dev: data.code_dev }
+  if (data.double_facteur_requis) {
+    return { double_facteur_requis: true, envoye: data.envoye, message: data.message, code_dev: data.code_dev }
+  }
   memoriserSession(data.jeton, data.utilisateur)
   return { utilisateur: data.utilisateur as Utilisateur }
 }
@@ -173,8 +178,18 @@ export async function verifierDoubleFacteur(identifiant: string, code: string): 
   memoriserSession(data.jeton, data.utilisateur)
   return data.utilisateur as Utilisateur
 }
-export async function basculerDoubleFacteur(actif: boolean): Promise<{ double_facteur_actif: boolean }> {
+/**
+ * Désactiver est immédiat. Activer envoie un code par e-mail (`code_envoye`) :
+ * l'option ne s'active qu'une fois ce code confirmé (confirmerDoubleFacteur).
+ */
+export async function basculerDoubleFacteur(actif: boolean): Promise<{
+  double_facteur_actif: boolean; code_envoye?: boolean; message?: string; code_dev?: string | null
+}> {
   const { data } = await api.put('/auth/double-facteur', { actif })
+  return data
+}
+export async function confirmerDoubleFacteur(code: string): Promise<{ double_facteur_actif: boolean }> {
+  const { data } = await api.post('/auth/double-facteur/confirmer', { code })
   return data
 }
 export async function inscrire(charge: { identifiant: string; mot_de_passe: string; nom_commerce?: string; telephone?: string }) {
@@ -191,7 +206,7 @@ export async function deconnecterPartout() {
   try { await api.post('/auth/deconnexion-partout') } catch { /* réseau : on nettoie quand même le local */ }
   deconnecter()
 }
-export async function motDePasseOublie(identifiant: string): Promise<{ message: string; code_dev?: string | null }> {
+export async function motDePasseOublie(identifiant: string): Promise<{ message: string; envoye?: boolean; code_dev?: string | null }> {
   const { data } = await api.post('/auth/mot-de-passe-oublie', { identifiant })
   return data
 }

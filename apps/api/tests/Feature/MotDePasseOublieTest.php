@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Mail\CodeReinitialisation;
+use App\Mail\CodeParEmail;
 use App\Models\Utilisateur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +37,7 @@ class MotDePasseOublieTest extends TestCase
         $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant])
             ->assertOk()->assertJson(['envoye' => true]);
 
-        Mail::assertSent(CodeReinitialisation::class);
+        Mail::assertSent(CodeParEmail::class);
     }
 
     public function test_le_message_contient_le_code_en_clair(): void
@@ -48,13 +48,25 @@ class MotDePasseOublieTest extends TestCase
 
         $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant]);
 
-        Mail::assertSent(function (CodeReinitialisation $courriel) {
+        Mail::assertSent(function (CodeParEmail $courriel) {
             // Deux vérifications : le code fait bien 6 chiffres, ET il apparaît
             // dans le message rendu — sans la seconde, on pourrait envoyer un
             // corps vide sans que le test s'en aperçoive.
             return preg_match('/^\d{6}$/', $courriel->code) === 1
                 && str_contains($courriel->render(), $courriel->code);
         });
+    }
+
+    public function test_le_message_annonce_la_duree_reelle_du_code(): void
+    {
+        // Il annonçait « 1 heure » pour un code qui expire au bout de 30 minutes.
+        Mail::fake();
+        $u = $this->commercant();
+
+        $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant]);
+
+        Mail::assertSent(fn (CodeParEmail $courriel) => $courriel->motif === 'reinitialisation'
+            && str_contains($courriel->render(), 'valable 30 minutes'));
     }
 
     public function test_n_envoie_rien_si_l_identifiant_n_est_pas_une_adresse(): void
@@ -88,7 +100,7 @@ class MotDePasseOublieTest extends TestCase
         $this->postJson('/api/auth/mot-de-passe-oublie', ['identifiant' => $u->identifiant])->assertOk();
 
         $code = null;
-        Mail::assertSent(CodeReinitialisation::class, function (CodeReinitialisation $courriel) use (&$code) {
+        Mail::assertSent(CodeParEmail::class, function (CodeParEmail $courriel) use (&$code) {
             $code = $courriel->code;
 
             return true;

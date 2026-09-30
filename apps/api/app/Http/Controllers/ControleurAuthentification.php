@@ -143,22 +143,21 @@ class ControleurAuthentification extends Controleur
 
         \Illuminate\Support\Facades\RateLimiter::clear($cleLimite);
 
-        // Double facteur activé : on n'émet PAS de jeton, on génère un code à vérifier.
+        /* Double facteur activé : on n'émet PAS de jeton ; le code part par
+           e-mail. Jusqu'au 30/09/2026 il était créé… et envoyé nulle part : le
+           compte ne pouvait plus se connecter depuis un nouvel appareil. */
         if ($utilisateur->double_facteur_actif) {
-            $code = (string) random_int(100000, 999999);
-            DB::table('codes_double_facteur')->insert([
-                'utilisateur_id' => $utilisateur->id,
-                'code_hache' => Hash::make($code),
-                'expire_le' => Carbon::now()->addMinutes(10),
-                'utilise' => false,
-                'cree_le' => Carbon::now(),
-                'modifie_le' => Carbon::now(),
-            ]);
+            $code = $this->creerCodeDoubleFacteur($utilisateur, 'connexion');
+            $envoye = $this->envoyerCodeParEmail($utilisateur, $code, 'connexion');
 
             return response()->json([
                 'double_facteur_requis' => true,
                 'identifiant' => $utilisateur->identifiant,
-                'code_dev' => (app()->environment('local') && config('app.debug')) ? $code : null,
+                'envoye' => $envoye,
+                'message' => $envoye
+                    ? 'Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.'
+                    : "Le code n'a pas pu être envoyé par e-mail. Contactez l'administrateur.",
+                'code_dev' => $this->codeDeDeveloppement($code),
             ]);
         }
 
@@ -184,15 +183,7 @@ class ControleurAuthentification extends Controleur
             throw ValidationException::withMessages(['identifiant' => ['Utilisateur introuvable']]);
         }
 
-        $ligne = DB::table('codes_double_facteur')->where('utilisateur_id', $utilisateur->id)->where('utilise', false)->orderByDesc('id')->first();
-        if (! $ligne || ! Hash::check($donnees['code'], $ligne->code_hache)) {
-            throw ValidationException::withMessages(['code' => ['Code invalide']]);
-        }
-        if (Carbon::parse($ligne->expire_le)->isPast()) {
-            throw ValidationException::withMessages(['code' => ['Code expiré, reconnectez-vous']]);
-        }
-
-        DB::table('codes_double_facteur')->where('id', $ligne->id)->update(['utilise' => true, 'modifie_le' => Carbon::now()]);
+        $this->consommerCodeDoubleFacteur($utilisateur, 'connexion', $donnees['code'], 'Code expiré, reconnectez-vous');
 
         $this->journaliserConnexion($requete, $utilisateur->identifiant, true);
 
@@ -218,14 +209,103 @@ class ControleurAuthentification extends Controleur
         ]);
     }
 
-    /** Active/désactive le double facteur pour le compte réellement connecté. */
+    /**
+     * Active ou désactive le double facteur du compte réellement connecté.
+     *
+     * Désactiver ne demande rien de plus : le compte est déjà connecté. Activer,
+     * si : on envoie d'abord un code, et l'option ne s'active qu'une fois ce
+     * code saisi (confirmerDoubleFacteur). Jusqu'au 30/09/2026, elle s'activait
+     * d'un clic alors qu'aucun code n'était jamais envoyé — le compte se
+     * retrouvait enfermé dehors à la connexion suivante sur un autre appareil.
+     */
     public function basculerDoubleFacteur(Request $requete)
     {
         $donnees = $requete->validate(['actif' => ['required', 'boolean']]);
         $utilisateur = $requete->attributes->get('utilisateur_reel') ?? $requete->user();
-        $utilisateur->update(['double_facteur_actif' => $donnees['actif']]);
 
-        return response()->json(['double_facteur_actif' => $utilisateur->double_facteur_actif]);
+        if (! $donnees['actif'] || $utilisateur->double_facteur_actif) {
+            $utilisateur->update(['double_facteur_actif' => $donnees['actif']]);
+
+            return response()->json(['double_facteur_actif' => $utilisateur->double_facteur_actif]);
+        }
+
+        if (! filter_var($utilisateur->identifiant, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'erreur' => "La vérification en 2 étapes envoie un code par e-mail : votre identifiant n'est pas une adresse e-mail.",
+            ], 422);
+        }
+
+        $code = $this->creerCodeDoubleFacteur($utilisateur, 'activation');
+        if (! $this->envoyerCodeParEmail($utilisateur, $code, 'activation')) {
+            return response()->json([
+                'erreur' => "L'e-mail n'a pas pu partir : la vérification en 2 étapes ne peut pas être activée pour le moment.",
+            ], 422);
+        }
+
+        return response()->json([
+            'double_facteur_actif' => false,
+            'code_envoye' => true,
+            'message' => 'Code envoyé par e-mail. Saisissez-le pour activer la vérification en 2 étapes.',
+            'code_dev' => $this->codeDeDeveloppement($code),
+        ]);
+    }
+
+    /** Second temps de l'activation : le code reçu prouve que l'e-mail arrive. */
+    public function confirmerDoubleFacteur(Request $requete)
+    {
+        $donnees = $requete->validate(['code' => ['required', 'string']]);
+        $utilisateur = $requete->attributes->get('utilisateur_reel') ?? $requete->user();
+
+        $this->consommerCodeDoubleFacteur($utilisateur, 'activation', $donnees['code'], 'Code expiré, redemandez-en un');
+        $utilisateur->update(['double_facteur_actif' => true]);
+
+        return response()->json(['double_facteur_actif' => true]);
+    }
+
+    /**
+     * Crée un code à 6 chiffres, valable 10 minutes. Le motif sépare les codes
+     * d'activation de ceux de connexion : un code reçu pour activer l'option ne
+     * doit jamais ouvrir une session.
+     */
+    private function creerCodeDoubleFacteur(Utilisateur $utilisateur, string $motif): string
+    {
+        $code = (string) random_int(100000, 999999);
+        DB::table('codes_double_facteur')->insert([
+            'utilisateur_id' => $utilisateur->id,
+            'motif' => $motif,
+            'code_hache' => Hash::make($code),
+            'expire_le' => Carbon::now()->addMinutes(10),
+            'utilise' => false,
+            'cree_le' => Carbon::now(),
+            'modifie_le' => Carbon::now(),
+        ]);
+
+        return $code;
+    }
+
+    /** Vérifie le dernier code non utilisé de ce motif, puis le marque utilisé. */
+    private function consommerCodeDoubleFacteur(Utilisateur $utilisateur, string $motif, string $code, string $siExpire): void
+    {
+        $ligne = DB::table('codes_double_facteur')
+            ->where('utilisateur_id', $utilisateur->id)->where('motif', $motif)->where('utilise', false)
+            ->orderByDesc('id')->first();
+        if (! $ligne || ! Hash::check($code, $ligne->code_hache)) {
+            throw ValidationException::withMessages(['code' => ['Code invalide']]);
+        }
+        if (Carbon::parse($ligne->expire_le)->isPast()) {
+            throw ValidationException::withMessages(['code' => [$siExpire]]);
+        }
+
+        DB::table('codes_double_facteur')->where('id', $ligne->id)->update(['utilise' => true, 'modifie_le' => Carbon::now()]);
+    }
+
+    /**
+     * S7 — Le code n'est exposé QUE en local avec débogage (logique inversée :
+     * un .env de production mal réglé ne fait pas fuiter de codes).
+     */
+    private function codeDeDeveloppement(string $code): ?string
+    {
+        return (app()->environment('local') && config('app.debug')) ? $code : null;
     }
 
     public function moi(Request $requete)
@@ -369,37 +449,37 @@ class ControleurAuthentification extends Controleur
             ['code_hache' => Hash::make($code), 'cree_le' => Carbon::now()],
         );
 
-        $envoye = $this->envoyerCodeParEmail($utilisateur, $code);
+        $envoye = $this->envoyerCodeParEmail($utilisateur, $code, 'reinitialisation');
 
         return response()->json([
             'message' => $envoye
                 ? 'Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.'
                 : "Code généré, mais l'e-mail n'a pas pu partir. Contactez la boutique.",
             'envoye' => $envoye,
-            // S7 — le code n'est exposé QUE en local+debug (logique inversée : un
-            // .env de prod mal réglé ne fuite plus de codes).
-            'code_dev' => (app()->environment('local') && config('app.debug')) ? $code : null,
+            'code_dev' => $this->codeDeDeveloppement($code),
         ]);
     }
 
     /**
-     * Envoie le code de réinitialisation.
+     * Envoie un code à 6 chiffres par e-mail (motifs : CodeParEmail::MOTIFS).
      *
-     * Jusqu'ici le code était généré... et n'allait NULLE PART : aucun
-     * expéditeur n'était configuré. L'utilisateur lisait « un code a été
+     * Le code de réinitialisation a longtemps été généré… et envoyé NULLE PART :
+     * aucun expéditeur n'était configuré. L'utilisateur lisait « un code a été
      * envoyé », ne recevait rien, et se retrouvait enfermé dehors avec son stock
-     * et ses ventes à l'intérieur. Pour un commerçant, c'était irréparable.
+     * et ses ventes à l'intérieur. Le code de connexion en deux étapes a connu
+     * le même sort jusqu'au 30/09/2026.
      *
-     * L'échec d'envoi ne fait pas échouer la requête : le code EXISTE en base,
-     * le propriétaire peut donc encore dépanner. Mais on le journalise, car un
-     * envoi muet est exactement le défaut qu'on vient de corriger.
+     * L'échec d'envoi est renvoyé à l'appelant, qui décide : la réinitialisation
+     * continue (le code EXISTE en base, le propriétaire peut encore dépanner),
+     * l'activation du double facteur est refusée. Dans tous les cas on le
+     * journalise, car un envoi muet est exactement le défaut qu'on a corrigé.
      */
-    private function envoyerCodeParEmail(Utilisateur $utilisateur, string $code): bool
+    private function envoyerCodeParEmail(Utilisateur $utilisateur, string $code, string $motif): bool
     {
         // Un identifiant qui n'est pas une adresse (compte créé à la main) :
         // rien à envoyer, inutile de faire semblant.
         if (! filter_var($utilisateur->identifiant, FILTER_VALIDATE_EMAIL)) {
-            Log::warning('[mdp-oublie] identifiant non-email, envoi impossible');
+            Log::warning("[code-{$motif}] identifiant non-email, envoi impossible");
 
             return false;
         }
@@ -407,15 +487,13 @@ class ControleurAuthentification extends Controleur
         $nom = $utilisateur->nom_commerce ?: 'Bonjour';
 
         try {
-            Mail::to($utilisateur->identifiant)->send(
-                new \App\Mail\CodeReinitialisation($code, $nom)
-            );
+            Mail::to($utilisateur->identifiant)->send(new \App\Mail\CodeParEmail($code, $nom, $motif));
 
             return true;
         } catch (\Throwable $e) {
             // On ne renvoie JAMAIS le détail au client : il indiquerait si le
             // compte existe, et exposerait la configuration du serveur.
-            Log::error('[mdp-oublie] envoi impossible : '.$e->getMessage());
+            Log::error("[code-{$motif}] envoi impossible : ".$e->getMessage());
 
             return false;
         }

@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Outils;
 
+use App\Compatibilite\AncienContrat;
+use App\Mail\CodeParEmail;
 use App\Models\Utilisateur;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 
@@ -35,6 +38,79 @@ trait RejeuScenario
     ];
 
     /**
+     * Défauts CORRIGÉS depuis l'enregistrement des empreintes, qui les ont
+     * fidèlement enregistrés. Pour chaque étape listée :
+     *  - `defaut` vérifie que l'empreinte contient bien le défaut décrit (sinon
+     *    la correction est périmée, et le test le dit) ;
+     *  - `corrige` déduit de l'empreinte la réponse attendue désormais ; la
+     *    réponse obtenue doit l'égaler exactement, comme pour toute étape ;
+     *  - `ensuite` (facultatif) joue ce que ferait l'utilisateur juste après.
+     *
+     * @return array<string, array{defaut: callable, corrige: callable, ensuite?: callable}>
+     */
+    private function corrections(): array
+    {
+        return [
+            // 30/09/2026 — le double facteur s'activait d'un clic, et le code de
+            // connexion n'était envoyé nulle part. L'activation envoie désormais
+            // un code, et n'aboutit qu'une fois ce code saisi.
+            'double facteur activé' => [
+                'defaut' => fn (array $e) => $e['reponse'] === ['twofa_enabled' => true],
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => [
+                    'twofa_enabled' => false,
+                    'code_envoye' => true,
+                    'message' => 'Code envoyé par e-mail. Saisissez-le pour activer la vérification en 2 étapes.',
+                    'dev_code' => null,
+                ]]),
+                // L'utilisateur saisit le code reçu : les étapes suivantes
+                // éprouvent donc toujours la connexion en deux étapes.
+                'ensuite' => function (array $variables, array &$routesJouees) {
+                    $code = Mail::sent(CodeParEmail::class)->last(fn ($c) => $c->motif === 'activation')->code;
+                    $this->app['auth']->forgetGuards();
+                    $this->postJson('/api/auth/double-facteur/confirmer', ['code' => $code], [
+                        'Authorization' => 'Bearer '.$variables['jeton_proprio'], AncienContrat::ENTETE => 'fr',
+                    ])->assertOk()->assertJson(['double_facteur_actif' => true]);
+                    $routesJouees[] = 'POST api/auth/double-facteur/confirmer';
+                },
+            ],
+            // 30/09/2026 — même défaut, vu de la connexion : le code part
+            // désormais par e-mail, et la réponse dit s'il a pu partir.
+            'connexion avec double facteur' => [
+                'defaut' => fn (array $e) => ($e['reponse']['twofa_required'] ?? false) === true && ! isset($e['reponse']['envoye']),
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => [
+                    'twofa_required' => true,
+                    'username' => $e['reponse']['username'],
+                    'envoye' => true,
+                    'message' => 'Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.',
+                    'dev_code' => null,
+                ]]),
+            ],
+            // 30/09/2026 — `withCount` écrasait les colonnes demandées : la liste
+            // des commandes ne portait jamais le nom ni le téléphone du
+            // fournisseur (« Sans fournisseur » partout à l'écran).
+            'commandes' => [
+                'defaut' => fn (array $e) => ! array_key_exists('fournisseur_name', $e['reponse'][0]),
+                'corrige' => function (array $e, array $parNom) {
+                    $fournisseur = $parNom['commande détaillée']['reponse']['fournisseur'];
+                    $e['reponse'] = array_map(function (array $commande) use ($fournisseur) {
+                        $connu = $commande['fournisseur_id'] === $fournisseur['id'];
+                        $nombre = $commande['items_count'];
+                        unset($commande['items_count']);
+
+                        return $commande + [
+                            'fournisseur_name' => $connu ? $fournisseur['name'] : null,
+                            'fournisseur_phone' => $connu ? $fournisseur['phone'] : null,
+                            'items_count' => $nombre,
+                        ];
+                    }, $e['reponse']);
+
+                    return $e;
+                },
+            ],
+        ];
+    }
+
+    /**
      * Réglages de PRODUCTION, imposés pour que les empreintes ne dépendent pas
      * du poste : sans trace de débogage, langue de secours par défaut (elle
      * fournit les libellés de pagination), adresse de base fixe (elle apparaît
@@ -42,6 +118,8 @@ trait RejeuScenario
      */
     private function preparerLeMonde(): void
     {
+        // Les e-mails sont interceptés : on y lit le code que l'utilisateur saisirait.
+        Mail::fake();
         config(['app.debug' => false, 'app.url' => 'http://localhost']);
         URL::forceRootUrl('http://localhost');
         $this->app->setLocale('fr');
@@ -72,6 +150,9 @@ trait RejeuScenario
             $traces[] = $this->jouer($etape, $variables, $secrets, $adaptateur);
             if ($route = Route::current()) {
                 $routesJouees[] = implode('|', $route->methods()).' '.$route->uri();
+            }
+            if ($ensuite = $this->corrections()[$etape['nom']]['ensuite'] ?? null) {
+                $ensuite($variables, $routesJouees);
             }
         }
 
@@ -136,11 +217,17 @@ trait RejeuScenario
     {
         $attendu = json_decode(file_get_contents(base_path(self::EMPREINTES)), true);
         $this->assertCount(count($attendu), $obtenu, 'Nombre d\'étapes du scénario');
+        $parNom = array_column($attendu, null, 'nom');
+        $corrections = $this->corrections();
 
         foreach ($attendu as $i => $empreinte) {
             // Les règles de normalisation sont idempotentes : on les réapplique
             // aux empreintes, pour qu'une règle ajoutée après coup vaille aussi.
             $empreinte['reponse'] = $this->normaliser($empreinte['reponse'], []);
+            if ($correction = $corrections[$empreinte['nom']] ?? null) {
+                $this->assertTrue(($correction['defaut'])($empreinte), "Correction périmée : « {$empreinte['nom']} »");
+                $empreinte = ($correction['corrige'])($empreinte, $parNom);
+            }
             foreach (self::ECARTS_ASSUMES[$empreinte['nom']] ?? [] as $chemin => [$avant, $apres]) {
                 $this->assertSame($avant, data_get($empreinte['reponse'], $chemin), "Écart assumé périmé : {$chemin}");
                 $this->assertSame($apres, data_get($obtenu[$i]['reponse'], $chemin), "Écart assumé : {$chemin}");

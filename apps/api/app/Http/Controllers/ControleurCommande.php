@@ -11,12 +11,17 @@ class ControleurCommande extends Controleur
 {
     public function lister(Request $requete)
     {
-
+        /* Les colonnes sont choisies AVANT `withCount` : celui-ci remplit la
+           sélection dès qu'elle est vide (`commandes.*` + le compte), et les
+           colonnes passées ensuite à `get()` étaient ignorées. Le nom et le
+           téléphone du fournisseur ne sont ainsi jamais remontés jusqu'au
+           30/09/2026 : la liste affichait « Sans fournisseur » partout. */
         return Commande::where('commandes.utilisateur_id', $requete->user()->id)
             ->leftJoin('fournisseurs', 'fournisseurs.id', '=', 'commandes.fournisseur_id')
+            ->select(['commandes.*', 'fournisseurs.nom as nom_fournisseur', 'fournisseurs.telephone as telephone_fournisseur'])
             ->withCount('lignes as nb_lignes')
             ->orderByDesc('commandes.cree_le')
-            ->get(['commandes.*', 'fournisseurs.nom as nom_fournisseur', 'fournisseurs.telephone as telephone_fournisseur']);
+            ->get();
     }
 
     public function afficher(Request $requete, int $id)

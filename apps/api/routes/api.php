@@ -70,6 +70,10 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::put('/auth/preferences', [ControleurAuthentification::class, 'modifierPreferences']);
     Route::put('/auth/passage-premium', [ControleurAuthentification::class, 'demanderPassagePremium']);
     Route::put('/auth/double-facteur', [ControleurAuthentification::class, 'basculerDoubleFacteur']);
+    // Second temps de l'activation (30/09/2026) : le code reçu par e-mail.
+    // Limité : 6 chiffres ne doivent pas pouvoir se deviner par essais.
+    Route::post('/auth/double-facteur/confirmer', [ControleurAuthentification::class, 'confirmerDoubleFacteur'])
+        ->middleware('throttle:10,1');
 
     // Boutiques (multi-boutique)
     Route::get('/boutiques', [ControleurBoutique::class, 'lister']);

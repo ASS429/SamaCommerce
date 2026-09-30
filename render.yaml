@@ -1,12 +1,12 @@
 # ─────────────────────────────────────────────────────────────
 # Blueprint Render — SamaCommerce
-#   • samacommerce-api : Laravel 13 (Docker)  → Supabase (Postgres)
-#   • samacommerce-web : React/Vite (statique) → appelle l'API
-# Le micro-service IA n'est PAS déployé ici : l'API a un repli heuristique PHP,
-# l'app fonctionne sans lui (à ajouter plus tard si besoin).
+#   • samacommerce-api : Laravel 13 (Docker)   → Supabase (PostgreSQL)
+#   • samacommerce-ia  : FastAPI (Docker)       → appelé par l'API, facultatif
+#   • samacommerce-web : React/Vite (statique)  → appelle l'API
+# L'API a un repli heuristique PHP : l'application fonctionne sans le service IA.
 #
-# Les variables `sync: false` sont à renseigner dans le dashboard Render
-# (secrets Supabase, APP_KEY, URLs croisées). Voir DEPLOIEMENT.md.
+# Les variables `sync: false` sont les SECRETS, à renseigner dans le tableau de
+# bord Render (APP_KEY, DB_URL, ADMIN_PASSWORD…). Voir DEPLOIEMENT.md.
 # ─────────────────────────────────────────────────────────────
 services:
   # ─── API Laravel (Docker) ───
@@ -33,9 +33,9 @@ services:
       - key: APP_URL
         sync: false          # ex: https://samacommerce-api.onrender.com
       - key: LOG_CHANNEL
-        value: stderr        # les logs remontent dans Render
+        value: stderr        # les journaux remontent dans Render
       - key: PHP_CLI_SERVER_WORKERS
-        value: "8"           # multi-workers pour le serveur PHP (rafales SPA : stats, nav rapide)
+        value: "8"           # plusieurs processus PHP (rafales d'appels du site : statistiques, navigation)
       # ─ Base Supabase (utiliser le CONNECTION POOLER, IPv4 — cf. DEPLOIEMENT.md) ─
       - key: DB_CONNECTION
         value: pgsql
@@ -54,35 +54,35 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       # ─ Sécurité ─
-      # Remontee d'erreurs. VIDE = totalement inerte : ni appel reseau, ni
-      # surcout. Renseigner le DSN d'un projet Sentry (offre gratuite) pour
-      # recevoir les alertes par mail. Couvre les erreurs de l'API ET celles du
-      # navigateur, relayees par POST /api/erreurs-navigateur.
-      # Mot de passe du panneau d'administration. VIDE = compte NEUTRALISE
-      # (personne ne peut se connecter) : en cas d'oubli, on ferme plutot que
-      # d'ouvrir. 12 caracteres minimum.
+      # Mot de passe du panneau d'administration. VIDE = compte NEUTRALISÉ
+      # (personne ne peut se connecter) : en cas d'oubli, on ferme plutôt que
+      # d'ouvrir. 12 caractères minimum.
       - key: ADMIN_PASSWORD
         sync: false
 
-      # ─ Envoi des e-mails (reinitialisation de mot de passe) via Resend ─
+      # ─ Envoi des e-mails (réinitialisation de mot de passe) via Resend ─
       #
       # API HTTP et NON SMTP : Render bloque les ports SMTP sortants (25/465/587)
-      # en protection anti-spam. Constate en production — l'envoi marchait depuis
-      # un poste local et echouait sur Render. L'API passe par le port 443.
+      # en protection anti-spam. Constaté en production — l'envoi marchait depuis
+      # un poste local et échouait sur Render. L'API passe par le port 443.
       #
-      # Sans RESEND_API_KEY, le code de reinitialisation n'est envoye nulle part
-      # et l'utilisateur reste enferme dehors.
+      # Sans RESEND_API_KEY, le code de réinitialisation n'est envoyé nulle part
+      # et l'utilisateur reste enfermé dehors.
       - key: MAIL_MAILER
         value: resend
       - key: RESEND_API_KEY
-        sync: false          # cle Resend (re_...)
-      # Tant qu'aucun domaine n'est verifie chez Resend, SEULE onboarding@resend.dev
-      # est autorisee, et Resend ne livre qu'a l'adresse du TITULAIRE du compte.
+        sync: false          # clé Resend (re_...)
+      # Tant qu'aucun domaine n'est vérifié chez Resend, SEULE onboarding@resend.dev
+      # est autorisée, et Resend ne livre qu'à l'adresse du TITULAIRE du compte.
       - key: MAIL_FROM_ADDRESS
         value: onboarding@resend.dev
       - key: MAIL_FROM_NAME
         value: SamaCommerce
 
+      # Remontée d'erreurs. VIDE = totalement inerte : ni appel réseau, ni
+      # surcoût. Renseigner le DSN d'un projet Sentry (offre gratuite) pour
+      # recevoir les alertes par e-mail. Couvre les erreurs de l'API ET celles du
+      # navigateur, relayées par POST /api/erreurs-navigateur.
       - key: SENTRY_LARAVEL_DSN
         sync: false
       - key: SANCTUM_EXPIRATION
@@ -90,34 +90,31 @@ services:
         # jours (fêtes, Magal, déplacement) : il retrouvait une session morte.
         # Le jeton reste révocable à tout moment (« Déconnecter tous les appareils »).
         value: "43200"       # 30 jours
-      # Adresses publiques : ecrites EN CLAIR (rien de secret), pour qu'une
+      # Adresses publiques : écrites EN CLAIR (rien de secret), pour qu'une
       # resynchronisation du blueprint ne puisse pas les effacer. Le nom
-      # francais remplace CORS_ALLOWED_ORIGINS / FRONTEND_URL (29/09/2026).
+      # français remplace CORS_ALLOWED_ORIGINS / FRONTEND_URL (29/09/2026).
       - key: ORIGINES_CORS_AUTORISEES
         value: https://samacommerce-web.onrender.com
-      # Base des liens envoyés aux gens (invitation d'un employe par WhatsApp).
-      # Facultatif : a defaut, on retombe sur ORIGINES_CORS_AUTORISEES.
+      # Base des liens envoyés aux gens (invitation d'un employé par WhatsApp).
+      # Facultatif : à défaut, on retombe sur ORIGINES_CORS_AUTORISEES.
       - key: URL_SITE_WEB
         value: https://samacommerce-web.onrender.com
-      # ─ IA : adresse fournie automatiquement par Render depuis le service ci-dessous.
-      #   Render renvoie l'hote SANS schema ; ClientIa prefixe https:// de lui-meme.
-      #   Si le service est retire, vider la variable suffit : l'API retombe sur
+      # ─ IA : adresse du service samacommerce-ia ci-dessous.
+      #   Si le service est retiré, vider la variable suffit : l'API retombe sur
       #   ses heuristiques PHP sans rien casser. ─
       - key: URL_SERVICE_IA
-        # Adresse ECRITE EN CLAIR, et non `fromService` : Render y a injecte le
-        # NOM du service (« samacommerce-ia ») et non son hote complet, ce qui
-        # donnait une resolution DNS immediatement en echec — et une IA
-        # silencieusement desactivee, le repli heuristique masquant la panne.
+        # Adresse ÉCRITE EN CLAIR, et non `fromService` : Render y a injecté le
+        # NOM du service (« samacommerce-ia ») et non son hôte complet, ce qui
+        # donnait une résolution DNS immédiatement en échec — et une IA
+        # silencieusement désactivée, le repli heuristique masquant la panne.
         value: https://samacommerce-ia.onrender.com
 
-  # ─── Web React (site statique) ───
-  # NB : un site statique Render n'a PAS de champ `plan` (toujours gratuit).
   # ─── Micro-service IA (Modules A & B) ────────────────────────────────────
-  # Previsions de reappro et scoring de credit. L'API Laravel l'appelle avec un
-  # court delai d'attente et RETOMBE sur ses heuristiques PHP s'il ne repond
-  # pas : le service peut donc etre absent, lent ou endormi sans jamais casser
-  # l'application. Sur le plan gratuit il s'endort apres 15 min d'inactivite,
-  # et le premier appel suivant repart en heuristique — c'est assume.
+  # Prévisions de réapprovisionnement et score de crédit. L'API Laravel l'appelle
+  # avec un court délai d'attente et RETOMBE sur ses heuristiques PHP s'il ne
+  # répond pas : le service peut donc être absent, lent ou endormi sans jamais
+  # casser l'application. Sur le plan gratuit il s'endort après 15 min
+  # d'inactivité, et le premier appel suivant repart en heuristique — c'est assumé.
   - type: web
     name: samacommerce-ia
     runtime: docker
@@ -130,6 +127,8 @@ services:
       - key: PORT
         value: "8001"
 
+  # ─── Site React (statique) ───
+  # NB : un site statique Render n'a PAS de champ `plan` (toujours gratuit).
   - type: web
     name: samacommerce-web
     runtime: static
@@ -137,12 +136,12 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
-      # Adresse ECRITE EN CLAIR, et non `sync: false` : cette variable est lue
-      # AU MOMENT DU BUILD pour composer la CSP (connect-src). Si elle manque,
-      # le site se deploie avec `connect-src 'self'` — le navigateur bloque
-      # alors TOUS les appels a l'API et chaque ecran affiche « Le serveur ne
-      # repond pas ». C'est arrive : une resynchronisation du blueprint a
-      # efface la valeur saisie a la main.
+      # Adresse ÉCRITE EN CLAIR, et non `sync: false` : cette variable est lue
+      # AU MOMENT DE LA CONSTRUCTION pour composer la CSP (connect-src). C'est
+      # arrivé : une resynchronisation du blueprint avait effacé la valeur saisie
+      # à la main, le site s'était déployé avec `connect-src 'self'` et chaque
+      # écran affichait « Le serveur ne répond pas ». Depuis, une valeur vide
+      # fait ÉCHOUER la construction (vite.config.ts).
       - key: VITE_URL_API
         value: https://samacommerce-api.onrender.com/api
     # SPA : toutes les routes retombent sur index.html

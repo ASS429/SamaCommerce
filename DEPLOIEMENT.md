@@ -3,11 +3,18 @@
 Architecture en production :
 
 ```
-  Navigateur ──► samacommerce-web (site statique React)  ──►  samacommerce-api (Laravel/Docker)  ──►  Supabase (Postgres)
+  Navigateur ──► samacommerce-web (site statique React)
+                        │
+                        ▼
+                 samacommerce-api (Laravel/Docker) ──► Supabase (PostgreSQL)
+                        │
+                        ▼
+                 samacommerce-ia (FastAPI/Docker)
 ```
 
-> Le micro-service IA n'est **pas** déployé au départ : l'API possède un **repli
-> heuristique PHP**, l'application fonctionne sans lui. (On pourra l'ajouter après.)
+> Le service IA est **facultatif** : l'API l'appelle avec un court délai
+> d'attente et **retombe sur ses heuristiques PHP** s'il ne répond pas (absent,
+> lent ou endormi). L'application fonctionne sans lui.
 
 ---
 
@@ -44,61 +51,81 @@ Copie la sortie complète (`base64:....`). Tu la colleras dans Render.
 
 1. Sur https://render.com → **New +** → **Blueprint**.
 2. Connecte le dépôt **ASS429/SamaCommerce**. Render lit `render.yaml` et propose de
-   créer **2 services** : `samacommerce-api` (Docker) et `samacommerce-web` (statique).
-3. Render demande les variables marquées `sync: false`. Renseigne-les :
+   créer **3 services** : `samacommerce-api` (Docker), `samacommerce-ia` (Docker)
+   et `samacommerce-web` (statique).
+3. Render demande les variables marquées `sync: false` — ce sont les **secrets**,
+   jamais écrits dans le dépôt. Toutes les autres (adresses publiques, réglages)
+   sont écrites en clair dans `render.yaml` : une resynchronisation du blueprint
+   ne peut donc pas les effacer.
 
    **Service `samacommerce-api`**
    | Variable | Valeur |
    |---|---|
    | `APP_KEY` | le `base64:...` de l'étape 2 |
-   | `APP_URL` | (laisse vide pour l'instant, tu la mettras après le 1er déploiement : `https://samacommerce-api.onrender.com`) |
+   | `APP_URL` | `https://samacommerce-api.onrender.com` |
    | `DB_URL` | la chaîne **Session pooler** de l'étape 1 |
-   | `ORIGINES_CORS_AUTORISEES` | (temporairement `*`, puis l'URL réelle du web après déploiement) |
+   | `ADMIN_PASSWORD` | mot de passe du compte `admin@samacommerce.sn`, 12 caractères minimum. **Vide = compte neutralisé** (personne ne peut s'y connecter) |
+   | `RESEND_API_KEY` | clé Resend (`re_...`) pour envoyer les codes « mot de passe oublié ». Sans elle, le code n'est envoyé nulle part |
+   | `SENTRY_LARAVEL_DSN` | facultatif : DSN d'un projet Sentry pour recevoir les erreurs de l'API et du navigateur. Vide = inerte |
 
-   **Service `samacommerce-web`**
-   | Variable | Valeur |
-   |---|---|
-   | `VITE_URL_API` | `https://samacommerce-api.onrender.com/api` |
+   Déjà renseignées en clair dans `render.yaml` : `ORIGINES_CORS_AUTORISEES` et
+   `URL_SITE_WEB` (adresse du site), `URL_SERVICE_IA` (adresse du service IA),
+   `VITE_URL_API` (adresse de l'API, côté site). Si les adresses Render de tes
+   services diffèrent, corrige-les **dans `render.yaml`**, pas dans le tableau de bord.
 
-4. **Apply** → Render construit les deux services (le premier build Docker prend
+4. **Apply** → Render construit les trois services (le premier build Docker prend
    quelques minutes).
 
-### 3.b) Recoller les URLs croisées (après le 1er déploiement)
-
-Une fois les 2 services créés, tu connais leurs URLs définitives. Ajuste :
-
-- API → `ORIGINES_CORS_AUTORISEES = https://samacommerce-web.onrender.com` (l'URL réelle du web)
-- API → `APP_URL = https://samacommerce-api.onrender.com`
-- Web → `VITE_URL_API = https://samacommerce-api.onrender.com/api`
-
-Après modif d'une variable, clique **Manual Deploy → Deploy latest commit** (le web doit
-être **rebuild** car `VITE_URL_API` est injecté au build).
+> `VITE_URL_API` est lue **à la construction** du site pour composer la politique
+> de sécurité du contenu (CSP). Si elle manque, la construction **échoue
+> volontairement** plutôt que de livrer un site qui ne pourrait joindre aucune API.
+> Après toute modification, le site doit être **reconstruit**.
 
 ---
 
-## 4) Créer les comptes de démo (une fois)
+## 4) Ce que l'API fait seule au démarrage
 
-Les migrations tournent automatiquement au démarrage de l'API. Pour insérer les
-comptes de démonstration, ouvre le **Shell** du service `samacommerce-api` sur Render :
+Le plan gratuit de Render n'offre **aucun accès en ligne de commande** : tout est
+automatique (`apps/api/demarrer.sh`).
 
-```bash
-php artisan db:seed --force
-```
+1. `php artisan migrate --force` — schéma à jour (idempotent).
+2. `php artisan base:amorcer-si-vide` — au **tout premier** démarrage seulement
+   (base sans aucun utilisateur), crée la démonstration :
+   - `demo@samacommerce.sn` / `password` (commerçant)
+   - `employe@samacommerce.sn` / `password` (employé)
+   - `admin@samacommerce.sn` (administrateur, mot de passe aléatoire)
+3. `php artisan admin:securiser` — applique `ADMIN_PASSWORD` au compte
+   administrateur, ou le **neutralise** si la variable est absente. Aucun mot de
+   passe d'administration n'est jamais écrit dans le dépôt.
 
-Comptes créés :
-- `demo@samacommerce.sn` / `password` (commerçant)
-- `admin@samacommerce.sn` / `password` (administrateur)
-- `employe@samacommerce.sn` / `password` (employé)
-
-> ⚠️ En production réelle, changer ces mots de passe (ou désactiver les comptes démo).
+> ⚠️ Les mots de passe de démonstration figurent dans ce dépôt public : ne mets
+> jamais de vraies données dans les comptes `demo@` et `employe@`.
 
 ---
 
 ## 5) Vérifications
 
-- API santé : `https://samacommerce-api.onrender.com/api/sante` → `{"statut":"ok",...}`
-  (l'IA apparaîtra « degraded » — normal, non déployée, repli PHP actif).
-- Web : `https://samacommerce-web.onrender.com` → écran de connexion → login `demo@samacommerce.sn`.
+- API : `https://samacommerce-api.onrender.com/api/sante` →
+  `{"statut":"ok", ..., "services":{"base_de_donnees":{"ok":true}, "ia":{"ok":true}}}`.
+  `"statut":"degrade"` avec `"ia":{"ok":false}` signifie seulement que le service
+  IA dort (plan gratuit) : le repli PHP prend le relais.
+- IA : `https://samacommerce-ia.onrender.com/sante`.
+- Site : `https://samacommerce-web.onrender.com` → écran de connexion → `demo@samacommerce.sn`.
+
+---
+
+## 6) Automatisations GitHub
+
+| Fichier | Rôle |
+|---|---|
+| `.github/workflows/integration-continue.yml` | à chaque envoi sur `main` : tests de l'API, du site et du service IA, construction du site |
+| `.github/workflows/sauvegarde-base.yml` | chaque nuit (02h17 UTC) : export **chiffré** de la base, contrôlé puis conservé 90 jours |
+| `.github/workflows/garder-api-eveillee.yml` | de 07h à 21h UTC : appelle l'API toutes les 10 min pour qu'elle ne s'endorme pas pendant les heures de vente |
+
+La sauvegarde exige deux secrets GitHub (**Settings → Secrets and variables →
+Actions**) : `SUPABASE_DB_URL` (chaîne Session pooler) et `BACKUP_PASSPHRASE`
+(phrase longue, à conserver **aussi** hors de GitHub). Restauration :
+[`docs/RESTAURATION_BASE.md`](docs/RESTAURATION_BASE.md).
 
 ---
 
@@ -107,16 +134,12 @@ Comptes créés :
 | Symptôme | Cause probable | Solution |
 |---|---|---|
 | API ne démarre pas, erreur DB `could not connect` | Direct connection (IPv6) au lieu du pooler | Utiliser la chaîne **Session pooler** (étape 1) |
-| Web charge mais aucune donnée / erreurs réseau | `VITE_URL_API` faux ou web pas rebuild | Corriger la variable puis **rebuild** le web |
-| Erreurs CORS dans la console | `ORIGINES_CORS_AUTORISEES` ≠ URL du web | Mettre l'URL exacte du web (sans `/` final) |
-| `MissingAppKeyException` | `APP_KEY` non défini | Coller le `base64:...` (étape 2) dans les env vars de l'API |
-| 419 / sessions | clé changée à chaque redémarrage | Fixer `APP_KEY` en variable (ne pas laisser vide) |
+| Le site affiche « Le serveur ne répond pas » partout | `VITE_URL_API` faux, ou API endormie (30 à 50 s de réveil) | Vérifier `render.yaml` puis **reconstruire** le site ; patienter une minute |
+| Erreurs CORS dans la console | `ORIGINES_CORS_AUTORISEES` ≠ adresse du site | Mettre l'adresse exacte du site (sans `/` final) dans `render.yaml` |
+| `MissingAppKeyException` | `APP_KEY` non défini | Coller le `base64:...` (étape 2) dans les variables de l'API |
+| Déconnexion de tous après chaque redémarrage | `APP_KEY` absente : une clé éphémère est générée | Fixer `APP_KEY` en variable (ne pas laisser vide) |
+| « Mot de passe oublié » : aucun e-mail reçu | `RESEND_API_KEY` absente, ou domaine non vérifié chez Resend (seule l'adresse du titulaire du compte reçoit) | Renseigner la clé ; vérifier un domaine chez Resend |
+| Le compte `admin@` refuse tout mot de passe | `ADMIN_PASSWORD` vide ou trop court : compte neutralisé | Renseigner `ADMIN_PASSWORD` (12 caractères min.) puis redéployer |
 
----
-
-## Plus tard : déployer le micro-service IA (optionnel)
-
-Créer un 3ᵉ service Render (runtime Python) depuis `services/ia`
-(`uvicorn app.main:app --host 0.0.0.0 --port $PORT`), puis pointer l'API dessus via
-`URL_SERVICE_IA=https://samacommerce-ia.onrender.com`. Tant que c'est vide, le repli
-heuristique PHP assure la fonctionnalité.
+> Render **bloque le SMTP sortant** (ports 25/465/587) : l'envoi d'e-mails passe
+> par l'API HTTP de Resend, jamais par SMTP.

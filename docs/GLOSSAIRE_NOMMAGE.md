@@ -1,7 +1,7 @@
 # SamaCommerce — glossaire de nommage et plan de francisation
 
-*Rédigé le 29 septembre 2026, avant le début des travaux. À valider avant toute
-modification du code.*
+*Rédigé le 29 septembre 2026, avant le début des travaux, et validé le jour même.
+Avancement : section 12.*
 
 Ce document fixe **comment chaque nom du code est traduit en français**, ce qui
 reste en anglais et pourquoi, puis **dans quel ordre** la traduction est menée
@@ -532,6 +532,17 @@ l'étape 0. En production : même parcours.
 
 Application mobile (écran de connexion), automatisations GitHub, documentation.
 
+Réalisé : les trois automatisations renommées (section 11) ; l'application
+mobile traduite **et rebranchée** — elle appelait `/login`, `/stats/dashboard`
+et `/products`, qui n'ont jamais existé dans l'API ; les dossiers du service IA
+oubliés par l'inventaire (section 10) ; README, guide de déploiement, état des
+lieux, procédure de restauration. Les documents d'avant la francisation
+(`AMELIORATIONS`, `ANALYSE_AMELIORATIONS_SECURITE_DESIGN`, `PROMPT_DESIGN`)
+gardent leur texte, précédé d'une note qui renvoie ici.
+
+La sauvegarde nocturne change de fichier : après la mise en ligne, on vérifie
+que la première nuit tourne bien sous le nouveau nom.
+
 ### Étape 5 — Retrait des compatibilités *(quelques semaines plus tard)*
 
 Aux dates du tableau de la section 3. Chaque retrait est un commit isolé.
@@ -539,3 +550,14 @@ Aux dates du tableau de la section 3. Chaque retrait est un commit isolé.
 ### Action manuelle requise
 
 Aucune : les secrets gardent leur nom (décision du 29/09/2026).
+
+### Avancement
+
+| Étape | État |
+|---|---|
+| 0 — Empreintes de l'existant | faite le 29/09 |
+| 1 — Service IA | en production le 29/09 |
+| 2 — API et base de données | en production le 29/09 (21h01 UTC), vérifiée |
+| 3 — Site web | prête et éprouvée ; mise en ligne prévue le 30/09 au soir |
+| 4 — Finitions | prête ; mise en ligne après l'étape 3 |
+| 5 — Retrait des compatibilités | après 14 jours sans aucun appel à l'ancien contrat |

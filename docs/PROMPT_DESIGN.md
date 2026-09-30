@@ -1,5 +1,10 @@
 # Prompt prêt à coller — Refonte du design SamaCommerce (Claude / Claude Design)
 
+> **Document historique**, rédigé avant la francisation du code (septembre 2026).
+> Les noms de fichiers, de tables, de routes, de classes et de variables CSS qu'il
+> cite sont les **anciens** ; leurs équivalents actuels sont dans
+> [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md).
+
 > Colle ce prompt dans Claude (mode design / artifacts). Il contient l'extraction
 > complète du design system actuel + la mission de refonte.
 

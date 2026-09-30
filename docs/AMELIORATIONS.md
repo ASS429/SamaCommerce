@@ -1,5 +1,10 @@
 # SamaCommerce — Suggestions d'améliorations (avec statut)
 
+> **Document historique**, rédigé avant la francisation du code (septembre 2026).
+> Les noms de fichiers, de tables, de routes, de classes et de variables CSS qu'il
+> cite sont les **anciens** ; leurs équivalents actuels sont dans
+> [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md).
+
 Légende : ✅ fait · 🟡 partiel · 🔜 à faire · 🚧 en cours (Batch 1)
 
 ## 🎯 BATCH 1 — ✅ FAIT & TESTÉ (build+lint clean, backend 76/76)

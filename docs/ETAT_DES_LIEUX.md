@@ -1,6 +1,6 @@
 # SamaCommerce — état des lieux
 
-*Dernière mise à jour : 28 août 2026.*
+*Dernière mise à jour : 30 septembre 2026.*
 
 Ce document dit **où en est la plateforme**, **ce qui reste à faire** et **comment
 l'exploiter au quotidien**. Il est fait pour être relu dans trois mois, quand le
@@ -34,8 +34,9 @@ plupart des choix d'exploitation ci-dessous.
 | Mot de passe oublié | Envoi réel par e-mail (Resend) |
 | Administration | Fermée — les identifiants publics ne fonctionnent plus |
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
-| IA | Modèles entraînés servis (`method: "model"`) |
-| Tests | PHPUnit 82/82 · Vitest 115/115 |
+| IA | Modèles entraînés servis (`methode: "modele"`) |
+| Tests | PHPUnit 90/90 · Vitest 145/145 · pytest 9/9 |
+| Code en français | API, base de données et IA depuis le 29/09/2026 ; site et finitions : voir [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12 |
 
 ---
 
@@ -64,13 +65,31 @@ sans que rien ne le signale — c'est exactement ce que cette alerte évite.
 
 ### 3.4 — Application mobile React Native *(décision à prendre)*
 
-`apps/mobile` s'arrête à un écran de connexion. C'est la seule phase du projet
-initial jamais menée à bout.
+`apps/mobile` s'arrête à la connexion et à un tableau de bord (chiffres du jour,
+stock). Jusqu'en septembre 2026, ce prototype appelait des adresses qui n'ont
+jamais existé dans l'API : il ne pouvait pas se connecter. Il est désormais
+branché sur le vrai contrat. C'est la seule phase du projet initial jamais
+menée à bout.
 
 **À arbitrer honnêtement** : le web est déjà une PWA installable qui fonctionne
 hors ligne. Pour un commerçant, la différence sera mince. La vraie raison de le
 faire est **académique** — si le sujet de mémoire annonce une application native,
 il faut la livrer.
+
+### 3.5 — Trois défauts trouvés pendant la francisation *(à corriger à part)*
+
+Antérieurs à la traduction, repérés en la vérifiant, et volontairement pas
+corrigés dans le même envoi (un envoi = un changement) :
+
+- **Double facteur à la connexion : le code n'est jamais envoyé.** L'API le
+  crée et attend qu'on le saisisse, mais ne l'adresse à personne (il n'est
+  renvoyé qu'en développement local). Un compte qui active cette option ne peut
+  plus se connecter depuis un nouvel appareil. L'envoi par e-mail existe déjà
+  pour « mot de passe oublié » : il suffit de le réutiliser.
+- **`GET /commandes` ne renvoie jamais le nom du fournisseur** (`withCount`
+  écrase les colonnes demandées).
+- **La recherche globale charge `/clients` même pour un employé sans ce droit**
+  (refus 403 dans la console, sans effet visible).
 
 ---
 
@@ -85,7 +104,7 @@ Chiffres coûtera plus d'un mégaoctet dans six mois.
 modifications des autres et peuvent supprimer des produits. Une remise à zéro
 périodique serait souhaitable.
 
-**`BoutiqueScope` et les runtimes persistants.** Le cloisonnement par boutique
+**`CloisonnementBoutique` (ex-`BoutiqueScope`) et les runtimes persistants.** Le cloisonnement par boutique
 s'enregistre par requête, dans un processus PHP qui meurt avec la réponse.
 Passer à **Octane, Swoole ou FrankenPHP** ferait fuir ce cloisonnement d'une
 requête à l'autre : un commerçant hériterait de la boutique du précédent. À
@@ -101,11 +120,14 @@ permettrait de garder l'IA éveillée.
 
 ### Tâches automatiques (GitHub Actions)
 
-| Tâche | Rythme | Rôle |
+| Tâche (fichier) | Rythme | Rôle |
 |---|---|---|
-| **Sauvegarde base** | Chaque nuit, 02h17 UTC | Dump chiffré, conservé 90 jours |
-| **Garder l'API éveillée** | Toutes les 10 min, 7h–21h | Évite l'attente de 30-50 s |
-| **CI** | À chaque push | Tests API + web, lint, build |
+| **Sauvegarde base** (`sauvegarde-base.yml`) | Chaque nuit, 02h17 UTC | Export chiffré, contrôlé, conservé 90 jours |
+| **Garder l'API éveillée** (`garder-api-eveillee.yml`) | Toutes les 10 min, 7h–21h | Évite l'attente de 30-50 s |
+| **Intégration continue** (`integration-continue.yml`) | À chaque envoi sur `main` | Tests API + site + IA, analyse du code, construction |
+
+Jusqu'au 30/09/2026, ces fichiers s'appelaient `backup.yml`, `keepalive.yml` et
+`ci.yml` : GitHub range leurs anciennes exécutions sous ces noms.
 
 ### Variables à connaître
 
@@ -133,7 +155,7 @@ l'usage de l'**API HTTP** de Resend, sur le port 443.
 
 **`pg_dump` d'Ubuntu est un aiguilleur.** Installer `postgresql-client-17` ne
 suffit pas : il faut appeler `/usr/lib/postgresql/17/bin/pg_dump` explicitement,
-sinon c'est la version 16 qui répond et le dump échoue.
+sinon c'est la version 16 qui répond et l'export échoue.
 
 **Render inscrit le NOM d'un service lié**, pas son adresse. `URL_SERVICE_IA`
 contenait `samacommerce-ia` au lieu de `https://samacommerce-ia.onrender.com`.
@@ -142,9 +164,24 @@ contenait `samacommerce-ia` au lieu de `https://samacommerce-ia.onrender.com`.
 **0 ms** = aucun appel tenté (URL vide) · **~2 ms** = échec DNS (adresse
 invalide) · **~40 ms** = tout va bien.
 
-**Le hash du bundle web diffère toujours du build local**, car `VITE_API_URL` est
-injecté à la compilation sur Render. Pour vérifier un déploiement, comparer le
-**CSS** ou chercher une chaîne du nouveau code.
+**L'empreinte du paquet JavaScript du site diffère toujours de la construction
+locale**, car `VITE_URL_API` est injectée à la construction sur Render. Pour
+vérifier un déploiement, comparer le **CSS** ou chercher une chaîne du nouveau code.
+
+**Deux fichiers du site ne se renomment jamais** : `sw.js` et
+`manifest.webmanifest`. Un téléphone qui a installé l'application interroge
+`/sw.js` pour se mettre à jour ; renommé, ce fichier répondrait 404 et le
+téléphone resterait bloqué sur l'ancienne version.
+
+**Tout client de l'API envoie l'en-tête `X-Contrat-Api: fr`.** Certaines
+adresses sont communes à l'ancien contrat (anglais) et au nouveau ; sans cet
+en-tête, elles répondent dans l'ancien format, conservé pour les téléphones pas
+encore mis à jour.
+
+**On ne change jamais le chemin de santé dans le déploiement qui le crée.**
+Le réglage de Render peut s'appliquer au conteneur encore en service, qui ne
+connaît pas la nouvelle adresse : il serait jugé en panne. `/api/sante` a donc
+été créé par un envoi, et n'est devenu le chemin de santé qu'à l'envoi suivant.
 
 ---
 

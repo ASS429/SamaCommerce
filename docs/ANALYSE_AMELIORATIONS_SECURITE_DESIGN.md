@@ -1,4 +1,10 @@
 # SamaCommerce — Analyse du projet & feuille de route
+
+> **Document historique**, rédigé avant la francisation du code (septembre 2026).
+> Les noms de fichiers, de tables, de routes, de classes et de variables CSS qu'il
+> cite sont les **anciens** ; leurs équivalents actuels sont dans
+> [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md).
+
 ### Améliorations techniques · Sécurité · Design UI/UX cinématique & 3D réaliste
 
 > **Nature du document** : analyse et spécification. **Rien n'est implémenté ici** — chaque point décrit *quoi faire, pourquoi, et comment s'y prendre*, avec une priorité (🔴 P0 critique · 🟠 P1 important · 🟢 P2 confort) et un effort estimé (S/M/L).

@@ -1,13 +1,13 @@
 # ─────────────────────────────────────────────
-# SamaCommerce — monorepo (api / web / mobile / ia)
+# SamaCommerce — monodépôt (api / web / mobile / ia)
 # ─────────────────────────────────────────────
 
-# Secrets & environnement (JAMAIS commités)
+# Secrets & environnement (JAMAIS versionnés)
 **/.env
 **/.env.*
 !**/.env.example
 
-# Sauvegardes des .git de scaffolding (renommés lors de la consolidation monorepo)
+# Sauvegardes des .git des gabarits (renommés lors du regroupement en monodépôt)
 _git_laravel_skeleton_bak/
 _git_expo_bak/
 apps/api/_git_laravel_skeleton_bak/
@@ -44,7 +44,7 @@ node_modules/
 **/__pycache__/
 **/*.pyc
 
-# ─── OS / éditeurs ───
+# ─── Système / éditeurs ───
 .DS_Store
 Thumbs.db
 *.log

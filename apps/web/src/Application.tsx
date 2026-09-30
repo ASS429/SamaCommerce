@@ -226,12 +226,19 @@ export default function Application() {
     Boutiques.lister().then(definirBoutiques).catch(() => {})
   }, [connecte, utilisateur?.role])
 
-  // Alertes de stock (cloche) + fichier clients de la recherche globale.
+  /* Alertes de stock (cloche) + fichier clients de la recherche globale.
+     Chaque lecture n'est tentée qu'avec le droit que l'API exige (`rapports`
+     pour les alertes, `clients` pour le fichier) : sans cela, un employé
+     privé de ces droits recevait deux refus 403 à chaque changement d'écran. */
+  const peutLireAlertes = peutAcceder(utilisateur, 'rapports')
+  const peutLireClients = peutAcceder(utilisateur, 'clients')
   useEffect(() => {
     if (!connecte || utilisateur?.role === 'admin') return
-    Statistiques.stockFaible(5).then((a) => { definirAlertes(a); if (!dejaNotifie.current) { dejaNotifie.current = true; notifierStock(a) } }).catch(() => {})
-    ApiClients.lister().then(definirClientsRecherche).catch(() => {})
-  }, [connecte, ecran, utilisateur?.role])
+    if (peutLireAlertes) {
+      Statistiques.stockFaible(5).then((a) => { definirAlertes(a); if (!dejaNotifie.current) { dejaNotifie.current = true; notifierStock(a) } }).catch(() => {})
+    }
+    if (peutLireClients) ApiClients.lister().then(definirClientsRecherche).catch(() => {})
+  }, [connecte, ecran, utilisateur?.role, peutLireAlertes, peutLireClients])
 
   const recherche = rechercheGlobale.trim().toLowerCase()
   const produitsTrouves = recherche.length >= 2 ? produitsRecherche.filter((p) => p.nom.toLowerCase().includes(recherche)).slice(0, 5) : []
@@ -262,7 +269,7 @@ export default function Application() {
   void versionSections // relit les sections affichées à chaque changement
   const section = !peutAcceder(utilisateur, ecran) ? <AccesRefuse /> : (<Suspense fallback={<ChargementSection />}>
     {ecran === 'toutes-boutiques' && <TableauBordBoutiques surNavigation={definirEcran} />}
-    {ecran === 'accueil' && <Accueil utilisateur={utilisateur} peutVoir={(e) => estVisible(utilisateur, e)} surNavigation={definirEcran} surDeconnexion={seDeconnecter} surPassagePremium={() => definirPremiumOuvert(true)} bureau={bureau} chiffres={chiffres} />}
+    {ecran === 'accueil' && <Accueil utilisateur={utilisateur} peutVoir={(e) => estVisible(utilisateur, e)} alertesAutorisees={peutLireAlertes} surNavigation={definirEcran} surDeconnexion={seDeconnecter} surPassagePremium={() => definirPremiumOuvert(true)} bureau={bureau} chiffres={chiffres} />}
     {ecran === 'vente' && <Vente />}
     {ecran === 'stock' && <Stock />}
     {ecran === 'categories' && <SectionCategories />}

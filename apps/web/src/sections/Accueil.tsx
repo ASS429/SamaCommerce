@@ -24,9 +24,11 @@ const TUILES: { ecran: Ecran; emoji: string; cle: string; sousTitre: string; tei
 /** Événement `beforeinstallprompt` (non typé par TypeScript). */
 type InvitationInstallation = Event & { prompt: () => void; userChoice: Promise<unknown> }
 
-export default function Accueil({ utilisateur, peutVoir, surNavigation, surDeconnexion, surPassagePremium, bureau, chiffres }: {
+export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = true, surNavigation, surDeconnexion, surPassagePremium, bureau, chiffres }: {
   utilisateur: Utilisateur | null
   peutVoir: (e: Ecran) => boolean
+  /** Droit de lire les alertes de stock (l'API les réserve au droit « rapports »). */
+  alertesAutorisees?: boolean
   surNavigation: (e: Ecran) => void
   surDeconnexion: () => void
   surPassagePremium: () => void
@@ -40,7 +42,9 @@ export default function Accueil({ utilisateur, peutVoir, surNavigation, surDecon
   const [rejoindreOuvert, definirRejoindreOuvert] = useState(false)
   const [semaine, definirSemaine] = useState<{ date: string; total_encaisse: number }[]>([])
 
-  useEffect(() => { Statistiques.stockFaible(5).then(definirAlertes).catch(() => definirAlertes([])) }, [])
+  useEffect(() => {
+    if (alertesAutorisees) Statistiques.stockFaible(5).then(definirAlertes).catch(() => definirAlertes([]))
+  }, [alertesAutorisees])
   useEffect(() => { if (bureau) Caisse.semaine().then(definirSemaine).catch(() => {}) }, [bureau])
 
   useEffect(() => {

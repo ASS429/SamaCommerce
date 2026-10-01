@@ -193,10 +193,11 @@ vérifier un déploiement, comparer le **CSS** ou chercher une chaîne du nouvea
 `/sw.js` pour se mettre à jour ; renommé, ce fichier répondrait 404 et le
 téléphone resterait bloqué sur l'ancienne version.
 
-**Tout client de l'API envoie l'en-tête `X-Contrat-Api: fr`.** Certaines
-adresses sont communes à l'ancien contrat (anglais) et au nouveau ; sans cet
-en-tête, elles répondent dans l'ancien format, conservé pour les téléphones pas
-encore mis à jour.
+**Un nom de classe enregistré en base ne se renomme pas sans migration.**
+Les jetons de connexion gardent le nom de classe de leur propriétaire : en
+retirant l'alias `App\Models\User`, une session ouverte avant aurait fini en
+erreur 500 à chaque appel (pas en simple déconnexion). Une migration a réécrit
+les jetons au nom français dans le même envoi.
 
 **On ne change jamais le chemin de santé dans le déploiement qui le crée.**
 Le réglage de Render peut s'appliquer au conteneur encore en service, qui ne

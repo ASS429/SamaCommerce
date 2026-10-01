@@ -69,15 +69,20 @@ Chaque exception a une raison vérifiable. Aucune n'est une facilité.
 ### Exceptions temporaires, avec date de retrait
 
 Pour **ne casser aucun téléphone** pendant la transition, quatre éléments
-contiennent forcément les anciens noms anglais : ils traduisent de l'ancien vers
-le nouveau. Ils sont isolés, commentés, et retirés à la date indiquée.
+contenaient forcément les anciens noms anglais : ils traduisaient de l'ancien
+vers le nouveau. Ils étaient isolés et commentés.
 
-| Élément | Rôle | Retrait prévu |
+**Retrait avancé (étape 5, décidé le 01/10/2026)** : l'application n'avait
+qu'un seul utilisateur réel, et l'API n'a plus reçu un seul appel à l'ancien
+format après la mise en ligne du site français (30/09) — attendre 14 jours ou
+trois mois n'aurait rien protégé.
+
+| Élément | Rôle | Sort |
 |---|---|---|
-| Couche de compatibilité de l'API | Une application restée ouverte sur l'ancienne version continue de fonctionner. | Quand l'API n'a reçu **aucun appel** à l'ancien format pendant 14 jours (compteur visible sur `/api/sante`). |
-| Migration inverse, prête à l'emploi | Retour arrière de la base en un seul envoi si le nouveau code devait être retiré. | Quelques semaines après un passage stable. |
-| Migration du stockage du navigateur | Recopie jeton, réglages et **ventes hors ligne en attente** sous les nouveaux noms. | Trois mois après la bascule. |
-| Harmonisation des noms de migrations | Permet de restaurer une ancienne sauvegarde sur le nouveau code. | Quand la dernière sauvegarde anglaise a expiré (90 jours). |
+| Couche de compatibilité de l'API | Une application restée ouverte sur l'ancienne version continue de fonctionner. | **Retirée** (étape 5). Ses tables deviennent une archive de test (`tests/Contrat`) : le scénario d'avant la francisation est toujours rejoué sur l'API française. |
+| Migration inverse, prête à l'emploi | Retour arrière de la base en un seul envoi si le nouveau code devait être retiré. | **Conservée** : c'est le retour arrière ordinaire de la migration de francisation, sans aucun coût. |
+| Migration du stockage du navigateur | Recopie jeton, réglages et **ventes hors ligne en attente** sous les nouveaux noms. | **Retirée** (étape 5). |
+| Harmonisation des noms de migrations | Permet de restaurer une ancienne sauvegarde sur le nouveau code. | **Conservée jusqu'à fin décembre 2026**, quand la dernière sauvegarde anglaise (29/09) aura expiré. |
 
 La **migration de renommage** elle-même garde les anciens noms pour toujours :
 c'est l'acte de traduction, il faut bien qu'il dise d'où il part.
@@ -399,9 +404,9 @@ puis l'ancienne est effacée **seulement après** une écriture réussie.
 | IndexedDB `samacommerce_offline` / `pending_sales` | `samacommerce_hors_ligne` / `ventes_en_attente` | **Ventes pas encore envoyées** : recopiées une à une, champs traduits |
 | Cache `api-cache` | `cache-api` | Ancien cache effacé |
 
-Les liens d'invitation déjà envoyés par WhatsApp portent `?invite=…`. Le
-nouveau paramètre est `?invitation=…` ; **l'ancien reste reconnu**, sinon un
-employé invité la veille resterait à la porte.
+Les liens d'invitation envoyés avant la francisation portaient `?invite=…`. Le
+nouveau paramètre est `?invitation=…` ; l'ancien est resté reconnu pendant la
+transition, puis a été retiré à l'étape 5.
 
 ---
 
@@ -547,13 +552,26 @@ que la première nuit tourne bien sous le nouveau nom.
 
 ### Étape 5 — Retrait des compatibilités *(quelques semaines plus tard)*
 
-Aux dates du tableau de la section 3. Chaque retrait est un commit isolé.
+Avancée au 01/10/2026 (cf. section 3) : un seul utilisateur réel, aucun appel
+à l'ancien format depuis la mise en ligne du site. Retirés, chacun dans son
+commit :
 
-S'y ajoute l'ancien réglage « 2FA » du panneau d'administration (route
-`PATCH /admin/parametres/double-facteur`, colonne
-`parametres_admin.double_facteur_actif`) : il ne protégeait rien et a été
-remplacé le 30/09/2026 par la vraie vérification en deux étapes du compte.
-Il ne reste que pour l'ancienne version du site.
+- la couche de compatibilité de l'API (anciennes adresses, dont
+  `/api/health`, et compteur `/api/sante/compatibilite`) ;
+- l'alias `App\Models\User` des jetons de connexion, avec une migration qui
+  réécrit les jetons existants (sinon chaque session ouverte avant finissait
+  en erreur 500) ;
+- les routes d'origine du service IA (`/forecast`, `/credit-score`, `/health`) ;
+- la reprise des données du navigateur (stockage, ventes hors ligne) et le
+  paramètre `?invite=` ;
+- l'ancien réglage « 2FA » du panneau d'administration (route, colonne) ;
+- la tolérance de la sauvegarde pour une base restée en anglais.
+
+Restent volontairement : l'harmonisation des noms de migrations (jusqu'à fin
+décembre 2026), le retour arrière ordinaire de la migration de francisation,
+et l'autorisation CORS de l'en-tête `X-Contrat-Api`, devenu sans effet, pour
+qu'une version du site gardée en cache ne soit pas bloquée à sa première
+ouverture.
 
 ### Action manuelle requise
 
@@ -568,4 +586,4 @@ Aucune : les secrets gardent leur nom (décision du 29/09/2026).
 | 2 — API et base de données | en production le 29/09 (21h01 UTC), vérifiée |
 | 3 — Site web | en production le 30/09 (21h15 UTC), vérifiée : un téléphone resté sur l'ancienne version garde sa session, et ses ventes hors ligne sont reprises et envoyées |
 | 4 — Finitions | en production le 01/10 (11h04 UTC), vérifiée : service IA reconstruit avec ses modèles, automatisations sous leurs nouveaux noms, sauvegarde relancée et verte |
-| 5 — Retrait des compatibilités | après 14 jours sans aucun appel à l'ancien contrat |
+| 5 — Retrait des compatibilités | codée et éprouvée le 01/10 (branche `etape-5`) ; mise en ligne à venir |

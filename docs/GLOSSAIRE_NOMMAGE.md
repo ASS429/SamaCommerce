@@ -586,4 +586,4 @@ Aucune : les secrets gardent leur nom (décision du 29/09/2026).
 | 2 — API et base de données | en production le 29/09 (21h01 UTC), vérifiée |
 | 3 — Site web | en production le 30/09 (21h15 UTC), vérifiée : un téléphone resté sur l'ancienne version garde sa session, et ses ventes hors ligne sont reprises et envoyées |
 | 4 — Finitions | en production le 01/10 (11h04 UTC), vérifiée : service IA reconstruit avec ses modèles, automatisations sous leurs nouveaux noms, sauvegarde relancée et verte |
-| 5 — Retrait des compatibilités | codée et éprouvée le 01/10 (branche `etape-5`) ; mise en ligne à venir |
+| 5 — Retrait des compatibilités | en production le 01/10 (14h09 UTC), vérifiée : sessions ouvertes avant la traduction toujours valides, adresses d'origine en 404 ; reste l'harmonisation des noms de migrations, jusqu'à fin décembre 2026 |

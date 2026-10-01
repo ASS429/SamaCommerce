@@ -35,8 +35,8 @@ plupart des choix d'exploitation ci-dessous.
 | Administration | Fermée — les identifiants publics ne fonctionnent plus |
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
 | IA | Modèles entraînés servis (`methode: "modele"`) |
-| Tests | PHPUnit 105/105 · Vitest 145/145 · pytest 9/9 |
-| Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions depuis le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
+| Tests | PHPUnit 99/99 · Vitest 130/130 · pytest 10/10 (tests de transition retirés avec les passerelles) |
+| Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions et retrait des passerelles de transition le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
 

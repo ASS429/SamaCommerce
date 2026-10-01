@@ -143,11 +143,16 @@ permettrait de garder l'IA éveillée.
 | Tâche (fichier) | Rythme | Rôle |
 |---|---|---|
 | **Sauvegarde base** (`sauvegarde-base.yml`) | Chaque nuit, 02h17 UTC | Export chiffré, contrôlé, conservé 90 jours |
-| **Garder l'API éveillée** (`garder-api-eveillee.yml`) | Toutes les 10 min, 7h–21h | Évite l'attente de 30-50 s |
 | **Intégration continue** (`integration-continue.yml`) | À chaque envoi sur `main` | Tests API + site + IA, analyse du code, construction |
 
 Jusqu'au 30/09/2026, ces fichiers s'appelaient `backup.yml`, `keepalive.yml` et
 `ci.yml` : GitHub range leurs anciennes exécutions sous ces noms.
+
+**Réveil de l'API : sur cron-job.org depuis le 01/10/2026** (toutes les 10 min,
+de 7h à 21h, heure de Dakar ; réglages dans `DEPLOIEMENT.md`, section 7). La
+tâche GitHub qui le faisait (`garder-api-eveillee.yml`) ne tournait que 2 à 4
+fois par jour au lieu de 84 : GitHub retarde ou saute les planifications
+fréquentes. Elle a été retirée.
 
 ### Variables à connaître
 

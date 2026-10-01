@@ -121,12 +121,32 @@ automatique (`apps/api/demarrer.sh`).
 |---|---|
 | `.github/workflows/integration-continue.yml` | à chaque envoi sur `main` : tests de l'API, du site et du service IA, construction du site |
 | `.github/workflows/sauvegarde-base.yml` | chaque nuit (02h17 UTC) : export **chiffré** de la base, contrôlé puis conservé 90 jours |
-| `.github/workflows/garder-api-eveillee.yml` | de 07h à 21h UTC : appelle l'API toutes les 10 min pour qu'elle ne s'endorme pas pendant les heures de vente |
 
 La sauvegarde exige deux secrets GitHub (**Settings → Secrets and variables →
 Actions**) : `SUPABASE_DB_URL` (chaîne Session pooler) et `BACKUP_PASSPHRASE`
 (phrase longue, à conserver **aussi** hors de GitHub). Restauration :
 [`docs/RESTAURATION_BASE.md`](docs/RESTAURATION_BASE.md).
+
+## 7) Réveil de l'API (cron-job.org)
+
+Sur le plan gratuit, Render endort l'API après 15 minutes sans visite ; le
+réveil prend 30 à 50 secondes, et le premier commerçant de la journée croit
+le site en panne. Une tâche externe l'appelle donc pendant les heures de vente :
+
+| Réglage | Valeur |
+|---|---|
+| Service | [cron-job.org](https://console.cron-job.org), compte du propriétaire |
+| Tâche | « Réveil API SamaCommerce » |
+| Adresse | `GET https://samacommerce-api.onrender.com/api/sante` |
+| Rythme | `*/10 7-20 * * *`, fuseau Africa/Dakar (toutes les 10 min, de 7h à 20h50) |
+
+- **Pourquoi pas GitHub Actions** : la tâche planifiée équivalente
+  (`garder-api-eveillee.yml`, retirée le 01/10/2026) ne tournait que 2 à 4 fois
+  par jour au lieu de 84 — GitHub retarde ou saute les planifications fréquentes.
+- **Pourquoi pas jour et nuit** : les 750 heures gratuites mensuelles de Render
+  sont partagées avec le service IA ; de 7h à 21h, l'API en consomme environ 430.
+- Le premier appel de 7h peut apparaître en échec dans cron-job.org (le serveur
+  a dormi toute la nuit) : c'est normal, celui de 7h10 réussit.
 
 ---
 

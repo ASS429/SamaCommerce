@@ -111,23 +111,13 @@ jobs:
             echo "::error::Export suspect (< 10 Ko) — sauvegarde refusée."
             exit 1
           fi
-          # Tables métier sous leur nom français (depuis le 29/09/2026). Pendant
-          # la transition, une base encore en anglais reste acceptée : si le
-          # déploiement de la francisation échouait, la sauvegarde de la nuit
-          # ne doit pas échouer avec lui. (À retirer à l'étape 5 du glossaire.)
-          presentes() {
-            for table in $1; do
-              grep -q "CREATE TABLE public.$table (" "$fichier" || return 1
-            done
-          }
-          if presentes "utilisateurs produits ventes clients boutiques"; then
-            echo "✅ Tables métier présentes."
-          elif presentes "users products sales clients boutiques"; then
-            echo "✅ Tables métier présentes (anciens noms anglais)."
-          else
-            echo "::error::Tables métier absentes de l'export — sauvegarde refusée."
-            exit 1
-          fi
+          for table in utilisateurs produits ventes clients boutiques; do
+            if ! grep -q "CREATE TABLE public.$table (" "$fichier"; then
+              echo "::error::Table métier « $table » absente de l'export — sauvegarde refusée."
+              exit 1
+            fi
+          done
+          echo "✅ Tables métier présentes."
 
       - name: Chiffrer
         env:
@@ -148,7 +138,7 @@ jobs:
           fichier="samacommerce_${HORODATAGE}.sql"
           gpg --batch --yes --decrypt --passphrase "$PHRASE_SECRETE" \
             --output /tmp/controle.sql "$fichier.gpg"
-          grep -qE "CREATE TABLE public\.(ventes|sales) \(" /tmp/controle.sql
+          grep -q "CREATE TABLE public.ventes (" /tmp/controle.sql
           echo "✅ Archive déchiffrable et complète."
           rm -f /tmp/controle.sql
 

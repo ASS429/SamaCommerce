@@ -4,10 +4,10 @@ Tests du micro-service IA.
 Les empreintes (tests/empreintes_avant_francisation.json) ont été enregistrées
 sur le code d'origine, AVANT la traduction en français, avec les modèles
 entraînés réels : 42 prévisions et 1 299 scores de crédit, entrées invalides
-comprises. Elles prouvent deux choses :
-  - les anciennes routes, encore appelées par l'API en production, répondent
-    à l'octet près comme avant ;
-  - les nouvelles routes françaises calculent exactement les mêmes résultats.
+comprises. Elles prouvent que les routes françaises calculent exactement les
+mêmes résultats que les routes d'origine. Celles-ci (/forecast, /credit-score,
+/health) ont été retirées le 01/10/2026 (étape 5 du glossaire) : l'API
+n'appelait plus que les routes françaises depuis le 29/09.
 """
 from __future__ import annotations
 
@@ -54,13 +54,6 @@ def _traduire(dico: dict) -> dict:
     return {CHAMPS[c]: (VALEURS.get(v, v) if isinstance(v, str) else v) for c, v in dico.items()}
 
 
-@pytest.mark.parametrize("module,ancienne_route", [("prevision", "/forecast"), ("credit", "/credit-score")])
-def test_les_anciennes_routes_repondent_comme_avant(client, module, ancienne_route):
-    for empreinte in EMPREINTES[module]:
-        r = client.post(ancienne_route, json=empreinte["entree"])
-        assert (r.status_code, r.json()) == (empreinte["statut"], empreinte["sortie"]), empreinte["entree"]
-
-
 @pytest.mark.parametrize("module,route", [("prevision", "/prevision"), ("credit", "/score-credit")])
 def test_les_routes_francaises_calculent_la_meme_chose(client, module, route):
     valides = [e for e in EMPREINTES[module] if e["statut"] == 200]
@@ -78,9 +71,11 @@ def test_une_entree_invalide_est_refusee(client, route, corps):
 
 def test_sante(client):
     assert client.get("/sante").json() == {"statut": "ok", "modele_demande": True, "modele_credit": True}
-    ancienne = EMPREINTES["sante"]
-    r = client.get("/health")
-    assert (r.status_code, r.json()) == (ancienne["statut"], ancienne["sortie"])
+
+
+@pytest.mark.parametrize("methode,ancienne_route", [("post", "/forecast"), ("post", "/credit-score"), ("get", "/health")])
+def test_les_routes_d_origine_ont_disparu(client, methode, ancienne_route):
+    assert getattr(client, methode)(ancienne_route).status_code == 404
 
 
 def test_les_modeles_deployes_portent_les_noms_francais():

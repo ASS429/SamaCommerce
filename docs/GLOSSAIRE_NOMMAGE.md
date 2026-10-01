@@ -567,5 +567,5 @@ Aucune : les secrets gardent leur nom (décision du 29/09/2026).
 | 1 — Service IA | en production le 29/09 |
 | 2 — API et base de données | en production le 29/09 (21h01 UTC), vérifiée |
 | 3 — Site web | en production le 30/09 (21h15 UTC), vérifiée : un téléphone resté sur l'ancienne version garde sa session, et ses ventes hors ligne sont reprises et envoyées |
-| 4 — Finitions | prête ; mise en ligne après l'étape 3 |
+| 4 — Finitions | en production le 01/10 (11h04 UTC), vérifiée : service IA reconstruit avec ses modèles, automatisations sous leurs nouveaux noms, sauvegarde relancée et verte |
 | 5 — Retrait des compatibilités | après 14 jours sans aucun appel à l'ancien contrat |

@@ -35,8 +35,8 @@ plupart des choix d'exploitation ci-dessous.
 | Administration | Fermée — les identifiants publics ne fonctionnent plus |
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
 | IA | Modèles entraînés servis (`methode: "modele"`) |
-| Tests | PHPUnit 90/90 · Vitest 145/145 · pytest 9/9 |
-| Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions : voir [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12 |
+| Tests | PHPUnit 105/105 · Vitest 145/145 · pytest 9/9 |
+| Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions depuis le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
 
@@ -79,8 +79,8 @@ il faut la livrer.
 ### 3.5 — Défauts trouvés pendant la francisation
 
 Antérieurs à la traduction, repérés en la vérifiant, et corrigés à part (un
-envoi = un changement) sur la branche `corrections-anterieures` — **pas encore
-en ligne** :
+envoi = un changement), puis **mis en ligne le 01/10/2026 (11h08 UTC) et
+vérifiés en production** :
 
 - **Double facteur : le code de connexion n'était jamais envoyé**, et l'option
   s'activait d'un clic. Un compte qui l'activait ne pouvait plus se connecter

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\RessourceVente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ControleurVente extends Controleur
 {
@@ -96,6 +97,10 @@ class ControleurVente extends Controleur
                     $echecs[] = ['uuid_appareil' => $uuid, 'erreur' => $res['corps']['erreur'] ?? 'Échec'];
                 }
             } catch (\Throwable $e) {
+                // La cause va aux journaux, jamais dans la réponse. Sans cette
+                // trace, un échec de synchronisation était indiagnosticable :
+                // le message générique ci-dessous masquait la vraie cause.
+                Log::warning('[synchronisation] vente refusée', ['uuid_appareil' => $uuid, 'cause' => $e->getMessage()]);
                 $echecs[] = ['uuid_appareil' => $uuid, 'erreur' => 'Produit introuvable ou données invalides'];
             }
         }
@@ -161,9 +166,14 @@ class ControleurVente extends Controleur
      */
     private function enregistrerVente(Request $requete, array $donnees): array
     {
-        // Idempotence : une vente déjà synchronisée (même uuid_appareil) est ignorée.
+        /* Idempotence : une vente déjà synchronisée (même uuid_appareil) est
+           ignorée — corbeille COMPRISE. Une vente reçue puis annulée, que le
+           téléphone renvoie (accusé de réception perdu), ne doit ni revenir ni
+           échouer : jusqu'au 01/10/2026, elle heurtait l'index unique (qui
+           couvre la corbeille) et restait « en attente » pour toujours sur le
+           téléphone. */
         if (! empty($donnees['uuid_appareil'])) {
-            $existante = $requete->user()->ventes()->where('uuid_appareil', $donnees['uuid_appareil'])->first();
+            $existante = $requete->user()->ventes()->withTrashed()->where('uuid_appareil', $donnees['uuid_appareil'])->first();
             if ($existante) {
                 return ['statut' => 200, 'corps' => $existante, 'doublon' => true];
             }

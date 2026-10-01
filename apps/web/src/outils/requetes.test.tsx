@@ -64,10 +64,4 @@ describe('cache du catalogue', () => {
     // faux ferait vendre à découvert.
     expect(client.getDefaultOptions().queries?.staleTime).toBe(60_000)
   })
-
-  it('annonce le contrat français à l\'API', () => {
-    // Sans cet en-tête, /categories et les autres adresses au nom identique
-    // dans les deux langues répondraient dans l'ANCIEN format anglais.
-    expect(api.defaults.headers['X-Contrat-Api']).toBe('fr')
-  })
 })

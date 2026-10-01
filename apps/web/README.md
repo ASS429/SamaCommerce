@@ -2,8 +2,8 @@
 
 Application de gestion de boutique (React 19, TypeScript, Vite), installable sur
 téléphone (PWA) et utilisable hors ligne. Elle dialogue avec l'API Laravel
-(`apps/api`) en **contrat français** : chaque appel porte l'en-tête
-`X-Contrat-Api: fr` (cf. `src/outils/api.ts`).
+(`apps/api`), dont les adresses et les champs sont en français (cf.
+`src/outils/api.ts`).
 
 ## Commandes
 
@@ -42,10 +42,9 @@ qui a installé l'application interroge `/sw.js` pour se mettre à jour : renomm
 ce fichier répondrait 404 et le téléphone resterait bloqué sur l'ancienne
 version.
 
-## Reprise des données de l'ancienne version
+## Données des versions d'avant la francisation
 
-Avant la francisation (septembre 2026), le navigateur stockait la session, les
-réglages et les ventes hors ligne sous des noms anglais. Au premier lancement,
-`src/outils/migrationStockage.ts` et `src/outils/fileHorsLigne.ts` les recopient
-sous leurs nouveaux noms — ventes en attente comprises — avant de les effacer.
-Ce code est temporaire : il sera retiré trois mois après la bascule.
+Jusqu'au 01/10/2026, le site reprenait au premier lancement la session, les
+réglages et les ventes hors ligne enregistrés par la version d'avant la
+francisation, sous leurs noms anglais. Ce code de transition est retiré
+depuis : tous les appareils utilisés étaient passés à la nouvelle version.

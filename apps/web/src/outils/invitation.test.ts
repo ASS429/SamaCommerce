@@ -8,10 +8,6 @@ describe('extraireJetonInvitation — tolérant au copier-coller WhatsApp', () =
     expect(extraireJetonInvitation(`https://samacommerce-web.onrender.com/?invitation=${JETON}`)).toBe(JETON)
   })
 
-  it('lit encore les liens envoyés avant la francisation (?invite=)', () => {
-    expect(extraireJetonInvitation(`https://samacommerce-web.onrender.com/?invite=${JETON}`)).toBe(JETON)
-  })
-
   it('accepte un jeton collé seul', () => {
     expect(extraireJetonInvitation(JETON)).toBe(JETON)
   })
@@ -44,12 +40,6 @@ describe('capturerInvitationDepuisAdresse — le lien devient une invitation en 
     // Un jeton d'invitation n'a rien à faire dans une barre d'adresse que l'on
     // partage, ni dans l'historique du téléphone.
     expect(window.location.search).not.toContain('invitation')
-  })
-
-  it('reconnaît l\'ancien paramètre ?invite= des liens déjà partagés', () => {
-    aller(`/?invite=${JETON}`)
-    expect(capturerInvitationDepuisAdresse()).toBe(JETON)
-    expect(window.location.search).not.toContain('invite')
   })
 
   it('préserve les autres paramètres', () => {

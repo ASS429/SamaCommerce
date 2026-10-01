@@ -17,9 +17,7 @@ const NOM_APPAREIL = `mobile-${Math.random().toString(36).slice(2, 10)}`
 
 export const api = axios.create({
   baseURL: URL_API,
-  // Contrat français de l'API : sans cet en-tête, les adresses communes aux
-  // deux versions répondent dans l'ancien format anglais.
-  headers: { Accept: 'application/json', 'X-Contrat-Api': 'fr' },
+  headers: { Accept: 'application/json' },
 })
 
 api.interceptors.request.use((requete) => {

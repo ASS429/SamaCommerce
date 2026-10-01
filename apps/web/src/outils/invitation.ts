@@ -11,14 +11,11 @@
  * l'employé crée son compte (l'acceptation exige d'être connecté), et on
  * NETTOIE l'adresse — un jeton d'invitation n'a rien à faire dans une barre
  * d'adresse que l'on partage ou qui se retrouve dans l'historique.
- *
- * Les liens envoyés AVANT la francisation portent `?invite=` : ils restent
- * reconnus, sinon un employé invité la veille resterait à la porte.
  */
 
 const CLE = 'samacommerce_invitation'
-/** Nom du paramètre d'adresse, suivi de l'ancien (liens déjà partagés). */
-const PARAMETRES = ['invitation', 'invite'] as const
+/** Nom du paramètre d'adresse qui porte le jeton. */
+const PARAMETRE = 'invitation'
 
 /**
  * Jeton contenu dans un lien, un fragment de lien, ou collé seul.
@@ -27,26 +24,25 @@ const PARAMETRES = ['invitation', 'invite'] as const
 export function extraireJetonInvitation(brut: string): string {
   const s = String(brut ?? '').trim()
   if (!s) return ''
-  const m = s.match(/(?:^|[?&#])(?:invitation|invite)=([^&#\s]+)/)
+  const m = s.match(/(?:^|[?&#])invitation=([^&#\s]+)/)
   if (m) return decodeURIComponent(m[1])
   // Collé sans son enrobage : on garde le premier bloc, sans queue de paramètres.
   return s.split(/[&#\s]/)[0]
 }
 
 /**
- * Lit `?invitation=` (ou l'ancien `?invite=`) dans l'adresse, le met de côté et
- * retire le paramètre.
+ * Lit `?invitation=` dans l'adresse, le met de côté et retire le paramètre.
  * @returns le jeton en attente (celui de l'adresse, sinon celui déjà stocké).
  */
 export function capturerInvitationDepuisAdresse(): string | null {
   try {
     const adresse = new URL(window.location.href)
-    const parametre = PARAMETRES.find((p) => adresse.searchParams.get(p))
-    if (!parametre) return invitationEnAttente()
+    const valeur = adresse.searchParams.get(PARAMETRE)
+    if (!valeur) return invitationEnAttente()
 
-    const jeton = extraireJetonInvitation(adresse.searchParams.get(parametre) || '')
+    const jeton = extraireJetonInvitation(valeur)
     if (jeton) localStorage.setItem(CLE, jeton)
-    PARAMETRES.forEach((p) => adresse.searchParams.delete(p))
+    adresse.searchParams.delete(PARAMETRE)
     window.history.replaceState({}, '', adresse.pathname + adresse.search + adresse.hash)
     return jeton || null
   } catch {

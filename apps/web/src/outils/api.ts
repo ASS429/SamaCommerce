@@ -4,14 +4,7 @@ import axios from 'axios'
 // En prod (build statique Render) : VITE_URL_API = https://<api>.onrender.com/api
 export const api = axios.create({
   baseURL: import.meta.env.VITE_URL_API || '/api',
-  headers: {
-    Accept: 'application/json',
-    /* Contrat de l'API. Sans cet en-tête, les adresses dont le nom est le même
-       dans les deux langues (/categories, /boutiques, /commandes…) répondent
-       dans l'ANCIEN format anglais, gardé pour les téléphones restés sur
-       l'ancienne version (cf. API, App\Compatibilite\AncienContrat). */
-    'X-Contrat-Api': 'fr',
-  },
+  headers: { Accept: 'application/json' },
 })
 
 const CLE_JETON = 'samacommerce_jeton'

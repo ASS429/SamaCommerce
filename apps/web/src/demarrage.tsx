@@ -1,7 +1,3 @@
-// EN PREMIER : reprise du stockage laissé par l'ancienne version (session,
-// code PIN, réglages…). Doit précéder tout module qui lit le stockage à son
-// import — cf. outils/migrationAuDemarrage.ts.
-import './outils/migrationAuDemarrage'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

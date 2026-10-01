@@ -105,8 +105,8 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Cache des réponses GET de l'API (consultation hors ligne).
-            // Nom différent de l'ancien (`api-cache`), qui contenait des
-            // réponses au format anglais : cf. outils/migrationStockage.ts.
+            // Nom différent de l'ancien (`api-cache`, réponses au format
+            // anglais d'avant la francisation), pour ne jamais les relire.
             urlPattern: ({ url, request }) => url.pathname.startsWith('/api') && request.method === 'GET',
             handler: 'NetworkFirst',
             options: {

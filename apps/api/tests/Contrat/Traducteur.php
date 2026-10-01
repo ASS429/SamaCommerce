@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Compatibilite;
+namespace Tests\Contrat;
 
 /**
- * TEMPORAIRE — traduit des données entre l'ancien et le nouveau contrat de
- * l'API (cf. AncienContrat). Utilisé par l'intergiciel de compatibilité, et
- * par les tests qui vérifient que les deux contrats disent la même chose.
+ * ARCHIVE DE TEST — traduit des données entre l'ancien et le nouveau contrat
+ * de l'API (cf. AncienContrat), pour comparer les réponses françaises aux
+ * empreintes enregistrées avant la francisation (ContratFrancaisTest).
  */
 final class Traducteur
 {

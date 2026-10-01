@@ -3,10 +3,8 @@
 namespace App\Providers;
 
 use App\Console\Commands\HarmoniserMigrations;
-use App\Models\Utilisateur;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\CommandStarting;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -38,14 +36,6 @@ class FournisseurServicesApplication extends ServiceProvider
         // `/clients/{id}` capturerait une adresse littérale comme
         // `/clients/for-sale` déclarée après elle.
         Route::pattern('id', '[0-9]+');
-
-        // Jetons de connexion (Sanctum) : chaque jeton enregistre la CLASSE de
-        // son propriétaire. Ceux émis avant la francisation portent l'ancien nom
-        // `App\Models\User` ; sans cet alias, tous les commerçants seraient
-        // déconnectés d'un coup. Les nouveaux jetons le reprennent aussi, pour
-        // que l'ancien code puisse encore les lire pendant la transition.
-        // Retrait prévu à l'étape 5 (glossaire, section 3).
-        Relation::morphMap(['App\Models\User' => Utilisateur::class]);
 
         // Avant toute commande de migration, faire reconnaître les migrations
         // déjà jouées sous leur nom français (cf. HarmoniserMigrations) : sans

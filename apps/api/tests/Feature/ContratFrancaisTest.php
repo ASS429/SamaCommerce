@@ -2,18 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Compatibilite\AncienContrat;
-use App\Compatibilite\Traducteur;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Contrat\AncienContrat;
+use Tests\Contrat\Traducteur;
 use Tests\Feature\Outils\RejeuScenario;
 use Tests\TestCase;
 
 /**
  * Le contrat FRANÇAIS dit exactement la même chose que l'ancien.
  *
- * Le même scénario que ContratHistoriqueTest est rejoué, mais sur les
- * NOUVELLES adresses, avec les noms de champs français et l'en-tête de la
- * nouvelle application. Chaque réponse, retraduite, doit égaler l'empreinte
+ * Le scénario enregistré sur l'API d'origine (avant la francisation) est
+ * rejoué sur les adresses FRANÇAISES, avec les noms de champs français, grâce
+ * à l'archive de l'ancien contrat (tests/Contrat). Chaque réponse, retraduite,
+ * doit égaler l'empreinte
  * enregistrée avant la francisation : mêmes statuts, mêmes valeurs, mêmes
  * identifiants. C'est la preuve que la nouvelle API est complète — aucune
  * route perdue, aucune règle métier modifiée par la traduction.
@@ -24,11 +25,7 @@ class ContratFrancaisTest extends TestCase
     use RejeuScenario;
 
     /** Routes françaises hors scénario, avec la raison. */
-    private const NON_JOUEES = [
-        // Apparue avec la francisation (pas d'équivalent dans l'ancien
-        // scénario) : couverte par CompatibiliteTest.
-        'GET|HEAD api/sante/compatibilite',
-    ];
+    private const NON_JOUEES = [];
 
     public function test_chaque_route_francaise_repond_comme_l_ancienne(): void
     {
@@ -57,7 +54,7 @@ class ContratFrancaisTest extends TestCase
                 return [
                     '/api/'.$version.$adresse.$requete,
                     Traducteur::entree($corps),
-                    $entetes + [AncienContrat::ENTETE => 'fr'],
+                    $entetes,
                     $modele,
                 ];
             }

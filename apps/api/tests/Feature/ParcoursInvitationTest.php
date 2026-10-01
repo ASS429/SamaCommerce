@@ -42,19 +42,6 @@ class ParcoursInvitationTest extends TestCase
         $this->assertStringStartsWith('http', $lien);
     }
 
-    public function test_l_ancienne_application_recoit_toujours_un_lien_qu_elle_comprend(): void
-    {
-        // Pendant la transition, un patron resté sur l'ancienne application
-        // envoie un lien que l'ancienne application doit savoir ouvrir.
-        [, $jeton] = $this->inscrireCommercant();
-        $this->app['auth']->forgetGuards();
-
-        $lien = $this->postJson('/api/members/invite', ['email' => 'awa@test.sn'], ['Authorization' => 'Bearer '.$jeton])
-            ->assertCreated()->json('invite_link');
-
-        $this->assertStringContainsString('?invite=', $lien);
-    }
-
     public function test_apercu_public_sans_compte(): void
     {
         [, $jeton] = $this->inscrireCommercant('patron@test.sn', 'Boutique Diallo');

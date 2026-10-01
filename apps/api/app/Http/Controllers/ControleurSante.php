@@ -47,28 +47,6 @@ class ControleurSante extends Controleur
         ], $base['ok'] ? 200 : 503);
     }
 
-    /**
-     * Appels reçus à l'ANCIEN format de l'API, sur les 14 derniers jours.
-     * Quand la liste reste vide deux semaines, plus aucun téléphone n'utilise
-     * l'ancienne version : la couche de compatibilité peut être retirée.
-     */
-    public function compatibilite()
-    {
-        $jours = [];
-        for ($i = 13; $i >= 0; $i--) {
-            $jour = now()->subDays($i)->toDateString();
-            $appels = (int) \Illuminate\Support\Facades\Cache::get("ancien_contrat:appels:{$jour}", 0);
-            if ($appels > 0) {
-                $jours[$jour] = $appels;
-            }
-        }
-
-        return response()->json([
-            'dernier_appel' => \Illuminate\Support\Facades\Cache::get('ancien_contrat:dernier_appel'),
-            'appels_par_jour' => (object) $jours,
-        ]);
-    }
-
     /** @param callable():bool $sonde */
     private function sonder(callable $sonde): array
     {

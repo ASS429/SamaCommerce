@@ -13,18 +13,17 @@ use Tests\TestCase;
  * Les routes hors périmètre (authentification, compte, boutiques, équipe, IA,
  * journal, santé) sont explicitement listées : elles sont soit publiques, soit
  * volontairement ouvertes à tout utilisateur connecté, soit réservées à
- * l'administration. Les anciennes adresses (compatibilité) sont vérifiées
- * comme les nouvelles.
+ * l'administration.
  */
 class PermissionsRoutesTest extends TestCase
 {
     /** Débuts d'adresse autorisés SANS perm: (justifiés). */
     private array $exceptions = [
-        'api/sante', 'api/health',
+        'api/sante',
         'api/auth',                       // public + compte (moi, déconnexion, profil…)
         'api/boutiques',                  // gérées par le propriétaire (logique interne)
-        'api/membres', 'api/members',     // équipe
-        'api/activite', 'api/activity',   // journal (lecture propriétaire)
+        'api/membres',                    // équipe
+        'api/activite',                   // journal (lecture propriétaire)
         'api/ia',                         // aide à la décision (tout employé peut consulter)
         'api/tontines',                   // module hérité, non sensible
     ];

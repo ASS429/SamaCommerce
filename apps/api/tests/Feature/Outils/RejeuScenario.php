@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Outils;
 
-use App\Compatibilite\AncienContrat;
 use App\Mail\CodeParEmail;
 use App\Models\Utilisateur;
 use Illuminate\Support\Carbon;
@@ -68,7 +67,7 @@ trait RejeuScenario
                     $code = Mail::sent(CodeParEmail::class)->last(fn ($c) => $c->motif === 'activation')->code;
                     $this->app['auth']->forgetGuards();
                     $this->postJson('/api/auth/double-facteur/confirmer', ['code' => $code], [
-                        'Authorization' => 'Bearer '.$variables['jeton_proprio'], AncienContrat::ENTETE => 'fr',
+                        'Authorization' => 'Bearer '.$variables['jeton_proprio'],
                     ])->assertOk()->assertJson(['double_facteur_actif' => true]);
                     $routesJouees[] = 'POST api/auth/double-facteur/confirmer';
                 },
@@ -83,6 +82,23 @@ trait RejeuScenario
                     'envoye' => true,
                     'message' => 'Code envoyé par e-mail. Pensez à regarder vos courriers indésirables.',
                     'dev_code' => null,
+                ]]),
+            ],
+            // 01/10/2026 — le réglage « 2FA » des paramètres d'administration ne
+            // protégeait rien (la connexion ne le lisait pas) : retiré, au profit
+            // de la vraie vérification en deux étapes du compte.
+            'paramètres modifiés' => [
+                'defaut' => fn (array $e) => array_key_exists('twofa_enabled', $e['reponse']['settings']),
+                'corrige' => function (array $e) {
+                    unset($e['reponse']['settings']['twofa_enabled']);
+
+                    return $e;
+                },
+            ],
+            'double facteur admin' => [
+                'defaut' => fn (array $e) => $e['reponse'] === ['message' => '2FA mis à jour', 'enabled' => true],
+                'corrige' => fn (array $e) => array_replace($e, ['statut' => 404, 'reponse' => [
+                    'message' => 'The route api/admin/parametres/double-facteur could not be found.',
                 ]]),
             ],
             // 30/09/2026 — `withCount` écrasait les colonnes demandées : la liste

@@ -37,9 +37,6 @@ $enregistrerRoutes = function (): void {
 
 // --- État de santé agrégé (public, pour la surveillance) — T14 ---
 Route::get('/sante', [ControleurSante::class, 'afficher']);
-// Usage de l'ancien format de l'API : dit QUAND la couche de compatibilité
-// peut être retirée (glossaire, section 3).
-Route::get('/sante/compatibilite', [ControleurSante::class, 'compatibilite']);
 
 // --- Authentification (publique) ---
 Route::post('/auth/inscription', [ControleurAuthentification::class, 'inscrire'])->middleware('throttle:10,1');
@@ -241,7 +238,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/transferts', [ControleurTransferts::class, 'creer']);
     Route::get('/parametres', [ControleurParametres::class, 'afficher']);
     Route::put('/parametres', [ControleurParametres::class, 'modifier']);
-    Route::patch('/parametres/double-facteur', [ControleurParametres::class, 'basculerDoubleFacteur']);
 });
 
 }; // fin de $enregistrerRoutes
@@ -249,7 +245,3 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 // Racine + espace versionné /v1.
 $enregistrerRoutes();
 Route::prefix('v1')->group($enregistrerRoutes);
-
-// COMPATIBILITÉ TEMPORAIRE : anciennes adresses et ancien format des données,
-// pour les téléphones restés sur l'ancienne version (glossaire, section 3).
-require __DIR__.'/api_ancien_contrat.php';

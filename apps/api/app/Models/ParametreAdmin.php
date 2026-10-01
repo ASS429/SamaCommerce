@@ -9,7 +9,7 @@ class ParametreAdmin extends Modele
     protected $fillable = [
         'admin_id', 'nom_application', 'email_contact', 'fuseau_horaire', 'prix_premium',
         'delai_grace', 'alertes_actives', 'notifier_nouveaux_abonnes', 'notifier_retards_paiement',
-        'notifier_rapports', 'sessions_multiples', 'double_facteur_actif',
+        'notifier_rapports', 'sessions_multiples',
     ];
 
     protected $casts = [
@@ -20,6 +20,5 @@ class ParametreAdmin extends Modele
         'notifier_retards_paiement' => 'boolean',
         'notifier_rapports' => 'boolean',
         'sessions_multiples' => 'boolean',
-        'double_facteur_actif' => 'boolean',
     ];
 }

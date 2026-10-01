@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Outils;
 
-use App\Compatibilite\AncienContrat;
 use App\Models\MembreBoutique;
 use App\Models\Utilisateur;
 
@@ -44,8 +43,7 @@ trait CreationComptes
     }
 
     /**
-     * En-têtes d'une requête authentifiée, au format FRANÇAIS de l'API (comme
-     * la nouvelle application web).
+     * En-têtes d'une requête authentifiée.
      *
      * On oublie les gardes résolus avant chaque requête : en test, l'application
      * est réutilisée entre les appels HTTP et le garde Sanctum garderait sinon
@@ -56,6 +54,6 @@ trait CreationComptes
     {
         $this->app['auth']->forgetGuards();
 
-        return ['Authorization' => 'Bearer '.$jeton, 'Accept' => 'application/json', AncienContrat::ENTETE => 'fr'];
+        return ['Authorization' => 'Bearer '.$jeton, 'Accept' => 'application/json'];
     }
 }

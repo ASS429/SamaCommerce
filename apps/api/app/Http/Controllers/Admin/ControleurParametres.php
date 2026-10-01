@@ -32,19 +32,4 @@ class ControleurParametres extends Controleur
 
         return response()->json(['message' => 'Paramètres mis à jour', 'parametres' => $parametres]);
     }
-
-    /**
-     * OBSOLÈTE (30/09/2026) — ce réglage n'a jamais rien protégé : la connexion
-     * ne le lit pas. Le panneau d'administration utilise désormais la vraie
-     * vérification en deux étapes du compte (PUT /auth/double-facteur, codes
-     * envoyés à EMAIL_ADMIN). Gardé pour l'ancienne version du site pendant
-     * la transition ; retiré avec les compatibilités (glossaire, étape 5).
-     */
-    public function basculerDoubleFacteur(Request $requete)
-    {
-        $parametres = ParametreAdmin::firstOrCreate(['admin_id' => $requete->user()->id]);
-        $parametres->update(['double_facteur_actif' => ! $parametres->double_facteur_actif]);
-
-        return response()->json(['message' => '2FA mis à jour', 'actif' => $parametres->double_facteur_actif]);
-    }
 }

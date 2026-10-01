@@ -168,19 +168,6 @@ class DoubleFacteurTest extends TestCase
         $this->assertFalse((bool) $u->fresh()->double_facteur_actif);
     }
 
-    public function test_l_ancien_contrat_n_active_plus_rien_sans_code(): void
-    {
-        // Un téléphone resté sur l'ancienne version appelle encore PUT /auth/2fa :
-        // il reçoit le code par e-mail, mais ne peut plus enfermer le compte.
-        Mail::fake();
-        [$u, $jeton] = $this->inscrireCommercant('awa@boutique.sn');
-        $this->app['auth']->forgetGuards();
-
-        $this->putJson('/api/auth/2fa', ['enabled' => true], ['Authorization' => 'Bearer '.$jeton])
-            ->assertOk()->assertJson(['twofa_enabled' => false, 'code_envoye' => true]);
-        $this->assertFalse((bool) $u->fresh()->double_facteur_actif);
-    }
-
     /** Compte administrateur connecté : [Utilisateur, jeton]. */
     private function administrateur(): array
     {

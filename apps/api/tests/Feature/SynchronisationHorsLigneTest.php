@@ -80,31 +80,4 @@ class SynchronisationHorsLigneTest extends TestCase
         $this->assertCount(1, $r['echecs']);
         $this->assertSame($mauvaise, $r['echecs'][0]['uuid_appareil']);
     }
-
-    /**
-     * Une vente faite HORS LIGNE sur l'ancienne version de l'application,
-     * envoyée après la mise à jour du serveur, doit être reçue : c'est la
-     * garantie que la francisation ne fait perdre aucune vente.
-     */
-    public function test_une_vente_hors_ligne_de_l_ancienne_application_est_recue(): void
-    {
-        [, $jeton] = $this->inscrireCommercant();
-        $p = $this->postJson('/api/produits', ['nom' => 'Pain', 'prix_vente' => 150, 'stock' => 20], $this->entetes($jeton))->assertCreated()->json();
-        $uuid = (string) Str::uuid();
-
-        // Exactement ce qu'envoie l'ancienne application : ancienne adresse,
-        // anciens noms de champs, sans l'en-tête du nouveau format.
-        $this->app['auth']->forgetGuards();
-        $r = $this->postJson('/api/sales/sync', ['sales' => [[
-            'client_uuid' => $uuid, 'product_id' => $p['id'], 'quantity' => 3, 'payment_method' => 'wave',
-            'created_at' => '2026-09-15T09:00:00Z', 'label' => '3× Pain — 450 F',
-        ]]], ['Authorization' => 'Bearer '.$jeton])->assertOk()->json();
-
-        $this->assertSame([$uuid], $r['synced']);
-        $vente = Vente::firstOrFail();
-        $this->assertSame($uuid, $vente->uuid_appareil);
-        $this->assertSame(3, $vente->quantite);
-        $this->assertSame('wave', $vente->moyen_paiement);
-        $this->assertSame(450, $vente->total);
-    }
 }

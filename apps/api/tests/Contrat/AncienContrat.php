@@ -1,35 +1,24 @@
 <?php
 
-namespace App\Compatibilite;
+namespace Tests\Contrat;
 
 /**
- * Traduction entre l'ANCIEN contrat de l'API (noms anglais) et le nouveau.
+ * ARCHIVE DE TEST — le contrat de l'API tel qu'il était AVANT la francisation
+ * (noms anglais des adresses, des champs et des valeurs).
  *
- * POURQUOI. Un téléphone qui garde l'application ouverte continue d'utiliser
- * l'ancienne version jusqu'à son prochain rechargement — parfois une journée
- * entière au comptoir. Il appelle les anciennes adresses avec les anciens noms
- * de champs, y compris pour envoyer les ventes faites HORS LIGNE. Sans cette
- * traduction, ces ventes seraient refusées.
- *
- * COMMENT. L'intergiciel CompatibiliteAncienContrat traduit l'entrée (ancien →
- * nouveau) avant le contrôleur, et la sortie (nouveau → ancien) après. Le
- * test ContratHistoriqueTest vérifie que les anciennes adresses renvoient,
- * à l'octet près, les réponses enregistrées avant la francisation.
- *
- * TEMPORAIRE. Les noms anglais ci-dessous SONT l'ancien contrat : ils ne
- * peuvent pas être traduits. Ce fichier disparaît quand plus aucun appel à
- * l'ancien format n'est reçu pendant 14 jours (cf. GET /api/sante/compatibilite
- * et le glossaire, section 3).
+ * Jusqu'au 01/10/2026, ces tables traduisaient au vol les appels des
+ * téléphones restés sur l'ancienne version (couche de compatibilité, retirée à
+ * l'étape 5 du glossaire). Elles ne servent plus qu'à ContratFrancaisTest, qui
+ * rejoue le scénario enregistré avant la francisation sur les adresses
+ * françaises : c'est la preuve durable que la traduction n'a changé aucune
+ * règle métier. Les noms anglais ci-dessous SONT l'ancien contrat.
  */
 final class AncienContrat
 {
-    /** En-tête par lequel la nouvelle application annonce qu'elle parle français. */
-    public const ENTETE = 'X-Contrat-Api';
-
     /**
      * Ancienne adresse => nouvelle adresse (sans le préfixe « api/ » ni « v1/ »).
-     * Une adresse identique dans les deux langues est PARTAGÉE : c'est alors
-     * l'en-tête ci-dessus qui dit quel format parle le client.
+     * Une adresse identique dans les deux langues était PARTAGÉE : l'en-tête
+     * X-Contrat-Api départageait alors les deux formats.
      */
     public const ADRESSES = [
         'health' => 'sante',

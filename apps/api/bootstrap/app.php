@@ -20,10 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // S5 — en-têtes de sécurité sur toutes les réponses de l'API.
         $middleware->appendToGroup('api', \App\Http\Middleware\EntetesSecurite::class);
-        // TEMPORAIRE — ancien format de l'API pour les téléphones restés sur
-        // l'ancienne version. Placé dans le groupe, donc AUTOUR des contrôles de
-        // droits : leurs réponses d'erreur sont traduites aussi.
-        $middleware->appendToGroup('api', \App\Http\Middleware\CompatibiliteAncienContrat::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -22,8 +22,11 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    // X-Contrat-Api : la nouvelle application annonce qu'elle parle le format
-    // français (cf. App\Compatibilite\AncienContrat — temporaire).
+    // X-Contrat-Api : envoyé par les versions du site d'avant le 01/10/2026
+    // (il départageait l'ancien et le nouveau format, retiré depuis) et ignoré
+    // désormais. On l'autorise encore : une version gardée en cache sur un
+    // téléphone serait sinon bloquée à sa première ouverture après la mise à
+    // jour. Peut disparaître une fois tous les appareils à jour.
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept', 'Origin', 'X-Contrat-Api'],
 
     'exposed_headers' => [],

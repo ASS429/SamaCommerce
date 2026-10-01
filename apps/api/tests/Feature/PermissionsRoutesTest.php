@@ -26,6 +26,9 @@ class PermissionsRoutesTest extends TestCase
         'api/activite',                   // journal (lecture propriétaire)
         'api/ia',                         // aide à la décision (tout employé peut consulter)
         'api/tontines',                   // module hérité, non sensible
+        // Abonnement : chacun voit le plan de la boutique (l'écran adapte ses
+        // limites) ; PAYER est réservé au propriétaire, vérifié par le contrôleur.
+        'api/abonnement',
     ];
 
     public function test_toutes_les_routes_de_donnees_exigent_une_permission(): void

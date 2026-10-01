@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -34,6 +35,17 @@ class ControleurSante extends Controleur
         // (sinon le contrôle de santé de Render échouerait alors que
         // l'application est utilisable).
         $statut = $base['ok'] ? ($ia['ok'] ? 'ok' : 'degrade') : 'hors_service';
+
+        // Réveil par cron-job.org (toutes les 10 min en journée) : on note son
+        // passage pour le tableau de bord, et on en profite pour envoyer, une
+        // fois par jour, les rappels d'échéance (pas de tâche planifiée sur
+        // l'hébergement gratuit). Envoi APRÈS la réponse : le réveil reste rapide.
+        if (stripos((string) request()->userAgent(), 'cron-job.org') !== false) {
+            Cache::put('reveil:dernier', now()->toIso8601String(), now()->addDays(2));
+        }
+        if ($base['ok'] && Cache::add('rappels-abonnement:'.now()->toDateString(), true, now()->addDay())) {
+            dispatch(fn () => \App\Services\RappelsAbonnement::envoyerCeuxDuJour())->afterResponse();
+        }
 
         return response()->json([
             'statut' => $statut,

@@ -12,15 +12,6 @@ use Illuminate\Support\Carbon;
 
 class ControleurBoutique extends Controleur
 {
-    private function limitePourPlan(string $plan): int
-    {
-        return match ($plan) {
-            'Premium' => 3,
-            'Entreprise' => 999,
-            default => 1, // Gratuit
-        };
-    }
-
     public function lister(Request $requete)
     {
         $proprietaire = $requete->user();
@@ -103,14 +94,9 @@ class ControleurBoutique extends Controleur
         ]);
 
         $proprietaire = $requete->user();
-        $limite = $this->limitePourPlan($proprietaire->plan);
-        if ($proprietaire->boutiques()->count() >= $limite) {
-            return response()->json([
-                'erreur' => 'Limite atteinte',
-                'code' => 'LIMITE_BOUTIQUES_ATTEINTE',
-                'message' => "Le plan {$proprietaire->plan} permet au maximum {$limite} boutique(s).",
-            ], 400);
-        }
+        // Limite du plan qui s'applique (essai et délai de grâce compris).
+        \App\Services\Abonnements::exigerPlace($proprietaire, 'boutiques', $proprietaire->boutiques()->count(),
+            'LIMITE_BOUTIQUES_ATTEINTE', fn (int $limite, $plan) => "Le plan {$plan->nom} permet au maximum {$limite} boutique(s).");
 
         $boutique = $proprietaire->boutiques()->create([
             'nom' => $donnees['nom'], 'telephone' => $donnees['telephone'] ?? null,

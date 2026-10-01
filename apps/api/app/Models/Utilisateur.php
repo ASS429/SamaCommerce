@@ -31,16 +31,22 @@ class Utilisateur extends Authenticatable
     protected $fillable = [
         'identifiant', 'mot_de_passe', 'nom_commerce', 'boutique_active_id', 'telephone', 'role', 'statut',
         'plan', 'statut_paiement', 'moyen_paiement', 'expiration', 'montant', 'statut_demande_premium', 'double_facteur_actif',
-        'photo', 'preferences',
+        'photo', 'preferences', 'essai_jusqu_au',
     ];
 
-    protected $hidden = ['mot_de_passe', 'jeton_souvenir'];
+    /**
+     * `essai_jusqu_au` ne voyage pas avec le compte : l'état d'abonnement
+     * complet (essai, échéance, délai de grâce, limites) est servi par
+     * /abonnement, calculé à partir des paiements validés.
+     */
+    protected $hidden = ['mot_de_passe', 'jeton_souvenir', 'essai_jusqu_au'];
 
     protected function casts(): array
     {
         return [
             'mot_de_passe' => 'hashed',
             'expiration' => 'date',
+            'essai_jusqu_au' => 'date',
             'montant' => 'decimal:2',
             'double_facteur_actif' => 'boolean',
             'preferences' => 'array',

@@ -97,6 +97,10 @@ return [
     */
     'email_admin' => env('EMAIL_ADMIN'),
 
+    // Dépôt GitHub (public) dont le tableau de bord admin lit l'état de la
+    // sauvegarde de nuit (workflow sauvegarde-base.yml).
+    'depot_github' => env('DEPOT_GITHUB', 'ASS429/SamaCommerce'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

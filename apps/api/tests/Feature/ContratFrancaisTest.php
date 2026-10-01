@@ -24,8 +24,33 @@ class ContratFrancaisTest extends TestCase
     use RefreshDatabase;
     use RejeuScenario;
 
-    /** Routes françaises hors scénario, avec la raison. */
-    private const NON_JOUEES = [];
+    /**
+     * Routes françaises hors scénario, avec la raison.
+     *
+     * Abonnements (octobre 2026) : routes nées APRÈS l'enregistrement des
+     * empreintes, donc absentes du scénario historique. Elles sont éprouvées
+     * par AbonnementCommercantTest et AbonnementAdminTest.
+     */
+    private const NON_JOUEES = [
+        'GET|HEAD api/abonnement',
+        'GET|HEAD api/abonnement/paiements',
+        'POST api/abonnement/paiements',
+        'GET|HEAD api/admin/tableau-de-bord',
+        'GET|HEAD api/admin/commercants',
+        'GET|HEAD api/admin/commercants/{id}',
+        'POST api/admin/commercants/{id}/offrir',
+        'POST api/admin/commercants/{id}/plan',
+        'GET|HEAD api/admin/paiements',
+        'GET|HEAD api/admin/paiements/{id}',
+        'POST api/admin/paiements/{id}/valider',
+        'POST api/admin/paiements/{id}/refuser',
+        'POST api/admin/paiements/{id}/annuler',
+        'GET|HEAD api/admin/plans',
+        'PUT api/admin/plans/{code}',
+        'GET|HEAD api/admin/reglages',
+        'PUT api/admin/reglages',
+        'GET|HEAD api/admin/finances',
+    ];
 
     public function test_chaque_route_francaise_repond_comme_l_ancienne(): void
     {

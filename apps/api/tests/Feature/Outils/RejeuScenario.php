@@ -49,7 +49,101 @@ trait RejeuScenario
      */
     private function corrections(): array
     {
+        /* 02/10/2026 — ABONNEMENTS REFONDUS. La demande « Premium » rendait le
+         * compte Premium à l'instant, avec le montant et l'échéance envoyés par
+         * le navigateur. Elle est remplacée par la déclaration d'un paiement
+         * (référence de transaction) que l'administrateur valide : les routes
+         * de l'ancien circuit et les statistiques calculées sur ces montants
+         * déclarés disparaissent (404), et le compte de la propriétaire reste
+         * sur son plan payé d'origine (Gratuit — l'essai Pro de 30 jours offert
+         * à l'inscription lui garde toutes ses fonctionnalités). */
+        $routeRetiree = fn (string $adresse) => [
+            'defaut' => fn (array $e) => $e['statut'] === 200,
+            'corrige' => fn (array $e) => array_replace($e, ['statut' => 404, 'reponse' => [
+                'message' => "The route {$adresse} could not be found.",
+            ]]),
+        ];
+        // Ce que la demande Premium avait écrit dans le compte de la propriétaire.
+        $sansPremium = fn (array $compte) => array_replace($compte, [
+            'plan' => 'Free', 'payment_method' => null, 'expiration' => null,
+            'amount' => '0.00', 'upgrade_status' => 'validé',
+        ]);
+        // Compte créé par l'administrateur : plus de plan choisi à la création
+        // (il se change depuis la fiche), et sa boutique principale est créée
+        // comme à l'inscription (n° 6 : les n° 1 à 5 sont déjà pris).
+        $compteCreeParAdmin = fn (array $compte) => array_replace($compte, [
+            'plan' => 'Free', 'payment_method' => null, 'upgrade_status' => 'validé', 'current_boutique_id' => 6,
+        ]);
+
         return [
+            'passage premium' => $routeRetiree('api/auth/passage-premium'),
+            'passage premium validé' => $routeRetiree('api/admin/passages-premium/2/valider'),
+            'passage premium refusé' => $routeRetiree('api/admin/passages-premium/5/refuser'),
+            'vue d\'ensemble' => $routeRetiree('api/admin/statistiques/vue-ensemble'),
+            'revenus du mois' => $routeRetiree('api/admin/statistiques/revenus'),
+            'revenus totaux' => $routeRetiree('api/admin/statistiques/revenus'),
+            'évolution des revenus' => $routeRetiree('api/admin/statistiques/revenus/evolution'),
+            'transactions' => $routeRetiree('api/admin/statistiques/transactions'),
+            'comptes' => $routeRetiree('api/admin/statistiques/comptes'),
+            'détail d\'un compte' => $routeRetiree('api/admin/statistiques/comptes/wave'),
+            'moi (employé)' => [
+                'defaut' => fn (array $e) => $e['reponse']['plan'] === 'Premium',
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => $sansPremium($e['reponse'])]),
+            ],
+            'utilisateurs' => [
+                'defaut' => fn (array $e) => collect($e['reponse'])->firstWhere('id', 2)['plan'] === 'Premium',
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => array_map(
+                    fn (array $compte) => $compte['id'] === 2 ? $sansPremium($compte) : $compte, $e['reponse'],
+                )]),
+            ],
+            // La limite vient désormais du plan qui s'applique (essai Pro), et
+            // un dépassement de plan répond 402 en désignant le plan suffisant.
+            'limite de boutiques' => [
+                'defaut' => fn (array $e) => $e['statut'] === 400 && str_contains($e['reponse']['message'], 'Premium'),
+                'corrige' => fn (array $e) => array_replace($e, ['statut' => 402, 'reponse' => [
+                    'error' => 'Limite atteinte',
+                    'code' => 'BOUTIQUE_LIMIT_REACHED',
+                    'message' => 'Le plan Pro permet au maximum 3 boutique(s).',
+                    'plan_requis' => 'entreprise',
+                    'plan_requis_nom' => 'Entreprise',
+                ]]),
+            ],
+            // Le compte créé par l'administrateur recevait le mot de passe
+            // « password » : il reçoit un mot de passe provisoire tiré au
+            // hasard, montré une fois. La réponse donne le compte complet.
+            'utilisateur créé' => [
+                'defaut' => fn (array $e) => $e['reponse']['plan'] === 'Premium' && ! array_key_exists('current_boutique_id', $e['reponse']),
+                'corrige' => fn (array $e, array $parNom) => array_replace($e, ['reponse' => $compteCreeParAdmin(array_replace(
+                    $parNom['utilisateur bloqué']['reponse'],
+                    ['status' => 'Actif', 'updated_at' => $parNom['utilisateur bloqué']['reponse']['created_at']],
+                )) + ['mot_de_passe_provisoire' => '<MOT_DE_PASSE>']]),
+            ],
+            'utilisateur bloqué' => [
+                'defaut' => fn (array $e) => $e['reponse']['plan'] === 'Premium',
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => $compteCreeParAdmin($e['reponse'])]),
+            ],
+            'utilisateur réactivé' => [
+                'defaut' => fn (array $e) => $e['reponse']['plan'] === 'Premium',
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => $compteCreeParAdmin($e['reponse'])]),
+            ],
+            // « Rappel envoyé » ne partait nulle part : la relance prépare le
+            // message WhatsApp (avec l'indicatif 221) et l'envoie par e-mail.
+            'relance' => [
+                'defaut' => fn (array $e) => $e['reponse'] === ['message' => 'Rappel envoyé à nouveau@x.sn'],
+                'corrige' => function (array $e) {
+                    $texte = 'Bonjour Nouveau, votre plan Pro SamaCommerce expire le 15 octobre 2026. '
+                        .'Pour continuer sans interruption, renouvelez-le depuis l’application, menu Mon plan (5 000 F). '
+                        .'Merci de votre confiance !';
+
+                    return array_replace($e, ['reponse' => [
+                        'message' => 'E-mail envoyé. Ouvrez WhatsApp pour envoyer aussi le message.',
+                        'texte' => $texte,
+                        'lien_whatsapp' => 'https://wa.me/221777778899?text='.rawurlencode($texte),
+                        'email_envoye' => true,
+                    ]]);
+                },
+            ],
+
             // 30/09/2026 — le double facteur s'activait d'un clic, et le code de
             // connexion n'était envoyé nulle part. L'activation envoie désormais
             // un code, et n'aboutit qu'une fois ce code saisi.
@@ -270,6 +364,8 @@ trait RejeuScenario
                     $cle === 'version' => '<VERSION>',
                     // Posée par la base (CURRENT_TIMESTAMP), hors de l'horloge figée.
                     in_array($cle, ['created_date', 'date_creation'], true) => '<HORLOGE_BASE>',
+                    // Tiré au hasard à chaque création de compte par l'administrateur.
+                    $cle === 'mot_de_passe_provisoire' => '<MOT_DE_PASSE>',
                     default => $this->normaliser($v, $secrets),
                 };
             }

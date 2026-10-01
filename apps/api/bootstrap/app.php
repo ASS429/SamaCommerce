@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\VerifierAdmin::class,
             'proprietaire' => \App\Http\Middleware\ResoudreProprietaire::class,
             'perm' => \App\Http\Middleware\VerifierPermission::class,
+            'plan' => \App\Http\Middleware\VerifierPlan::class,
         ]);
         // S5 — en-têtes de sécurité sur toutes les réponses de l'API.
         $middleware->appendToGroup('api', \App\Http\Middleware\EntetesSecurite::class);

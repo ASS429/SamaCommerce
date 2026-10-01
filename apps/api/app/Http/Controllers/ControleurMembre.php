@@ -45,6 +45,13 @@ class ControleurMembre extends Controleur
         ]);
 
         $proprietaire = $requete->user();
+        // Invitations en cours comprises : sans quoi on inviterait dix
+        // personnes avant qu'une seule n'ait accepté.
+        \App\Services\Abonnements::exigerPlace($proprietaire, 'employes',
+            MembreBoutique::where('proprietaire_id', $proprietaire->id)->where('statut', '!=', 'refusee')->count(),
+            'LIMITE_EMPLOYES_ATTEINTE', fn (int $limite, $plan) => $limite === 0
+                ? "Le plan {$plan->nom} est réservé au patron : passez au plan supérieur pour ajouter des employés."
+                : "Le plan {$plan->nom} permet au maximum {$limite} employé(s).");
         $role = $donnees['role'] ?? 'employe';
         $boutiqueId = $donnees['boutique_id'] ?? $proprietaire->boutique_active_id ?? $proprietaire->boutiquePrincipale()?->id;
 

@@ -209,7 +209,7 @@ class CloisonnementBoutiqueTest extends TestCase
 
         // Les écrans d'administration agrègent volontairement tous les
         // commerçants : le cloisonnement ne doit pas les vider.
-        $vue = $this->getJson('/api/admin/statistiques/vue-ensemble', $this->entetes($jetonAdmin))->assertOk()->json();
-        $this->assertGreaterThan(0, $vue['total_utilisateurs']);
+        $vue = $this->getJson('/api/admin/tableau-de-bord', $this->entetes($jetonAdmin))->assertOk()->json();
+        $this->assertGreaterThan(0, $vue['chiffres']['commercants']);
     }
 }

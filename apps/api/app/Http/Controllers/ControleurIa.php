@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConsommationIa;
+use App\Services\Abonnements;
 use App\Services\ClientIa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,6 +20,8 @@ class ControleurIa extends Controleur
     public function reappro(Request $requete)
     {
         $proprietaire = $requete->user();
+        // Quota de conseils IA du plan (402 au-delà). Compté après succès.
+        Abonnements::exigerConseilIa($proprietaire);
         $produits = $proprietaire->produits()
             ->get();
 
@@ -80,6 +84,8 @@ class ControleurIa extends Controleur
             return $ja <=> $jb;
         });
 
+        ConsommationIa::compter($proprietaire->id);
+
         return response()->json($resultat);
     }
 
@@ -98,6 +104,7 @@ class ControleurIa extends Controleur
         ]);
 
         $proprietaire = $requete->user();
+        Abonnements::exigerConseilIa($proprietaire);
         $joursAvantEcheance = ! empty($donnees['date_echeance'])
             ? max(0, (int) Carbon::today()->diffInDays(Carbon::parse($donnees['date_echeance']), false))
             : 15;
@@ -134,6 +141,8 @@ class ControleurIa extends Controleur
         ];
 
         $score = $this->ia->scoreCredit($profil) ?? $this->scoreHeuristique($profil);
+
+        ConsommationIa::compter($proprietaire->id);
 
         return response()->json($score);
     }

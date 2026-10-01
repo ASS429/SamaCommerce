@@ -2,9 +2,15 @@
 
 use App\Http\Controllers\Admin\ControleurParametres;
 use App\Http\Controllers\Admin\ControleurRetraits;
-use App\Http\Controllers\Admin\ControleurStatistiques as ControleurStatistiquesAdmin;
+use App\Http\Controllers\Admin\ControleurCommercants;
+use App\Http\Controllers\Admin\ControleurFinances;
+use App\Http\Controllers\Admin\ControleurPaiements;
+use App\Http\Controllers\Admin\ControleurPlans;
+use App\Http\Controllers\Admin\ControleurReglages;
+use App\Http\Controllers\Admin\ControleurTableauDeBord;
 use App\Http\Controllers\Admin\ControleurTransferts;
 use App\Http\Controllers\Admin\ControleurUtilisateurs;
+use App\Http\Controllers\ControleurAbonnement;
 use App\Http\Controllers\ControleurActivite;
 use App\Http\Controllers\ControleurAuthentification;
 use App\Http\Controllers\ControleurBoutique;
@@ -65,18 +71,27 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::put('/auth/profil', [ControleurAuthentification::class, 'modifierProfil']);
     // Réglages d'écran du compte connecté (sections masquées, impression auto).
     Route::put('/auth/preferences', [ControleurAuthentification::class, 'modifierPreferences']);
-    Route::put('/auth/passage-premium', [ControleurAuthentification::class, 'demanderPassagePremium']);
     Route::put('/auth/double-facteur', [ControleurAuthentification::class, 'basculerDoubleFacteur']);
     // Second temps de l'activation (30/09/2026) : le code reçu par e-mail.
     // Limité : 6 chiffres ne doivent pas pouvoir se deviner par essais.
     Route::post('/auth/double-facteur/confirmer', [ControleurAuthentification::class, 'confirmerDoubleFacteur'])
         ->middleware('throttle:10,1');
 
+    // Abonnement : état, plans, où payer ; déclaration d'un paiement (vérifié
+    // ensuite par l'administrateur — rien ne s'active avant).
+    Route::get('/abonnement', [ControleurAbonnement::class, 'etat']);
+    Route::get('/abonnement/paiements', [ControleurAbonnement::class, 'historique']);
+    Route::post('/abonnement/paiements', [ControleurAbonnement::class, 'declarer'])->middleware('throttle:10,1');
+
+    /* Fonctionnalités réservées à certains plans : 'plan:x' (tout est réservé)
+       ou 'plan:x,ecriture' (la LECTURE reste permise : un commerçant repassé au
+       plan Gratuit retrouve toujours ses données). Cf. VerifierPlan. */
+
     // Boutiques (multi-boutique)
     Route::get('/boutiques', [ControleurBoutique::class, 'lister']);
     // Vue consolidée de TOUTES les boutiques (déclarée avant /{id} pour ne pas
     // être capturée par le paramètre de route).
-    Route::get('/boutiques/tableau-de-bord', [ControleurBoutique::class, 'tableauDeBord']);
+    Route::get('/boutiques/tableau-de-bord', [ControleurBoutique::class, 'tableauDeBord'])->middleware('plan:tableau_boutiques');
     Route::post('/boutiques', [ControleurBoutique::class, 'creer']);
     Route::post('/boutiques/{id}/activer', [ControleurBoutique::class, 'activer']);
     Route::get('/boutiques/{id}/statistiques', [ControleurBoutique::class, 'statistiques']);
@@ -84,7 +99,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::delete('/boutiques/{id}', [ControleurBoutique::class, 'supprimer']);
 
     // Journal d'activité du propriétaire
-    Route::get('/activite', [ControleurActivite::class, 'lister']);
+    Route::get('/activite', [ControleurActivite::class, 'lister'])->middleware('plan:journal_activite');
 
     // IA — aide à la décision (Module A réappro, Module B score de crédit)
     // S8 — limite plus stricte (micro-service ML coûteux).
@@ -148,7 +163,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     });
 
     // Commandes (réappro fournisseurs)
-    Route::middleware('perm:commandes')->group(function () {
+    Route::middleware(['perm:commandes', 'plan:fournisseurs_commandes,ecriture'])->group(function () {
         Route::get('/commandes', [ControleurCommande::class, 'lister']);
         Route::get('/commandes/{id}', [ControleurCommande::class, 'afficher']);
         Route::post('/commandes', [ControleurCommande::class, 'creer']);
@@ -158,7 +173,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     });
 
     // Livraisons (suivi des réappros)
-    Route::middleware('perm:livraisons')->group(function () {
+    Route::middleware(['perm:livraisons', 'plan:livraisons,ecriture'])->group(function () {
         Route::get('/livraisons', [ControleurLivraison::class, 'lister']);
         Route::get('/livraisons/{id}', [ControleurLivraison::class, 'afficher']);
         Route::post('/livraisons', [ControleurLivraison::class, 'creer']);
@@ -167,7 +182,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     });
 
     // Retours
-    Route::middleware('perm:credits')->group(function () {
+    Route::middleware(['perm:credits', 'plan:inventaire_retours,ecriture'])->group(function () {
         Route::get('/retours', [ControleurRetour::class, 'lister']);
         Route::get('/retours/statistiques', [ControleurRetour::class, 'statistiques']);
         Route::post('/retours', [ControleurRetour::class, 'creer']);
@@ -182,7 +197,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     });
 
     // Fournisseurs
-    Route::middleware('perm:fournisseurs')->group(function () {
+    Route::middleware(['perm:fournisseurs', 'plan:fournisseurs_commandes,ecriture'])->group(function () {
         Route::get('/fournisseurs', [ControleurFournisseur::class, 'lister']);
         Route::get('/fournisseurs/{id}/message-reappro', [ControleurFournisseur::class, 'messageReappro']);
         Route::post('/fournisseurs', [ControleurFournisseur::class, 'creer']);
@@ -197,39 +212,55 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::get('/statistiques/resume-jour', [ControleurStatistiques::class, 'resumeJour'])->middleware('perm:stock|vente');
 
     Route::prefix('statistiques')->middleware('perm:rapports')->group(function () {
-        Route::get('/ventes-par-categorie', [ControleurStatistiques::class, 'ventesParCategorie']);
+        // Rapports du jour et de la semaine : inclus dans tous les plans.
         Route::get('/ventes-par-jour', [ControleurStatistiques::class, 'ventesParJour']);
         Route::get('/paiements', [ControleurStatistiques::class, 'paiements']);
-        Route::get('/meilleurs-produits', [ControleurStatistiques::class, 'meilleursProduits']);
         Route::get('/stock-faible', [ControleurStatistiques::class, 'stockFaible']);
-        Route::get('/marge-categorie', [ControleurStatistiques::class, 'margeParCategorie']);
-        Route::get('/rotation-stock', [ControleurStatistiques::class, 'rotationStock']);
-        Route::get('/meilleurs-clients', [ControleurStatistiques::class, 'meilleursClients']);
-        Route::get('/marchandage', [ControleurStatistiques::class, 'marchandage']);
+        // Rapports complets : à partir du plan Essentiel.
+        Route::middleware('plan:rapports_complets')->group(function () {
+            Route::get('/ventes-par-categorie', [ControleurStatistiques::class, 'ventesParCategorie']);
+            Route::get('/meilleurs-produits', [ControleurStatistiques::class, 'meilleursProduits']);
+            Route::get('/marge-categorie', [ControleurStatistiques::class, 'margeParCategorie']);
+            Route::get('/rotation-stock', [ControleurStatistiques::class, 'rotationStock']);
+            Route::get('/meilleurs-clients', [ControleurStatistiques::class, 'meilleursClients']);
+            Route::get('/marchandage', [ControleurStatistiques::class, 'marchandage']);
+        });
     });
 });
 
 // --- Administration (jeton Sanctum + rôle admin) ---
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    // Utilisateurs / abonnés
+    Route::get('/tableau-de-bord', [ControleurTableauDeBord::class, 'afficher']);
+
+    // Comptes (création, blocage, relance)
     Route::get('/utilisateurs', [ControleurUtilisateurs::class, 'lister']);
     Route::post('/utilisateurs', [ControleurUtilisateurs::class, 'creer']);
     Route::put('/utilisateurs/{id}/bloquer', [ControleurUtilisateurs::class, 'bloquer']);
     Route::put('/utilisateurs/{id}/activer', [ControleurUtilisateurs::class, 'activer']);
     Route::delete('/utilisateurs/{id}', [ControleurUtilisateurs::class, 'supprimer']);
     Route::post('/utilisateurs/{id}/relancer', [ControleurUtilisateurs::class, 'relancer']);
-    Route::put('/passages-premium/{id}/valider', [ControleurUtilisateurs::class, 'validerPassagePremium']);
-    Route::put('/passages-premium/{id}/refuser', [ControleurUtilisateurs::class, 'refuserPassagePremium']);
 
-    // Statistiques de l'administration
-    Route::prefix('statistiques')->group(function () {
-        Route::get('/vue-ensemble', [ControleurStatistiquesAdmin::class, 'vueEnsemble']);
-        Route::get('/revenus/evolution', [ControleurStatistiquesAdmin::class, 'evolution']);
-        Route::get('/revenus', [ControleurStatistiquesAdmin::class, 'revenus']);
-        Route::get('/transactions', [ControleurStatistiquesAdmin::class, 'transactions']);
-        Route::get('/comptes/{moyen}', [ControleurStatistiquesAdmin::class, 'detailCompte']);
-        Route::get('/comptes', [ControleurStatistiquesAdmin::class, 'comptes']);
-    });
+    // Commerçants : plan qui s'applique, fiche, gestes (jours offerts, plan)
+    Route::get('/commercants', [ControleurCommercants::class, 'lister']);
+    Route::get('/commercants/{id}', [ControleurCommercants::class, 'afficher']);
+    Route::post('/commercants/{id}/offrir', [ControleurCommercants::class, 'offrir']);
+    Route::post('/commercants/{id}/plan', [ControleurCommercants::class, 'changerPlan']);
+
+    // Paiements d'abonnement à vérifier (remplacent les « passages Premium »)
+    Route::get('/paiements', [ControleurPaiements::class, 'lister']);
+    Route::get('/paiements/{id}', [ControleurPaiements::class, 'afficher']);
+    Route::post('/paiements/{id}/valider', [ControleurPaiements::class, 'valider']);
+    Route::post('/paiements/{id}/refuser', [ControleurPaiements::class, 'refuser']);
+    Route::post('/paiements/{id}/annuler', [ControleurPaiements::class, 'annuler']);
+
+    // Catalogue des plans et règles d'abonnement
+    Route::get('/plans', [ControleurPlans::class, 'lister']);
+    Route::put('/plans/{code}', [ControleurPlans::class, 'modifier']);
+    Route::get('/reglages', [ControleurReglages::class, 'afficher']);
+    Route::put('/reglages', [ControleurReglages::class, 'modifier']);
+
+    // Finances : soldes par compte, mouvements du mois
+    Route::get('/finances', [ControleurFinances::class, 'afficher']);
 
     // Retraits / transferts / paramètres
     Route::get('/retraits', [ControleurRetraits::class, 'lister']);

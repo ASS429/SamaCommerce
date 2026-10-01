@@ -83,6 +83,10 @@ class ControleurAuthentification extends Controleur
             'telephone' => ['nullable', 'string', 'max:32'],
         ]);
 
+        // Essai offert : le plan d'essai (Pro par défaut) s'applique pendant la
+        // durée réglée par l'administrateur. Le plan PAYÉ reste « Gratuit ».
+        $dureeEssai = \App\Models\ReglagesAbonnement::courants()->duree_essai_jours;
+
         $utilisateur = Utilisateur::create([
             'identifiant' => $donnees['identifiant'],
             'mot_de_passe' => Hash::make($donnees['mot_de_passe']),
@@ -93,6 +97,7 @@ class ControleurAuthentification extends Controleur
             'plan' => 'Gratuit',
             'statut_paiement' => 'À jour',
             'statut_demande_premium' => 'validé',
+            'essai_jusqu_au' => $dureeEssai > 0 ? Carbon::today()->addDays($dureeEssai) : null,
         ]);
 
         // Boutique principale automatique
@@ -423,30 +428,6 @@ class ControleurAuthentification extends Controleur
         }
 
         return response()->json($utilisateur->fresh());
-    }
-
-    /** Demande de passage à Premium (5000 FCFA, expiration +1 mois). */
-    public function demanderPassagePremium(Request $requete)
-    {
-        $donnees = $requete->validate([
-            'telephone' => ['required', 'string', 'max:32'],
-            'moyen_paiement' => ['required', 'string', 'max:32'],
-            'montant' => ['required', 'numeric'],
-            'expiration' => ['required', 'date'],
-        ]);
-
-        $utilisateur = $requete->user();
-        $utilisateur->update([
-            'telephone' => $donnees['telephone'],
-            'plan' => 'Premium',
-            'moyen_paiement' => $donnees['moyen_paiement'],
-            'montant' => $donnees['montant'],
-            'expiration' => Carbon::parse($donnees['expiration']),
-            'statut_demande_premium' => 'en attente',
-            'statut_paiement' => 'À jour',
-        ]);
-
-        return response()->json(['message' => 'Demande d’upgrade enregistrée', 'utilisateur' => $utilisateur]);
     }
 
     /** Génère un code de réinitialisation (6 chiffres), envoyé par e-mail. */

@@ -32,6 +32,7 @@ class ControleurProduit extends Controleur
     public function creer(Request $requete)
     {
         $donnees = $this->valider($requete);
+        $this->exigerPlaceProduit($requete);
 
         $produit = $requete->user()->produits()->create([
             'nom' => $donnees['nom'],
@@ -87,10 +88,26 @@ class ControleurProduit extends Controleur
     public function restaurer(Request $requete, int $id)
     {
         $produit = $requete->user()->produits()->onlyTrashed()->findOrFail($id);
+        $this->exigerPlaceProduit($requete);
         $produit->restore();
         \App\Models\JournalActivite::consigner($requete, 'produit.restaure', $produit->nom);
 
         return new RessourceProduit($produit->load('conditionnements'));
+    }
+
+    /**
+     * Limite de produits du plan, comptée sur TOUTES les boutiques du
+     * commerçant (le cloisonnement par boutique est levé sciemment). Les
+     * produits existants restent vendables : seul l'ajout est bloqué.
+     */
+    private function exigerPlaceProduit(Request $requete): void
+    {
+        $proprietaire = $requete->user();
+        $nombre = Produit::withoutGlobalScope(\App\Models\Scopes\CloisonnementBoutique::class)
+            ->where('utilisateur_id', $proprietaire->id)->count();
+
+        \App\Services\Abonnements::exigerPlace($proprietaire, 'produits', $nombre, 'LIMITE_PRODUITS_ATTEINTE',
+            fn (int $limite, $plan) => "Le plan {$plan->nom} permet {$limite} produits. Vos produits restent vendables ; passez au plan supérieur pour en ajouter.");
     }
 
     private function valider(Request $requete, bool $partiel = false): array

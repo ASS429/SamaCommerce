@@ -65,6 +65,7 @@ Chaque exception a une raison vérifiable. Aucune n'est une facilité.
 | Adresses publiques | `samacommerce-api.onrender.com`, `samacommerce-web…` | Les renommer casserait les favoris et les applications déjà installées. |
 | Historique Git | messages des anciens commits | L'historique d'un dépôt public ne se réécrit pas. |
 | Sigles admis en français | `id`, `uuid`, `url`, `api`, `ia`, `pdf`, `pin`, `kpi`, `ok`, `email` | Employés tels quels en français. |
+| Termes de Git | `commit` (clé de `/api/sante` : le commit en ligne) | Le mot de Git, employé tel quel en français ; les vérifications de mise en ligne lisent cette clé. *Ajouté le 02/10/2026.* |
 
 ### Exceptions temporaires, avec date de retrait
 

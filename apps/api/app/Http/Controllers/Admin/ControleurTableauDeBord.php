@@ -24,14 +24,14 @@ class ControleurTableauDeBord extends Controleur
         $comptes = Utilisateur::where('role', '!=', 'admin')->whereNotIn('id', $employes)->orderByDesc('cree_le')->orderByDesc('id')->get();
 
         $repartition = ['gratuit' => 0, 'essai' => 0] + collect(Plan::catalogue())->filter->estPayant()->map(fn () => 0)->all();
-        $mrr = 0;
+        $revenuMensuel = 0;
         $expirent = 0;
         $etats = [];
         foreach ($comptes as $compte) {
             $etat = $etats[$compte->id] = Abonnements::etat($compte, $aujourdhui);
             if (in_array($etat->source, ['paye', 'grace'], true)) {
                 $repartition[$etat->planPaye->code] = ($repartition[$etat->planPaye->code] ?? 0) + 1;
-                $mrr += $this->valeurMensuelle($compte->id, $aujourdhui);
+                $revenuMensuel += $this->valeurMensuelle($compte->id, $aujourdhui);
             } elseif ($etat->source === 'essai') {
                 $repartition['essai']++;
             } else {
@@ -66,7 +66,7 @@ class ControleurTableauDeBord extends Controleur
 
         return response()->json([
             'chiffres' => [
-                'revenu_mensuel_recurrent' => (int) round($mrr),
+                'revenu_mensuel_recurrent' => (int) round($revenuMensuel),
                 'abonnes_payants' => array_sum(array_diff_key($repartition, ['gratuit' => 0, 'essai' => 0])),
                 'encaisse_mois' => (int) (clone $valides)->where('decide_le', '>=', $debutMois)->sum('montant_declare'),
                 'paiements_valides_mois' => (clone $valides)->where('decide_le', '>=', $debutMois)->count(),

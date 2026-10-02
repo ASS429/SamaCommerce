@@ -119,20 +119,20 @@ export function atoutsDuPlan(plan: PlanPublic, precedent?: PlanPublic | null): s
   const atouts: string[] = []
   if (precedent && precedent.code !== 'gratuit') atouts.push(`Tout le plan ${precedent.nom}`)
   const L = plan.limites
-  const change = (cle: CleLimite) => !precedent || L[cle] !== precedent.limites[cle]
+  const differe = (cle: CleLimite) => !precedent || L[cle] !== precedent.limites[cle]
 
-  if (change('produits')) atouts.push(L.produits === null ? 'Produits illimités' : `Jusqu’à ${nombre(L.produits)} produits`)
-  if (change('employes')) {
+  if (differe('produits')) atouts.push(L.produits === null ? 'Produits illimités' : `Jusqu’à ${nombre(L.produits)} produits`)
+  if (differe('employes')) {
     atouts.push(L.employes === null ? 'Employés illimités, chacun avec ses droits'
       : L.employes === 0 ? 'Vous seul, sans employé'
         : `${L.employes} employé${L.employes > 1 ? 's' : ''} en plus de vous`)
   }
-  if (change('boutiques')) {
+  if (differe('boutiques')) {
     atouts.push(L.boutiques === null ? 'Boutiques illimitées'
       : L.boutiques === 1 ? 'Une boutique'
         : `Jusqu’à ${L.boutiques} boutiques${plan.fonctionnalites.includes('tableau_boutiques') ? ', suivies ensemble' : ''}`)
   }
-  if (change('ia')) {
+  if (differe('ia')) {
     atouts.push(L.ia === null ? 'Conseils de l’IA sans limite : quoi racheter, à qui faire crédit'
       : `${nombre(L.ia)} conseils de l’IA par mois`)
   }

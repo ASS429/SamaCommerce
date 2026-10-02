@@ -182,8 +182,8 @@ return new class extends Migration
 
         DB::table('utilisateurs')->where('role', '!=', 'admin')->update(['essai_jusqu_au' => $finEssai]);
 
-        $premiums = DB::table('utilisateurs')->where('plan', 'Premium')->where('role', '!=', 'admin')->get();
-        foreach ($premiums as $compte) {
+        $comptesPremium = DB::table('utilisateurs')->where('plan', 'Premium')->where('role', '!=', 'admin')->get();
+        foreach ($comptesPremium as $compte) {
             $echeance = $compte->expiration ? Carbon::parse($compte->expiration) : null;
             $enCours = $compte->statut_demande_premium === 'validé' && $echeance && $echeance->gte($aujourdhui);
 

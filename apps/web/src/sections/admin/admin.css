@@ -63,9 +63,9 @@ html.sombre .adm {
 .adm-compte-avatar { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--adm-rose); color: #fff; font-weight: 700; }
 .adm-compte-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; color: var(--adm-colonne-doux); }
 .adm-compte-texte strong { font-size: 14px; color: #fff; }
-.adm-compte-2fa { display: flex; align-items: center; gap: 6px; }
-.adm-compte-2fa--actif { color: #A7F3D0; }
-.adm-compte-2fa--inactif { color: #FDE68A; }
+.adm-compte-double-facteur { display: flex; align-items: center; gap: 6px; }
+.adm-compte-double-facteur--actif { color: #A7F3D0; }
+.adm-compte-double-facteur--inactif { color: #FDE68A; }
 .adm-sortie { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid #4B4590; border-radius: 10px; background: transparent; color: #E9E5FF; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* ─── Barre du haut et du bas (téléphone) ─── */

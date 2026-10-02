@@ -98,7 +98,7 @@ export default function ApplicationAdmin({ utilisateur, surDeconnexion }: { util
               <span>{utilisateur?.identifiant}</span>
             </span>
           </div>
-          <span className={`adm-compte-2fa adm-compte-2fa--${doubleFacteur ? 'actif' : 'inactif'}`}>
+          <span className={`adm-compte-double-facteur adm-compte-double-facteur--${doubleFacteur ? 'actif' : 'inactif'}`}>
             {doubleFacteur ? <ShieldCheck size={15} aria-hidden="true" /> : <ShieldAlert size={15} aria-hidden="true" />}
             {doubleFacteur ? 'Vérification en 2 étapes' : 'Sans vérification en 2 étapes'}
           </span>

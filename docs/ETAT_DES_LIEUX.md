@@ -36,7 +36,8 @@ plupart des choix d'exploitation ci-dessous.
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
 | IA | Modèles entraînés servis (`methode: "modele"`) |
 | Abonnements et administration | En ligne depuis le 02/10/2026 (09h19 UTC) : migration appliquée, 34 contrôles verts en production, parcours « Mon plan » vérifié dans un navigateur (voir 3.6) |
-| Tests | PHPUnit 124/124 · Vitest 154/154 · pytest 10/10 |
+| Dettes techniques soldées | En ligne depuis le 02/10/2026 (14h30 UTC) : 23 contrôles verts en production, parcours dans un navigateur (ordinateur, téléphone, compte de démonstration) sans erreur (voir 3.7) |
+| Tests | PHPUnit 135/135 · Vitest 157/157 · pytest 10/10 |
 | Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions et retrait des passerelles de transition le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
@@ -162,7 +163,7 @@ remises à zéro) ; tout le reste de la suite passe sur PostgreSQL.
 
 ---
 
-### 3.7 — Dettes techniques soldées *(02/10/2026, branche `dettes-techniques`)*
+### 3.7 — Dettes techniques soldées *(en ligne depuis le 02/10/2026)*
 
 Les trois dettes de la section 4 qui touchaient au code sont réglées, avec
 d'autres défauts trouvés en chemin :
@@ -204,6 +205,22 @@ d'autres défauts trouvés en chemin :
   `adm-compte-2fa` → `adm-compte-double-facteur`, `$mrr` → `$revenuMensuel`).
 
 Tests : PHPUnit 134/134, Vitest 157/157 (dont 8 sur l'empreinte CSP).
+
+**Mise en ligne du 02/10/2026** : sauvegarde chiffrée lancée à la main juste
+avant (réussie, 206 Ko), puis fusion dans `main` (0ae75d5), en ligne à 14h30
+UTC. Vérifié en production : nouvelles adresses protégées et justes, compte de
+démonstration sans numéro de paiement et déclaration refusée (403), jeton
+inutilisable après « Quitter », remise à zéro de la démonstration faite au
+premier contrôle de santé (40 sessions fermées), site et styles traduits
+livrés ; puis parcours dans un navigateur sur le site en ligne, sur ordinateur
+et sur téléphone, sans erreur.
+
+**Défaut trouvé pendant cette vérification, puis corrigé** : toutes les ventes de
+la démonstration étaient datées du jour de la remise à zéro. `cree_le` n'est
+pas remplissable, et `Vente::create` l'ignorait sans rien dire (défaut d'origine
+de l'amorceur, devenu visible chaque jour avec la remise à zéro). L'amorceur
+date désormais ses ventes sur les 30 derniers jours ; effet à la remise à zéro
+suivante.
 
 ---
 

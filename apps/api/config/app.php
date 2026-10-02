@@ -39,7 +39,11 @@ return [
     |
     */
 
-    'version' => env('VERSION_APPLICATION', '3.2.0'),
+    'version' => env('VERSION_APPLICATION', '3.3.0'),
+
+    // Commit déployé, fourni par Render à chaque mise en ligne : il dit quel
+    // code tourne vraiment, alors que la version ci-dessus ne change qu'à la main.
+    'commit' => substr((string) env('RENDER_GIT_COMMIT', ''), 0, 7) ?: null,
 
     /*
     |--------------------------------------------------------------------------

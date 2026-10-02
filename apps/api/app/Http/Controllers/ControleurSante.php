@@ -50,6 +50,7 @@ class ControleurSante extends Controleur
         return response()->json([
             'statut' => $statut,
             'version' => (string) config('app.version', '3.0.0'),
+        ] + array_filter(['commit' => config('app.commit')]) + [ // en ligne seulement
             'cache_statistiques' => (bool) config('app.cache_statistiques', false), // aide au diagnostic
             'heure' => now()->toIso8601String(),
             'services' => [

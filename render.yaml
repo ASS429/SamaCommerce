@@ -115,6 +115,19 @@ services:
         # silencieusement désactivée, le repli heuristique masquant la panne.
         value: https://samacommerce-ia.onrender.com
 
+      # ─ Assistant vocal (bêta) : oreille et voix chez Soynade, cerveau chez
+      #   Google (Gemini). Sans les deux clés, le micro ne s'affiche pour
+      #   personne. COMPTES_ASSISTANT_VOCAL liste les identifiants qui y ont
+      #   droit (séparés par des virgules ; « * » = tout le monde). ─
+      - key: CLE_API_SOYNADE
+        sync: false
+      - key: CLE_API_GEMINI
+        sync: false          # clé d'un projet Google AI Studio AVEC facturation
+      - key: COMPTES_ASSISTANT_VOCAL
+        sync: false
+      - key: QUOTA_ASSISTANT_VOCAL
+        value: "40"          # questions par jour et par commerçant (chacune est facturée)
+
   # ─── Micro-service IA (Modules A & B) ────────────────────────────────────
   # Prévisions de réapprovisionnement et score de crédit. L'API Laravel l'appelle
   # avec un court délai d'attente et RETOMBE sur ses heuristiques PHP s'il ne

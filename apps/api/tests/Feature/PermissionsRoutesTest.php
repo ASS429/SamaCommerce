@@ -29,6 +29,10 @@ class PermissionsRoutesTest extends TestCase
         // Abonnement : chacun voit le plan de la boutique (l'écran adapte ses
         // limites) ; PAYER est réservé au propriétaire, vérifié par le contrôleur.
         'api/abonnement',
+        // Assistant vocal : ouvert à tout utilisateur connecté, mais chacun de
+        // ses outils vérifie la permission de l'employé, comme l'écran qu'il
+        // remplace (OutilsAssistant::autorise, éprouvé par AssistantVocalTest).
+        'api/assistant-vocal',
     ];
 
     public function test_toutes_les_routes_de_donnees_exigent_une_permission(): void

@@ -30,7 +30,7 @@ export default function Retours() {
 
   return (
     <>
-      <div className="page-entete"><h2>↩️ Retours</h2><button className="bouton-principal" onClick={() => definirFenetreOuverte(true)}>+ Nouveau retour</button></div>
+      <div className="page-entete"><h2>↩️ Retours</h2><button className="bouton-principal" data-guide="retours-nouveau" onClick={() => definirFenetreOuverte(true)}>+ Nouveau retour</button></div>
 
       {/* Les compteurs restent visibles pendant le chargement : un cadre vide
           donne l'impression que l'application a planté. */}

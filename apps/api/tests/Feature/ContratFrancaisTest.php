@@ -57,6 +57,10 @@ class ContratFrancaisTest extends TestCase
         'GET|HEAD api/ventes/quantites-par-produit',
         'GET|HEAD api/statistiques/indicateurs',
         'GET|HEAD api/retours/ventes-retournables',
+        // Assistant vocal (bêta, octobre 2026), éprouvé par AssistantVocalTest.
+        'GET|HEAD api/assistant-vocal/etat',
+        'POST api/assistant-vocal/questions',
+        'POST api/assistant-vocal/questions/{id}/voix',
     ];
 
     public function test_chaque_route_francaise_repond_comme_l_ancienne(): void

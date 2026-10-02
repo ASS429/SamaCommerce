@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ControleurTransferts;
 use App\Http\Controllers\Admin\ControleurUtilisateurs;
 use App\Http\Controllers\ControleurAbonnement;
 use App\Http\Controllers\ControleurActivite;
+use App\Http\Controllers\ControleurAssistantVocal;
 use App\Http\Controllers\ControleurAuthentification;
 use App\Http\Controllers\ControleurBoutique;
 use App\Http\Controllers\ControleurCaisse;
@@ -110,6 +111,14 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
         Route::get('/ia/reappro', [ControleurIa::class, 'reappro']);
         Route::post('/ia/score-credit', [ControleurIa::class, 'scoreCredit']);
     });
+
+    // Assistant vocal (bêta) : questions en wolof ou en français, à la voix ou
+    // par écrit. Il lit et guide, il n'écrit rien. Débit bridé : chaque
+    // question est facturée (transcription, voix).
+    Route::get('/assistant-vocal/etat', [ControleurAssistantVocal::class, 'etat']);
+    Route::post('/assistant-vocal/questions', [ControleurAssistantVocal::class, 'poser'])->middleware('throttle:assistant');
+    Route::post('/assistant-vocal/questions/{id}/voix', [ControleurAssistantVocal::class, 'voix'])
+        ->whereNumber('id')->middleware('throttle:assistant');
 
     // Équipe / membres
     Route::get('/membres', [ControleurMembre::class, 'lister']);

@@ -796,10 +796,17 @@ html.sombre .fa-whatsapp { background: #0d3b22; color: #6EE7B7; }
   --vert-profond: #047857;   /* vert lisible en petit sur fond blanc (5,5:1) */
   --or: #B45309;
   /* Échelle d'empilement nommée : plus de 999 ni de 9999 posés au hasard. */
-  --z-collant: 10; --z-nav: 40; --z-calque: 50; --z-panneau: 60; --z-bulle: 900;
+  --z-collant: 10; --z-nav: 40; --z-micro: 45; --z-calque: 50; --z-panneau: 60; --z-bulle: 900;
+  /* Assistant vocal : micro vert comme celui de WhatsApp (blanc dessus : 3,7:1),
+     bulle « vous » vert d'eau comme les messages envoyés. */
+  --vert-vocal: #0D9488; --vert-vocal-fonce: #0F766E;
+  --bulle-vous: #D9F2E6; --bulle-vous-meta: #3F5F55;
+  --infobulle: #1E1B4B;
 }
 html.sombre {
   --vert-profond: #34D399;
+  --bulle-vous: #123B33; --bulle-vous-meta: #9CCFBF;
+  --infobulle: #2C2840;
   --or: #FBBF24;
   --voile-sombre: rgba(0,0,0,.3);
 }

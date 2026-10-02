@@ -30,7 +30,7 @@ export default function Clients() {
 
   return (
     <>
-      <div className="page-entete"><h2>👤 Clients</h2><button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
+      <div className="page-entete"><h2>👤 Clients</h2><button className="bouton-principal" data-guide="clients-ajouter" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
       <input className="barre-recherche" placeholder="🔍 Rechercher un client..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
       {chargement && <ListeSquelette nombre={4} />}

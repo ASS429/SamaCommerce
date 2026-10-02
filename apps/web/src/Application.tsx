@@ -40,6 +40,7 @@ import Equipe from './sections/Equipe'
 import Profil from './sections/Profil'
 import IaReappro from './sections/IaReappro'
 import Logo from './composants/Logo'
+import AssistantVocal from './composants/AssistantVocal'
 
 const TITRES: Record<Ecran, string> = {
   accueil: traduire('titre.accueil'), 'toutes-boutiques': 'Toutes mes boutiques', vente: traduire('titre.vente'), stock: traduire('titre.stock'),
@@ -389,6 +390,7 @@ export default function Application() {
           </div>
           <div className="bureau-contenu"><div className="bureau-contenu-interieur">{section}</div></div>
         </div>
+        <AssistantVocal bureau ecran={ecran} surNavigation={aller} />
         {fenetres}
       </div>
     )
@@ -532,6 +534,7 @@ export default function Application() {
       )}
 
       {voletPlusOuvert && <VoletPlus peutVoir={(e) => estVisible(utilisateur, e)} surFermeture={() => definirVoletPlusOuvert(false)} surNavigation={(e) => { definirEcran(e); definirVoletPlusOuvert(false) }} />}
+      <AssistantVocal bureau={false} ecran={ecran} surNavigation={aller} />
       {fenetres}
     </div>
   )

@@ -121,7 +121,7 @@ export default function Stock() {
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="bouton-pdf" style={{ background: '#ECFDF5', color: 'var(--vert)' }} onClick={exporterExcel} disabled={filtres.length === 0}>📊 Excel</button>
           <button className="bouton-pdf" onClick={exporterListePdf} disabled={filtres.length === 0}>📄 PDF</button>
-          <button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button>
+          <button className="bouton-principal" data-guide="stock-ajouter" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button>
         </div>
       </div>
 

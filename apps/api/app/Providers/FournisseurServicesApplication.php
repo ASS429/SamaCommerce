@@ -57,6 +57,12 @@ class FournisseurServicesApplication extends ServiceProvider
         RateLimiter::for('ia', fn (Request $requete) => Limit::perMinute(20)
             ->by($requete->user()?->id ?: $requete->ip()));
 
+        // Assistant vocal : chaque question est facturée (oreille, voix) et
+        // compte double (la question, puis sa voix) : 20 / minute suffisent à
+        // une vraie conversation, pas à une boucle.
+        RateLimiter::for('assistant', fn (Request $requete) => Limit::perMinute(20)
+            ->by($requete->user()?->id ?: $requete->ip()));
+
         // Écritures sensibles (POST/PUT/DELETE) : 40 / minute / utilisateur.
         RateLimiter::for('ecritures', fn (Request $requete) => Limit::perMinute(40)
             ->by($requete->user()?->id ?: $requete->ip()));

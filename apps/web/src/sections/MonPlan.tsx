@@ -7,7 +7,7 @@
  * jamais une date d'échéance que le serveur n'a pas encore calculée. */
 
 import { useId, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Check, CircleCheck, Clock, Copy, MessageCircle, Send, ShieldCheck, TriangleAlert, Upload, X } from 'lucide-react'
+import { Check, CircleCheck, Clock, Copy, Info, MessageCircle, Send, ShieldCheck, TriangleAlert, Upload, X } from 'lucide-react'
 import { Abonnement, fcfa, type CleLimite, type CodePlan, type DonneesAbonnement, type EtatAbonnement, type PaiementAbonnement, type PlanPublic, type UtilisationPlan, type Utilisateur } from '../outils/api'
 import { useAbonnement, useRafraichirAbonnement } from '../outils/requetes'
 import { LIBELLES_LIMITES, atoutsDuPlan, dateLongue, equivalentMensuel, montant, presDeLaLimite, prixPeriode, quand, texteEtat, texteUtilisation, type Periode } from '../outils/abonnement'
@@ -42,7 +42,7 @@ function ApercuPlans({ donnees, periode, surPeriode, surChoisir }: {
   surPeriode: (p: Periode) => void
   surChoisir: (plan: PlanPublic) => void
 }) {
-  const { etat, plans, en_attente, dernier_refus, paiement, peut_payer, utilisation } = donnees
+  const { etat, plans, en_attente, dernier_refus, paiement, peut_payer, utilisation, demonstration } = donnees
   const bandeau = texteEtat(etat, plans)
   const parCode = (code: CodePlan) => plans.find((p) => p.code === code)
   const precedent = (plan: PlanPublic) => [...plans].filter((p) => p.ordre < plan.ordre).sort((a, b) => b.ordre - a.ordre)[0]
@@ -51,6 +51,16 @@ function ApercuPlans({ donnees, periode, surPeriode, surChoisir }: {
 
   return (
     <div className="plan-page">
+      {/* Sur ordinateur seulement : titre et durée sur une ligne (sur téléphone,
+          le titre est dans la barre du haut et la durée juste au-dessus des offres). */}
+      <div className="plan-titre-bureau">
+        <div className="plan-titre-bloc">
+          <h1 className="plan-titre">Mon plan</h1>
+          <p className="plan-titre-detail">Choisissez le plan qui suit votre boutique. Vos données restent à vous, quel que soit le plan.</p>
+        </div>
+        <BasculePeriode periode={periode} moisOfferts={paiement.mois_offerts_annuel} surChoix={surPeriode} />
+      </div>
+
       <section className={`plan-bandeau plan-bandeau--${bandeau.ton}`}>
         <span className="plan-bandeau-icone" aria-hidden="true">
           {bandeau.ton === 'grace' ? <TriangleAlert size={22} /> : bandeau.ton === 'paye' ? <CircleCheck size={22} /> : <Clock size={22} />}
@@ -71,24 +81,36 @@ function ApercuPlans({ donnees, periode, surPeriode, surChoisir }: {
           </span>
         </section>
       )}
-      {!peut_payer && <p className="plan-note">Seul le propriétaire de la boutique peut changer de plan.</p>}
+      {!peut_payer && (
+        <p className="plan-note">
+          {demonstration
+            ? 'Compte de démonstration : les paiements y sont désactivés. Créez votre compte pour choisir un plan.'
+            : 'Seul le propriétaire de la boutique peut changer de plan.'}
+        </p>
+      )}
 
-      <BasculePeriode periode={periode} moisOfferts={paiement.mois_offerts_annuel} surChoix={surPeriode} />
+      <div className="plan-bascule-mobile">
+        <BasculePeriode periode={periode} moisOfferts={paiement.mois_offerts_annuel} surChoix={surPeriode} />
+      </div>
 
-      {(['pro', 'essentiel', 'entreprise'] as CodePlan[]).map((code) => {
-        const plan = parCode(code)
-        return plan && (
-          <CarteOffre key={code} plan={plan} precedent={precedent(plan)} periode={periode} etat={etat}
-            bloque={bloque} enAttente={!!en_attente} lienContact={paiement.lien_contact} surChoisir={surChoisir} />
-        )
-      })}
+      {/* Téléphone : Pro d'abord. Ordinateur : Essentiel, Pro, Entreprise côte à côte (ordre CSS). */}
+      <div className="plan-offres">
+        {(['pro', 'essentiel', 'entreprise'] as CodePlan[]).map((code) => {
+          const plan = parCode(code)
+          return plan && (
+            <CarteOffre key={code} plan={plan} precedent={precedent(plan)} periode={periode} etat={etat}
+              bloque={bloque} enAttente={!!en_attente} lienContact={paiement.lien_contact} surChoisir={surChoisir} />
+          )
+        })}
+      </div>
 
+      <div className="plan-bas">
       {gratuit && (
         <article className="plan-carte plan-carte--discrete" aria-labelledby="plan-gratuit">
           <div className="plan-entete">
             <h2 id="plan-gratuit" className="plan-nom">Gratuit</h2>
-            {etat.source === 'essai' && <span className="plan-chip">Après votre essai</span>}
-            {etat.source === 'gratuit' && <span className="plan-chip">Votre plan</span>}
+            {etat.source === 'essai' && <span className="plan-pastille">Après votre essai</span>}
+            {etat.source === 'gratuit' && <span className="plan-pastille">Votre plan</span>}
           </div>
           <span className="plan-prix-valeur plan-prix-valeur--petit">0 F</span>
           <ul className="plan-atouts plan-atouts--compact">
@@ -100,6 +122,7 @@ function ApercuPlans({ donnees, periode, surPeriode, surChoisir }: {
       )}
 
       <Utilisation etat={etat} utilisation={utilisation} />
+      </div>
 
       <p className="plan-note">
         <ShieldCheck size={20} aria-hidden="true" />
@@ -138,10 +161,10 @@ function CarteOffre({ plan, precedent, periode, etat, bloque, enAttente, lienCon
   const action = actuel ? (etat.source === 'essai' ? `Continuer avec ${plan.nom}` : `Renouveler ${plan.nom}`) : `Choisir ${plan.nom}`
 
   return (
-    <article className={`plan-carte${vedette ? ' plan-carte--vedette' : ''}`} aria-labelledby={`plan-${plan.code}`}>
+    <article className={`plan-carte plan-carte--${plan.code}${vedette ? ' plan-carte--vedette' : ''}`} aria-labelledby={`plan-${plan.code}`}>
       <div className="plan-entete">
         <h2 id={`plan-${plan.code}`} className="plan-nom">{plan.nom}</h2>
-        {etiquette && <span className="plan-chip">{etiquette}</span>}
+        {etiquette && <span className="plan-pastille">{etiquette}</span>}
       </div>
       {plan.accroche && <p className="plan-accroche">{plan.accroche}</p>}
 
@@ -169,11 +192,11 @@ function CarteOffre({ plan, precedent, periode, etat, bloque, enAttente, lienCon
 
       {plan.sur_devis ? (
         lienContact
-          ? <a className="plan-cta plan-cta--contour" href={lienContact} target="_blank" rel="noopener noreferrer"><MessageCircle size={20} aria-hidden="true" /> Nous écrire sur WhatsApp</a>
+          ? <a className="plan-bouton plan-bouton--contour" href={lienContact} target="_blank" rel="noopener noreferrer"><MessageCircle size={20} aria-hidden="true" /> Nous écrire sur WhatsApp</a>
           : <p className="plan-accroche">Demandez un devis à l’administrateur de SamaCommerce.</p>
       ) : (
         <>
-          <button type="button" className={`plan-cta${vedette ? '' : ' plan-cta--contour'}`} disabled={bloque} onClick={() => surChoisir(plan)}>
+          <button type="button" className={`plan-bouton${vedette ? '' : ' plan-bouton--contour'}`} disabled={bloque} onClick={() => surChoisir(plan)}>
             {action}
           </button>
           {enAttente && <span className="plan-aide">Un paiement est déjà en vérification : attendez son résultat.</span>}
@@ -291,7 +314,8 @@ function ParcoursPaiement({ choix, donnees, telephone, surRetour }: {
   const aide = (cle: string) => (erreurs[cle] ? `${id}-${cle}-erreur` : undefined)
 
   return (
-    <div className="plan-page">
+    <div className="plan-page plan-page--parcours">
+      <div className="plan-parcours-principal">
       <ol className="plan-etapes" aria-label="Étapes du paiement">
         {ETAPES.map((libelle, i) => {
           const n = i + 1
@@ -306,16 +330,6 @@ function ParcoursPaiement({ choix, donnees, telephone, surRetour }: {
         })}
       </ol>
 
-      <section className="plan-recap" aria-label="Votre choix">
-        <span className="plan-recap-texte">
-          <span>Votre choix</span>
-          <strong>{plan.nom} · {periode === 'an' ? '1 an' : '1 mois'}</strong>
-          <span>{apresEssai ? `Commence à la fin de votre essai, le ${dateLongue(lendemain(etat.essai_jusqu_au!), false)}`
-            : aLaSuite ? 'S’ajoute à la suite de votre plan actuel'
-              : 'Actif dès la validation du paiement'}</span>
-        </span>
-        <span className="plan-recap-montant">{montant(prix)}</span>
-      </section>
 
       {etape === 1 && (
         <section className="plan-etape-contenu" key="etape-1">
@@ -364,7 +378,7 @@ function ParcoursPaiement({ choix, donnees, telephone, surRetour }: {
             <p className="plan-refus"><TriangleAlert size={20} aria-hidden="true" /><span>Aucun numéro de paiement n’est encore configuré. Écrivez à l’administrateur de SamaCommerce.</span></p>
           )}
 
-          <button type="button" className="plan-cta" disabled={!numeroChoisi} onClick={() => definirEtape(2)}>J’ai payé, continuer</button>
+          <button type="button" className="plan-bouton" disabled={!numeroChoisi} onClick={() => definirEtape(2)}>J’ai payé, continuer</button>
           <button type="button" className="plan-lien" onClick={surRetour}>Changer de plan</button>
         </section>
       )}
@@ -411,7 +425,7 @@ function ParcoursPaiement({ choix, donnees, telephone, surRetour }: {
 
           {erreurs.general && <p className="plan-erreur" role="alert">{erreurs.general}</p>}
 
-          <button type="submit" className="plan-cta" disabled={envoi}>
+          <button type="submit" className="plan-bouton" disabled={envoi}>
             {envoi ? 'Envoi…' : <><Send size={18} aria-hidden="true" /> Envoyer pour vérification</>}
           </button>
           <button type="button" className="plan-lien" onClick={() => definirEtape(1)}>Retour</button>
@@ -421,9 +435,39 @@ function ParcoursPaiement({ choix, donnees, telephone, surRetour }: {
       {etape === 3 && envoye && (
         <div className="plan-etape-contenu" key="etape-3">
           <SuiviVerification paiement={envoye} lienContact={reglages.lien_contact} />
-          <button type="button" className="plan-cta" onClick={surRetour}>Retour à Mon plan</button>
+          <button type="button" className="plan-bouton" onClick={surRetour}>Retour à Mon plan</button>
         </div>
       )}
+      </div>
+
+      {/* Téléphone : le récapitulatif s'intercale entre les étapes et leur contenu
+          (ordre CSS). Ordinateur : colonne de droite, qui reste visible. */}
+      <aside className="plan-cote" aria-label="Récapitulatif">
+        <section className="plan-recap" aria-label="Votre choix">
+          <span className="plan-recap-texte">
+            <span>Votre choix</span>
+            <strong>{plan.nom} · {periode === 'an' ? '1 an' : '1 mois'}</strong>
+            <span>{apresEssai ? `Commence à la fin de votre essai, le ${dateLongue(lendemain(etat.essai_jusqu_au!), false)}`
+              : aLaSuite ? 'S’ajoute à la suite de votre plan actuel'
+                : 'Actif dès la validation du paiement'}</span>
+          </span>
+          <span className="plan-recap-montant">{montant(prix)}</span>
+        </section>
+        <section className="plan-cote-aide" aria-labelledby={`${id}-comment`}>
+          <h2 id={`${id}-comment`} className="plan-sous-titre">Comment ça marche</h2>
+          <ol>
+            <li><span aria-hidden="true">1</span><span>Vous payez avec Wave ou Orange Money, depuis votre téléphone.</span></li>
+            <li><span aria-hidden="true">2</span><span>Vous recopiez la référence du SMS de confirmation.</span></li>
+            <li><span aria-hidden="true">3</span><span>SamaCommerce retrouve le paiement et active votre plan.</span></li>
+          </ol>
+          <p>
+            <Info size={18} aria-hidden="true" />
+            <span>{etat.source === 'essai'
+              ? 'Votre essai continue pendant la vérification : vous pouvez vendre normalement.'
+              : 'Vous pouvez vendre normalement pendant la vérification.'}</span>
+          </p>
+        </section>
+      </aside>
     </div>
   )
 }

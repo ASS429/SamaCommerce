@@ -47,10 +47,10 @@ html.sombre .plan-refus { color: #FDE68A; }
 .plan-entete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .plan-nom { margin: 0; font: 700 22px/1.2 var(--police-titre); letter-spacing: -.01em; color: inherit; }
 .plan-carte:not(.plan-carte--vedette) .plan-nom { color: var(--encre); }
-.plan-chip { padding: 4px 10px; border-radius: 8px; background: var(--marque-teinte); color: var(--marque-fonce); font-size: 12px; font-weight: 700; white-space: nowrap; }
-html.sombre .plan-chip { color: var(--marque); }
-.plan-carte--vedette .plan-chip { background: #fff; color: #5B21B6; }
-.plan-carte--discrete .plan-chip { background: var(--surface); }
+.plan-pastille { padding: 4px 10px; border-radius: 8px; background: var(--marque-teinte); color: var(--marque-fonce); font-size: 12px; font-weight: 700; white-space: nowrap; }
+html.sombre .plan-pastille { color: var(--marque); }
+.plan-carte--vedette .plan-pastille { background: #fff; color: #5B21B6; }
+.plan-carte--discrete .plan-pastille { background: var(--surface); }
 .plan-carte--vedette .plan-accroche { color: #EDE9FE; }
 .plan-prix { display: flex; flex-direction: column; gap: 2px; animation: plan-fondu 220ms var(--courbe-sortie-expo); }
 .plan-prix-ligne { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
@@ -67,18 +67,18 @@ html.sombre .plan-chip { color: var(--marque); }
 .plan-atouts--compact { gap: 6px; font-size: 14px; }
 
 /* Actions */
-.plan-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: #7C3AED; color: #fff; font: 700 16px var(--police-titre); text-decoration: none; cursor: pointer; transition: transform 160ms var(--courbe-sortie-expo), background-color 150ms ease; }
-.plan-cta:active:not(:disabled) { transform: scale(.97); }
-.plan-cta:disabled { opacity: .5; cursor: not-allowed; }
-.plan-carte--vedette .plan-cta { background: #fff; color: #5B21B6; }
-.plan-cta--contour { background: var(--surface); color: var(--marque-fonce); box-shadow: inset 0 0 0 2px var(--marque); }
-html.sombre .plan-cta--contour { color: var(--marque); }
+.plan-bouton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: #7C3AED; color: #fff; font: 700 16px var(--police-titre); text-decoration: none; cursor: pointer; transition: transform 160ms var(--courbe-sortie-expo), background-color 150ms ease; }
+.plan-bouton:active:not(:disabled) { transform: scale(.97); }
+.plan-bouton:disabled { opacity: .5; cursor: not-allowed; }
+.plan-carte--vedette .plan-bouton { background: #fff; color: #5B21B6; }
+.plan-bouton--contour { background: var(--surface); color: var(--marque-fonce); box-shadow: inset 0 0 0 2px var(--marque); }
+html.sombre .plan-bouton--contour { color: var(--marque); }
 .plan-lien { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--marque-fonce); font: 600 15px var(--police-titre); text-decoration: none; cursor: pointer; }
 html.sombre .plan-lien { color: var(--marque); }
 @media (hover: hover) and (pointer: fine) {
-  .plan-cta:hover:not(:disabled) { background: #6D28D9; }
-  .plan-carte--vedette .plan-cta:hover:not(:disabled) { background: #F3EFFE; }
-  .plan-cta--contour:hover:not(:disabled) { background: var(--marque-teinte); }
+  .plan-bouton:hover:not(:disabled) { background: #6D28D9; }
+  .plan-carte--vedette .plan-bouton:hover:not(:disabled) { background: #F3EFFE; }
+  .plan-bouton--contour:hover:not(:disabled) { background: var(--marque-teinte); }
   .plan-lien:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 
@@ -206,5 +206,60 @@ html.sombre .carte-plan--douce .carte-plan-action { color: var(--marque); }
 @media (prefers-reduced-motion: reduce) {
   .plan-bascule::before { transition: none; }
   .plan-prix, .plan-etape-contenu, .plan-copier-contenu { animation: none; }
-  .plan-cta, .carte-plan, .plan-copier { transition: none; }
+  .plan-bouton, .carte-plan, .plan-copier { transition: none; }
+}
+
+/* ═══════════ Ordinateur (≥ 1024 px) ═══════════
+   D'après les maquettes « ordinateur » du canevas (02/10/2026). Sur téléphone,
+   rien ne change : les conteneurs ajoutés pour l'ordinateur sont transparents
+   et l'ordre d'origine est rétabli par `order`. Sur ordinateur, les offres se
+   rangent côte à côte et le paiement garde son récapitulatif à droite. */
+.plan-titre-bureau, .plan-cote-aide { display: none; }
+.plan-offres, .plan-bas { display: flex; flex-direction: column; gap: 16px; }
+.plan-parcours-principal { display: contents; }
+.plan-page--parcours .plan-etapes { order: 1; }
+.plan-page--parcours .plan-cote { order: 2; display: flex; flex-direction: column; gap: 16px; }
+.plan-page--parcours .plan-etape-contenu { order: 3; }
+
+@media (min-width: 1024px) {
+  .plan-page { width: 100%; max-width: 1140px; margin: 0 auto; gap: 24px; }
+
+  .plan-titre-bureau { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .plan-titre-bloc { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .plan-titre { margin: 0; font: 700 30px/1.15 var(--police-titre); letter-spacing: -.02em; color: var(--encre); }
+  .plan-titre-detail { margin: 0; font-size: 15px; color: var(--attenue); text-wrap: pretty; }
+  .plan-titre-bureau .plan-bascule { width: 380px; }
+  .plan-bascule-mobile { display: none; }
+
+  .plan-offres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+  .plan-carte--essentiel { order: 1; }
+  .plan-carte--pro { order: 2; box-shadow: 0 18px 40px -22px rgba(76, 29, 149, .7); }
+  .plan-carte--entreprise { order: 3; }
+  .plan-offres .plan-carte { padding: 24px; }
+  .plan-offres .plan-bouton { margin-top: auto; }
+  .plan-bas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 20px; align-items: stretch; }
+
+  /* Paiement : étapes et contenu à gauche, récapitulatif collé à droite. */
+  .plan-page--parcours { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
+  .plan-parcours-principal { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  /* top: 0 : la zone qui défile a déjà sa marge haute (24 px) ; un décalage en plus
+     faisait démarrer la colonne plus bas que les étapes. */
+  .plan-page--parcours .plan-cote { position: sticky; top: 0; }
+  .plan-cote .plan-recap { flex-direction: column; align-items: flex-start; gap: 8px; padding: 22px; }
+  .plan-cote .plan-recap-montant { font-size: 32px; }
+  .plan-cote-aide { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 20px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+  .plan-cote-aide ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.45; color: var(--attenue); }
+  .plan-cote-aide li { display: flex; gap: 10px; }
+  .plan-cote-aide li > span:first-child { flex: none; width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; background: var(--marque-teinte); color: var(--marque-fonce); font-size: 12px; font-weight: 700; }
+  .plan-cote-aide p { display: flex; gap: 8px; margin: 0; padding-top: 12px; box-shadow: 0 -1px 0 var(--trait-doux); font-size: 13px; line-height: 1.45; color: var(--attenue); }
+  .plan-cote-aide p svg { flex: none; color: var(--marque); }
+
+  .plan-page--parcours .plan-etapes { padding: 16px 20px; border-radius: 18px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+  .plan-page--parcours .plan-etape-contenu:not(:has(.plan-suivi)) { padding: 24px; border-radius: 20px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+  .plan-page--parcours .plan-etape-contenu .plan-instructions { background: var(--fond); box-shadow: none; }
+  .plan-page--parcours .plan-moyens { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .plan-page--parcours .plan-moyens > :not(label) { grid-column: 1 / -1; }
+  .plan-page--parcours .plan-numero { max-width: 520px; }
+  .plan-page--parcours .plan-bouton { width: auto; min-width: 260px; align-self: flex-start; padding: 0 24px; }
+  .plan-page--parcours .plan-lien { align-self: flex-start; }
 }

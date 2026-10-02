@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Ventes, identiteBoutique, fcfa, type Vente } from '../outils/api'
+import { Ventes, identiteBoutique, fcfa } from '../outils/api'
 import { exporterClasseur } from '../outils/xlsx'
 import { exporterPdf, montant } from '../outils/pdf'
 import { ListeSquelette } from '../composants/Squelette'
@@ -12,7 +12,9 @@ import { useProduits, LISTE_VIDE } from '../outils/requetes'
 export default function Inventaire() {
   // Catalogue partagé : déjà en mémoire si l'on vient de Stock ou de Vendre.
   const produits = useProduits().data ?? LISTE_VIDE
-  const [ventes, definirVentes] = useState<Vente[]>([])
+  // Quantité vendue par produit, calculée par le serveur (et non plus en
+  // téléchargeant tout l'historique des ventes).
+  const [vendues, definirVendues] = useState<Record<number, number>>({})
   const [recherche, definirRecherche] = useState('')
   const [chargement, definirChargement] = useState(true)
   const { erreur, surveiller, effacer } = useErreurChargement()
@@ -20,16 +22,10 @@ export default function Inventaire() {
   const charger = () => {
     effacer()
     Promise.all([
-      surveiller(Ventes.lister().then(definirVentes)),
+      surveiller(Ventes.quantitesParProduit().then((lignes) => definirVendues(Object.fromEntries(lignes.map((l) => [l.produit_id, l.quantite]))))),
     ]).finally(() => definirChargement(false))
   }
   useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const vendues = useMemo(() => {
-    const parProduit: Record<number, number> = {}
-    for (const v of ventes) parProduit[v.produit_id] = (parProduit[v.produit_id] || 0) + v.quantite
-    return parProduit
-  }, [ventes])
 
   const lignes = useMemo(() => produits.filter((p) => p.nom.toLowerCase().includes(recherche.toLowerCase())).map((p) => {
     const vendus = vendues[p.id] || 0

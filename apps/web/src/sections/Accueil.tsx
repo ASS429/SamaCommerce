@@ -5,6 +5,7 @@ import { changerTheme, lirePreferenceTheme, LIBELLES_THEME, type PreferenceTheme
 import { bulle } from '../outils/bulles'
 import { extraireJetonInvitation } from '../outils/invitation'
 import CartePlan from '../composants/CartePlan'
+import { useAbonnement } from '../outils/requetes'
 
 export type Ecran = 'accueil' | 'toutes-boutiques' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
   | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'retours' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia' | 'plan'
@@ -38,6 +39,15 @@ export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = tru
 }) {
   const [alertes, definirAlertes] = useState<AlerteStock[]>([])
   const [guide, definirGuide] = useState(true)
+  // Le plan qui s'applique (essai compris) : `utilisateur.plan` n'est que le
+  // dernier plan PAYÉ, et affichait « Gratuit » pendant un essai Pro. Hors
+  // ligne, un tiret plutôt qu'un chargement sans fin ; le retour du réseau
+  // relance la requête.
+  const requeteAbonnement = useAbonnement()
+  const abonnement = requeteAbonnement.data?.etat
+  const libellePlan = abonnement
+    ? (abonnement.source === 'essai' ? `Essai ${abonnement.plan.nom}` : abonnement.plan.nom)
+    : requeteAbonnement.isError ? '—' : '…'
   const [theme, definirTheme] = useState<PreferenceTheme>(lirePreferenceTheme())
   const [invitationInstallation, definirInvitationInstallation] = useState<InvitationInstallation | null>(null)
   const [rejoindreOuvert, definirRejoindreOuvert] = useState(false)
@@ -86,7 +96,7 @@ export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = tru
             <div className="stat stat-violet"><div className="stat-valeur">{fcfa(chiffres?.ca || 0)}</div><div className="stat-libelle">Encaissé aujourd'hui</div></div>
             <div className="stat stat-bleu"><div className="stat-valeur">{chiffres?.articles || 0}</div><div className="stat-libelle">Articles vendus</div></div>
             <div className="stat stat-jaune"><div className="stat-valeur">{chiffres?.stock || 0}</div><div className="stat-libelle">Articles en stock</div></div>
-            <div className="stat stat-vert"><div className="stat-valeur">👑 {utilisateur?.plan}</div><div className="stat-libelle">Abonnement</div></div>
+            <div className="stat stat-vert"><div className="stat-valeur">👑 {libellePlan}</div><div className="stat-libelle">Abonnement</div></div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16, marginBottom: 4 }}>

@@ -29,7 +29,8 @@ export default function Credits() {
 
   const charger = () => {
     effacer()
-    surveiller(Ventes.lister().then((liste) => definirVentes(liste.filter((v) => v.moyen_paiement === 'credit')))).finally(() => definirChargement(false))
+    // Les seules ventes à crédit : l'écran téléchargeait tout l'historique pour les trier.
+    surveiller(Ventes.credits().then(definirVentes)).finally(() => definirChargement(false))
   }
   useEffect(charger, []) // eslint-disable-line react-hooks/exhaustive-deps
 

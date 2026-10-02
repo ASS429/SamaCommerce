@@ -17,7 +17,8 @@ type Message = { ton: 'vedette' | 'douce' | 'alerte'; titre: string; detail: str
 
 export default function CartePlan({ contexte, surOuvrir }: { contexte: Contexte; surOuvrir: () => void }) {
   const { data } = useAbonnement()
-  if (!data || !data.peut_payer) return null
+  // Masquée pour un employé ; gardée sur le compte de démonstration, qui montre les plans.
+  if (!data || (!data.peut_payer && !data.demonstration)) return null
 
   const message = messageDuPlan(data.etat, data.en_attente, data.plans.find((p) => p.code === 'essentiel')?.prix_mensuel ?? null, contexte)
   if (!message) return null

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
-import { Ventes, Statistiques, identiteBoutique, fcfa, type Vente } from '../outils/api'
+import { Ventes, Statistiques, identiteBoutique, fcfa, type IndicateursChiffres, type Vente } from '../outils/api'
 import { exporterPdf, montant } from '../outils/pdf'
 import { exporterClasseur } from '../outils/xlsx'
 import { iconeProduit } from '../outils/iconeProduit'
@@ -20,7 +20,9 @@ type Periode = 'jour' | 'semaine' | 'mois' | 'tout'
 const PERIODE_COURT: Record<Periode, string> = { jour: 'Jour', semaine: 'Semaine', mois: 'Mois', tout: 'Tout' }
 
 export default function Rapports() {
-  const [ventes, definirVentes] = useState<Vente[]>([])
+  // Encaissé, en attente et crédits, calculés par le serveur : l'écran
+  // téléchargeait tout l'historique des ventes pour les additionner.
+  const [donnees, definirDonnees] = useState<IndicateursChiffres | null>(null)
   const [parJour, definirParJour] = useState<any[]>([])
   const [paiements, definirPaiements] = useState<any[]>([])
   const [meilleurs, definirMeilleurs] = useState<any[]>([])
@@ -58,7 +60,7 @@ export default function Rapports() {
     // `chargement` sert à afficher des cadres qui « respirent » plutôt que des
     // 0 F trompeurs : voir un chiffre d'affaires à zéro fait paniquer.
     Promise.all([
-      surveiller(Ventes.lister().then(definirVentes)),
+      surveiller(Statistiques.indicateurs({ jour: debutDe('jour').toISOString(), semaine: debutDe('semaine').toISOString(), mois: debutDe('mois').toISOString() }).then(definirDonnees)),
       surveiller(Statistiques.ventesParJour().then(definirParJour)),
       surveiller(Statistiques.paiements().then(definirPaiements)),
       surveiller(Statistiques.meilleursProduits().then(definirMeilleurs)),
@@ -69,17 +71,18 @@ export default function Rapports() {
   useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const debutDe = (p: Periode) => { const d = new Date(); if (p === 'jour') d.setHours(0,0,0,0); else if (p === 'semaine') d.setDate(d.getDate()-7); else if (p === 'mois') d.setMonth(d.getMonth()-1); else return new Date(0); return d }
-  const sommePeriode = (p: Periode) => ventes.filter((v) => new Date(v.cree_le) >= debutDe(p) && v.paye).reduce((a, v) => a + Number(v.total), 0)
+  const sommePeriode = (p: Periode) => donnees?.encaisse[p] ?? 0
 
   const indicateurs = useMemo(() => {
-    const dansPeriode = ventes.filter((v) => new Date(v.cree_le) >= debutDe(periode))
-    const encaisse = dansPeriode.filter((v) => v.paye).reduce((a, v) => a + Number(v.total), 0)
-    const attente = dansPeriode.filter((v) => !v.paye).reduce((a, v) => a + Number(v.total), 0)
-    const credits = ventes.filter((v) => v.moyen_paiement === 'credit')
-    const rembourses = credits.filter((v) => v.paye).reduce((a, v) => a + Number(v.total), 0)
-    const impayes = credits.filter((v) => !v.paye).reduce((a, v) => a + Number(v.total), 0)
-    return { encaisse, attente, credits: impayes, taux: rembourses + impayes > 0 ? (rembourses / (rembourses + impayes)) * 100 : 0 }
-  }, [ventes, periode])
+    const rembourses = donnees?.credits.rembourses ?? 0
+    const impayes = donnees?.credits.impayes ?? 0
+    return {
+      encaisse: donnees?.encaisse[periode] ?? 0,
+      attente: donnees?.attente[periode] ?? 0,
+      credits: impayes,
+      taux: rembourses + impayes > 0 ? (rembourses / (rembourses + impayes)) * 100 : 0,
+    }
+  }, [donnees, periode])
 
   const LIBELLE_PERIODE: Record<Periode, string> = {
     jour: "Aujourd'hui", semaine: 'Cette semaine', mois: 'Ce mois', tout: 'Depuis le début',

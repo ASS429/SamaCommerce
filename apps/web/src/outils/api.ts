@@ -208,6 +208,18 @@ export async function inscrire(charge: { identifiant: string; mot_de_passe: stri
   return data.utilisateur as Utilisateur
 }
 export function deconnecter() {
+  // Ferme aussi la session sur le serveur, sans l'attendre (hors ligne, on
+  // oublie seulement le jeton local). Avant, le jeton oublié restait valable
+  // sept jours : le compte de démonstration en cumulait des dizaines.
+  // `fetch` et non axios : un 401 ici ne doit pas relancer la déconnexion.
+  const jeton = localStorage.getItem(CLE_JETON)
+  if (jeton) {
+    try {
+      void fetch(`${import.meta.env.VITE_URL_API || '/api'}/auth/deconnexion`, {
+        method: 'POST', keepalive: true, headers: { Authorization: `Bearer ${jeton}`, Accept: 'application/json' },
+      }).catch(() => {})
+    } catch { /* fetch indisponible : le jeton expirera de lui-même */ }
+  }
   localStorage.removeItem(CLE_JETON)
   localStorage.removeItem(CLE_UTILISATEUR)
 }
@@ -253,6 +265,10 @@ export const Categories = {
 export const Ventes = {
   lister: () => api.get<Vente[]>('/ventes').then((r) => r.data),
   page: (numero: number, parPage = 20) => api.get<Page<Vente>>('/ventes', { params: { page: numero, par_page: parPage } }).then((r) => r.data),
+  /** Les seules ventes à crédit (écran Crédits), au lieu de tout l'historique. */
+  credits: () => api.get<Vente[]>('/ventes', { params: { moyen: 'credit' } }).then((r) => r.data),
+  /** Quantité vendue par produit (Inventaire). */
+  quantitesParProduit: () => api.get<{ produit_id: number; quantite: number }[]>('/ventes/quantites-par-produit').then((r) => r.data),
   corbeille: () => api.get<Vente[]>('/ventes/corbeille').then((r) => r.data), // T4
   restaurer: (id: number) => api.post<Vente>(`/ventes/${id}/restaurer`).then((r) => r.data), // T4
   creer: (v: Record<string, unknown>) => api.post<Vente>('/ventes', v).then((r) => r.data),
@@ -304,6 +320,8 @@ export const Livraisons = {
 export const Retours = {
   lister: () => api.get('/retours').then((r) => r.data),
   statistiques: () => api.get('/retours/statistiques').then((r) => r.data),
+  /** Les 300 ventes les plus récentes qui peuvent encore être rendues. */
+  ventesRetournables: () => api.get<Vente[]>('/retours/ventes-retournables').then((r) => r.data),
   creer: (vente_id: number, quantite: number, motif?: string, moyen_remboursement?: string) =>
     api.post('/retours', { vente_id, quantite, motif, moyen_remboursement }).then((r) => r.data),
 }
@@ -336,6 +354,13 @@ export type ResumeJour = { date: string; ca: number | null; articles: number | n
 /** Produit en stock faible, tel que le renvoient les statistiques. */
 export type AlerteStock = { produit: string; stock: number }
 
+export type PeriodeChiffres = 'jour' | 'semaine' | 'mois' | 'tout'
+export type IndicateursChiffres = {
+  encaisse: Record<PeriodeChiffres, number>
+  attente: Record<PeriodeChiffres, number>
+  credits: { rembourses: number; impayes: number }
+}
+
 export const Statistiques = {
   /* Remplace le téléchargement de TOUT l'historique des ventes (~450 octets par
      vente, à chaque changement d'écran) par une réponse de taille constante.
@@ -349,6 +374,10 @@ export const Statistiques = {
   rotationStock: () => api.get('/statistiques/rotation-stock').then((r) => r.data),
   meilleursClients: () => api.get('/statistiques/meilleurs-clients').then((r) => r.data),
   marchandage: () => api.get('/statistiques/marchandage').then((r) => r.data),
+  /** Encaissé / en attente par période et crédits (écran Chiffres). Les débuts
+   *  de période sont ceux du téléphone : « aujourd'hui » suit son fuseau. */
+  indicateurs: (debuts: { jour: string; semaine: string; mois: string }) =>
+    api.get<IndicateursChiffres>('/statistiques/indicateurs', { params: debuts }).then((r) => r.data),
 }
 
 // --- Abonnement (côté commerçant) ---
@@ -427,6 +456,8 @@ export type DonneesAbonnement = {
   dernier_refus: PaiementAbonnement | null
   /** Faux pour un employé : seul le propriétaire paie l'abonnement. */
   peut_payer: boolean
+  /** Compte public de démonstration : aucun paiement possible. */
+  demonstration?: boolean
 }
 export type DeclarationPaiement = {
   plan: CodePlan

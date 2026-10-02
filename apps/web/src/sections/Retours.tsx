@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Retours as ApiRetours, Ventes, fcfa, type Vente } from '../outils/api'
+import { Retours as ApiRetours, fcfa, type Vente } from '../outils/api'
 import { bulle } from '../outils/bulles'
 import { ListeSquelette } from '../composants/Squelette'
 import { iconeProduit, fondProduit } from '../outils/iconeProduit'
@@ -17,7 +17,6 @@ const REMBOURSEMENTS: { valeur: string; icone: string; libelle: string }[] = [
 export default function Retours() {
   const [liste, definirListe] = useState<any[]>([])
   const [chiffres, definirChiffres] = useState<any>(null)
-  const [ventes, definirVentes] = useState<Vente[]>([])
   const [fenetreOuverte, definirFenetreOuverte] = useState(false)
   const [chargement, definirChargement] = useState(true)
   const { erreur, surveiller, effacer } = useErreurChargement()
@@ -26,7 +25,6 @@ export default function Retours() {
     effacer()
     surveiller(ApiRetours.lister().then(definirListe)).finally(() => definirChargement(false))
     ApiRetours.statistiques().then(definirChiffres).catch(() => {})
-    Ventes.lister().then((v) => definirVentes(v.filter((x) => x.quantite > 0 && x.moyen_paiement !== 'retour'))).catch(() => {})
   }
   useEffect(() => { charger() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -75,12 +73,16 @@ export default function Retours() {
         </div>
       ))}
 
-      {fenetreOuverte && <FenetreRetour ventes={ventes} surFermeture={() => definirFenetreOuverte(false)} surEnregistrement={() => { definirFenetreOuverte(false); charger() }} />}
+      {fenetreOuverte && <FenetreRetour surFermeture={() => definirFenetreOuverte(false)} surEnregistrement={() => { definirFenetreOuverte(false); charger() }} />}
     </>
   )
 }
 
-function FenetreRetour({ ventes, surFermeture, surEnregistrement }: { ventes: Vente[]; surFermeture: () => void; surEnregistrement: () => void }) {
+function FenetreRetour({ surFermeture, surEnregistrement }: { surFermeture: () => void; surEnregistrement: () => void }) {
+  // Chargées à l'ouverture seulement : les 300 ventes les plus récentes qui
+  // peuvent encore être rendues (avant : tout l'historique, à chaque visite).
+  const [ventes, definirVentes] = useState<Vente[] | null>(null)
+  useEffect(() => { ApiRetours.ventesRetournables().then(definirVentes).catch(() => definirVentes([])) }, [])
   const [venteId, definirVenteId] = useState('')
   const [quantite, definirQuantite] = useState('1')
   const [motif, definirMotif] = useState('')
@@ -94,16 +96,16 @@ function FenetreRetour({ ventes, surFermeture, surEnregistrement }: { ventes: Ve
     catch (e: any) { alert(e?.response?.data?.erreur || 'Erreur') } finally { definirEnvoi(false) }
   }
 
-  const vente = ventes.find((v) => String(v.id) === venteId)
+  const vente = ventes?.find((v) => String(v.id) === venteId)
 
   return (
     <div className="fenetre-calque" onClick={surFermeture}>
       <div className="fenetre-boite" onClick={(e) => e.stopPropagation()}>
         <div className="fenetre-titre">↩️ Nouveau retour</div>
         <div className="groupe-champ"><label>🛒 Vente concernée</label>
-          <select value={venteId} onChange={(e) => definirVenteId(e.target.value)}>
-            <option value="">Choisir une vente</option>
-            {ventes.map((v) => <option key={v.id} value={v.id}>{iconeProduit(v.nom_produit)} {v.nom_produit} × {v.quantite} · {fcfa(Number(v.total))} · {(v.cree_le || '').slice(0, 10)}</option>)}
+          <select value={venteId} onChange={(e) => definirVenteId(e.target.value)} disabled={!ventes}>
+            <option value="">{!ventes ? 'Chargement des ventes…' : ventes.length ? 'Choisir une vente' : 'Aucune vente à rendre'}</option>
+            {(ventes ?? []).map((v) => <option key={v.id} value={v.id}>{iconeProduit(v.nom_produit)} {v.nom_produit} × {v.quantite} · {fcfa(Number(v.total))} · {(v.cree_le || '').slice(0, 10)}</option>)}
           </select>
         </div>
         {vente && (

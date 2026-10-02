@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\RessourceVente;
 use App\Models\Retour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -15,6 +16,26 @@ class ControleurRetour extends Controleur
             ->join('produits', 'produits.id', '=', 'retours.produit_id')
             ->orderByDesc('retours.cree_le')->limit(100)
             ->get(['retours.*', 'produits.nom as nom_produit', 'produits.prix_vente as prix_produit']);
+    }
+
+    /**
+     * Les ventes qui peuvent encore être rendues : les 300 plus récentes dont
+     * tout n'a pas déjà été rendu. Le dialogue « Nouveau retour » téléchargeait
+     * tout l'historique et proposait même des ventes entièrement rendues, que
+     * l'enregistrement refusait ensuite.
+     */
+    public function ventesRetournables(Request $requete)
+    {
+        return RessourceVente::collection($requete->user()->ventes()
+            ->join('produits', 'produits.id', '=', 'ventes.produit_id')
+            ->select('ventes.*', 'produits.nom as nom_produit')
+            ->where('ventes.quantite', '>', 0)
+            ->where('ventes.moyen_paiement', '!=', 'retour')
+            ->whereRaw('ventes.quantite > (select coalesce(sum(r.quantite), 0) from retours r where r.vente_id = ventes.id)')
+            ->orderByDesc('ventes.cree_le')
+            ->orderByDesc('ventes.id')
+            ->limit(300)
+            ->get());
     }
 
     public function statistiques(Request $requete)

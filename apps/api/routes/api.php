@@ -188,6 +188,7 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::middleware(['perm:credits', 'plan:inventaire_retours,ecriture'])->group(function () {
         Route::get('/retours', [ControleurRetour::class, 'lister']);
         Route::get('/retours/statistiques', [ControleurRetour::class, 'statistiques']);
+        Route::get('/retours/ventes-retournables', [ControleurRetour::class, 'ventesRetournables']);
         Route::post('/retours', [ControleurRetour::class, 'creer']);
     });
 
@@ -213,12 +214,16 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
        ces trois chiffres s'affichent à tout vendeur. Le contrôleur masque de
        lui-même les champs auxquels l'employé n'a pas droit. */
     Route::get('/statistiques/resume-jour', [ControleurStatistiques::class, 'resumeJour'])->middleware('perm:stock|vente');
+    // Quantités vendues par produit, pour l'inventaire (écran du droit « stock »).
+    Route::get('/ventes/quantites-par-produit', [ControleurVente::class, 'quantitesParProduit'])->middleware('perm:stock|vente');
 
     Route::prefix('statistiques')->middleware('perm:rapports')->group(function () {
         // Rapports du jour et de la semaine : inclus dans tous les plans.
         Route::get('/ventes-par-jour', [ControleurStatistiques::class, 'ventesParJour']);
         Route::get('/paiements', [ControleurStatistiques::class, 'paiements']);
         Route::get('/stock-faible', [ControleurStatistiques::class, 'stockFaible']);
+        // Encaissé, en attente et crédits de l'écran Chiffres.
+        Route::get('/indicateurs', [ControleurStatistiques::class, 'indicateurs']);
         // Rapports complets : à partir du plan Essentiel.
         Route::middleware('plan:rapports_complets')->group(function () {
             Route::get('/ventes-par-categorie', [ControleurStatistiques::class, 'ventesParCategorie']);

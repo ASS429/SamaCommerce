@@ -53,6 +53,10 @@ class ContratFrancaisTest extends TestCase
         // Appareils connectés (octobre 2026), éprouvés par AppareilsConnectesTest.
         'GET|HEAD api/auth/appareils',
         'POST api/auth/deconnexion-autres',
+        // Écrans allégés (02/10/2026), éprouvés par EcransAllegesTest.
+        'GET|HEAD api/ventes/quantites-par-produit',
+        'GET|HEAD api/statistiques/indicateurs',
+        'GET|HEAD api/retours/ventes-retournables',
     ];
 
     public function test_chaque_route_francaise_repond_comme_l_ancienne(): void

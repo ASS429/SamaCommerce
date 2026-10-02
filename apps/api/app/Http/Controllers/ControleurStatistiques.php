@@ -5,10 +5,66 @@ namespace App\Http\Controllers;
 use App\Models\Produit;
 use App\Models\Vente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ControleurStatistiques extends Controleur
 {
+    /**
+     * Indicateurs de l'écran Chiffres : encaissé et en attente depuis le début
+     * du jour, de la semaine, du mois et depuis toujours ; crédits remboursés et
+     * impayés. L'écran les calculait en téléchargeant TOUT l'historique des
+     * ventes (plus d'un mégaoctet au bout de quelques mois).
+     *
+     * Les débuts de période viennent du téléphone (`?jour=…&semaine=…&mois=…`,
+     * instants ISO 8601) : « aujourd'hui » est celui de son fuseau horaire.
+     * Mêmes ventes que la liste (boutique active, corbeille exclue).
+     */
+    public function indicateurs(Request $requete)
+    {
+        $donnees = $requete->validate([
+            'jour' => ['nullable', 'date'],
+            'semaine' => ['nullable', 'date'],
+            'mois' => ['nullable', 'date'],
+        ]);
+        $maintenant = Carbon::now();
+        $debut = fn (string $periode, Carbon $defaut) => isset($donnees[$periode]) ? Carbon::parse($donnees[$periode]) : $defaut;
+        $periodes = [
+            'jour' => $debut('jour', $maintenant->copy()->startOfDay()),
+            'semaine' => $debut('semaine', $maintenant->copy()->subDays(7)),
+            'mois' => $debut('mois', $maintenant->copy()->subMonth()),
+            'tout' => null,
+        ];
+        // Sommes payées / non payées d'un ensemble de ventes, en une requête.
+        $sommes = function (callable $filtre) use ($requete): array {
+            $lignes = $filtre($requete->user()->ventes()->join('produits', 'produits.id', '=', 'ventes.produit_id'))
+                ->toBase()
+                ->selectRaw('ventes.paye as paye, SUM(ventes.total) as somme')
+                ->groupBy('ventes.paye')
+                ->get();
+            $resultat = ['paye' => 0, 'impaye' => 0];
+            foreach ($lignes as $ligne) {
+                $resultat[(bool) $ligne->paye ? 'paye' : 'impaye'] += (int) round((float) $ligne->somme);
+            }
+
+            return $resultat;
+        };
+
+        $encaisse = $attente = [];
+        foreach ($periodes as $periode => $depuis) {
+            $somme = $sommes(fn ($q) => $depuis ? $q->where('ventes.cree_le', '>=', $depuis->copy()->setTimezone(config('app.timezone'))) : $q);
+            $encaisse[$periode] = $somme['paye'];
+            $attente[$periode] = $somme['impaye'];
+        }
+        $credits = $sommes(fn ($q) => $q->where('ventes.moyen_paiement', 'credit'));
+
+        return response()->json([
+            'encaisse' => $encaisse,
+            'attente' => $attente,
+            'credits' => ['rembourses' => $credits['paye'], 'impayes' => $credits['impaye']],
+        ]);
+    }
+
     public function ventesParCategorie(Request $requete)
     {
         // Cloisonnement par boutique (les agrégats passent par le constructeur

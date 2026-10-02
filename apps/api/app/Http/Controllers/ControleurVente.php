@@ -12,11 +12,17 @@ class ControleurVente extends Controleur
     /** Liste des ventes du propriétaire, avec le nom du produit.
      *  Avec ?page=N : renvoie une page paginée {data, current_page, last_page, total} ;
      *  sinon : renvoie le tableau complet (rétro-compatible). */
+    /**
+     * Les ventes de la boutique active, avec le nom du produit.
+     *
+     * `?moyen=credit` ne renvoie que les ventes d'un moyen de paiement : l'écran
+     * Crédits téléchargeait TOUT l'historique pour n'en garder que les crédits.
+     */
     public function lister(Request $requete)
     {
-        $selection = $requete->user()->ventes()
+        $selection = $this->ventesAvecProduit($requete)
             ->select('ventes.*', 'produits.nom as nom_produit')
-            ->join('produits', 'produits.id', '=', 'ventes.produit_id')
+            ->when($requete->filled('moyen'), fn ($q) => $q->where('ventes.moyen_paiement', (string) $requete->query('moyen')))
             ->orderByDesc('ventes.cree_le');
 
         if ($requete->filled('page')) {
@@ -27,6 +33,27 @@ class ControleurVente extends Controleur
         }
 
         return RessourceVente::collection($selection->get());
+    }
+
+    /**
+     * Quantité vendue par produit, pour l'inventaire : une ligne par produit au
+     * lieu de tout l'historique des ventes. Même ensemble de ventes que la liste
+     * (boutique active, ventes à la corbeille exclues).
+     */
+    public function quantitesParProduit(Request $requete)
+    {
+        return response()->json($this->ventesAvecProduit($requete)
+            ->selectRaw('ventes.produit_id, SUM(ventes.quantite) as quantite')
+            ->groupBy('ventes.produit_id')
+            ->get()
+            ->map(fn ($ligne) => ['produit_id' => (int) $ligne->produit_id, 'quantite' => (int) $ligne->quantite])
+            ->values());
+    }
+
+    /** Ventes du propriétaire (boutique active) jointes à leur produit : la base commune de la liste et des totaux. */
+    private function ventesAvecProduit(Request $requete)
+    {
+        return $requete->user()->ventes()->join('produits', 'produits.id', '=', 'ventes.produit_id');
     }
 
     /** Règles de validation d'une vente (partagées entre creer et synchroniser). */

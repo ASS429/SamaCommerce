@@ -27,19 +27,24 @@ class ReglagesAbonnement extends Modele
 
     public const RAPPELS = ['j-7' => '7 jours avant', 'j-1' => 'La veille', 'j0' => 'Le jour de l’échéance', 'grace' => 'Pendant le délai de grâce'];
 
-    private static ?self $courants = null;
+    /** Réglages lus une fois par REQUÊTE (conteneur, et non propriété statique). */
+    private const CLE = 'abonnements.reglages';
 
     /** Les réglages en vigueur, lus une fois par requête. */
     public static function courants(): self
     {
-        return self::$courants ??= static::query()->firstOrCreate(['id' => 1], [
-            'rappels' => array_keys(self::RAPPELS),
-        ]);
+        if (! app()->bound(self::CLE)) {
+            app()->instance(self::CLE, static::query()->firstOrCreate(['id' => 1], [
+                'rappels' => array_keys(self::RAPPELS),
+            ]));
+        }
+
+        return app(self::CLE);
     }
 
     public static function oublier(): void
     {
-        self::$courants = null;
+        app()->forgetInstance(self::CLE);
     }
 
     /** Numéro où payer selon le moyen, ou null s'il n'est pas encore renseigné. */

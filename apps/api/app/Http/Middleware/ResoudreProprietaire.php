@@ -40,10 +40,11 @@ class ResoudreProprietaire
 
         /* Cloisonnement par boutique active, appliqué une fois pour toute la
          * requête (cf. CloisonnementBoutique). L'administrateur en est exclu :
-         * ses écrans agrègent volontairement tous les commerçants. */
-        if ($requete->user()->role !== 'admin') {
-            \App\Models\Scopes\CloisonnementBoutique::activer($requete->user()->boutique_active_id);
-        }
+         * ses écrans agrègent volontairement tous les commerçants. On l'appelle
+         * aussi pour lui, avec null, pour effacer toute boutique précédente. */
+        \App\Models\Scopes\CloisonnementBoutique::activer(
+            $requete->user()->role !== 'admin' ? $requete->user()->boutique_active_id : null,
+        );
 
         return $suite($requete);
     }

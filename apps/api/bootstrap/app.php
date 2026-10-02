@@ -21,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // S5 — en-têtes de sécurité sur toutes les réponses de l'API.
         $middleware->appendToGroup('api', \App\Http\Middleware\EntetesSecurite::class);
+        // Aucune boutique héritée d'une requête précédente (serveur persistant, tests).
+        $middleware->prependToGroup('api', \App\Http\Middleware\OublierBoutiquePrecedente::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

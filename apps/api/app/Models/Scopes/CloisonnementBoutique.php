@@ -34,14 +34,20 @@ use Illuminate\Database\Eloquent\Scope;
  * le demander explicitement : `Vente::withoutGlobalScope(CloisonnementBoutique::class)`.
  * L'exception est ainsi visible à la lecture, à l'inverse de l'oubli.
  *
- * NB : l'enregistrement se fait par requête HTTP (intergiciel
- * ResoudreProprietaire), dans un processus PHP qui meurt avec la réponse. Un
- * serveur applicatif persistant (Octane, Swoole) exigerait de désactiver le
- * cloisonnement en fin de requête — ce n'est pas le mode de déploiement ici
- * (Apache/mod_php).
+ * LA BOUTIQUE ACTIVE VIT DANS LE CONTENEUR DE LA REQUÊTE, pas dans le filtre.
+ * Le filtre est enregistré une fois par modèle (état statique d'Eloquent) mais
+ * ne retient rien : il lit la boutique à chaque requête SQL. Jusqu'au
+ * 02/10/2026, chaque requête enregistrait un filtre portant SA boutique ; sous
+ * Apache/mod_php (un processus neuf par requête) c'était sans danger, mais un
+ * serveur persistant (Octane, Swoole, FrankenPHP) aurait gardé la boutique du
+ * commerçant précédent — et l'administrateur, qui n'activait rien, aurait hérité
+ * du filtre du dernier commerçant servi.
  */
 class CloisonnementBoutique implements Scope
 {
+    /** Clé de la boutique active dans le conteneur (null : aucun cloisonnement). */
+    public const CLE = 'cloisonnement.boutique';
+
     /** Modèles portant une colonne `boutique_id`. */
     public const MODELES = [
         Produit::class,
@@ -55,17 +61,21 @@ class CloisonnementBoutique implements Scope
         JournalActivite::class,
     ];
 
-    public function __construct(private int $boutiqueId) {}
-
     public function apply(Builder $constructeur, Model $modele): void
     {
+        $boutiqueId = self::boutiqueActive();
+        if (! $boutiqueId) {
+            return;
+        }
         // Table qualifiée : plusieurs requêtes joignent `produits` ou
         // `fournisseurs`, où une colonne `boutique_id` nue serait ambiguë.
-        $constructeur->where($modele->getTable().'.boutique_id', $this->boutiqueId);
+        $constructeur->where($modele->getTable().'.boutique_id', $boutiqueId);
     }
 
     /**
-     * Active le cloisonnement pour la requête en cours.
+     * Fixe la boutique de la requête en cours. À appeler pour CHAQUE requête
+     * authentifiée, y compris avec null : c'est ce qui efface la boutique d'une
+     * requête précédente servie par le même processus.
      *
      * Sans boutique active (compte sans boutique principale, administrateur),
      * on n'applique rien : mieux vaut tout montrer que faire disparaître les
@@ -73,12 +83,17 @@ class CloisonnementBoutique implements Scope
      */
     public static function activer(?int $boutiqueId): void
     {
-        if (! $boutiqueId) {
-            return;
-        }
+        app()->instance(self::CLE, $boutiqueId ?: null);
 
         foreach (self::MODELES as $modele) {
-            $modele::addGlobalScope(new self($boutiqueId));
+            if (! $modele::hasGlobalScope(self::class)) {
+                $modele::addGlobalScope(new self);
+            }
         }
+    }
+
+    public static function boutiqueActive(): ?int
+    {
+        return app()->bound(self::CLE) ? app(self::CLE) : null;
     }
 }

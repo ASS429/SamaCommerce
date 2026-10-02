@@ -2,21 +2,14 @@
 
 namespace Tests;
 
-use App\Models\Plan;
-use App\Models\ReglagesAbonnement;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
+/**
+ * Le catalogue des plans, les réglages d'abonnement et la boutique active
+ * vivent dans le conteneur de l'application : chaque test, qui reçoit une
+ * application neuve, repart donc à vide sans rien avoir à oublier.
+ */
 abstract class TestCase extends BaseTestCase
 {
-    /**
-     * Le catalogue des plans et les réglages d'abonnement sont lus une fois par
-     * requête (mémoire statique). En production chaque requête est un processus
-     * neuf ; en test, tout tourne dans le même processus : on repart à vide.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Plan::oublierCatalogue();
-        ReglagesAbonnement::oublier();
-    }
+    //
 }

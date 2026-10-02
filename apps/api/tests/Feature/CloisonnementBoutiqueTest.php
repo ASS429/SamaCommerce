@@ -212,4 +212,29 @@ class CloisonnementBoutiqueTest extends TestCase
         $vue = $this->getJson('/api/admin/tableau-de-bord', $this->entetes($jetonAdmin))->assertOk()->json();
         $this->assertGreaterThan(0, $vue['chiffres']['commercants']);
     }
+
+    /**
+     * Une requête qui suit celle d'un commerçant, dans le même processus (un
+     * serveur persistant, ou un test), ne garde pas sa boutique. Avant le
+     * 02/10/2026 le filtre portait la boutique dans un état statique, et
+     * l'administrateur, qui n'activait rien, héritait de celle du dernier
+     * commerçant servi.
+     */
+    public function test_la_boutique_d_une_requete_ne_survit_pas_a_la_suivante(): void
+    {
+        [, $jetonA] = $this->inscrireCommercant('a@test.sn', 'Boutique A');
+        [, $jetonB] = $this->inscrireCommercant('b@test.sn', 'Boutique B');
+        $this->postJson('/api/produits', ['nom' => 'Riz', 'prix_vente' => 600], $this->entetes($jetonA))->assertCreated();
+        $this->postJson('/api/produits', ['nom' => 'Huile', 'prix_vente' => 1000], $this->entetes($jetonB))->assertCreated();
+        $admin = Utilisateur::create(['identifiant' => 'admin@test.sn', 'mot_de_passe' => bcrypt('Password123'), 'role' => 'admin']);
+        $jetonAdmin = $admin->createToken('admin')->plainTextToken;
+
+        $this->getJson('/api/produits', $this->entetes($jetonA))->assertOk()->assertJsonCount(1);
+        $this->assertSame(1, Produit::count()); // la requête de A a fixé SA boutique
+
+        $this->getJson('/api/admin/tableau-de-bord', $this->entetes($jetonAdmin))->assertOk();
+        $this->assertSame(2, Produit::count()); // l'administrateur l'a effacée
+
+        $this->getJson('/api/produits', $this->entetes($jetonB))->assertOk()->assertJsonCount(1)->assertJsonPath('0.nom', 'Huile');
+    }
 }

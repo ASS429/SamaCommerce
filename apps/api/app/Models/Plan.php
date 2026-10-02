@@ -54,19 +54,24 @@ class Plan extends Modele
         'ia' => 'quota_ia_mensuel',
     ];
 
-    /** @var array<string, self>|null Catalogue lu une fois par requête. */
-    private static ?array $catalogue = null;
+    /** Catalogue lu une fois par REQUÊTE : gardé dans le conteneur, pas dans une
+     *  propriété statique qu'un serveur persistant garderait d'une requête à l'autre. */
+    private const CLE_CATALOGUE = 'abonnements.catalogue';
 
     /** @return array<string, self> code => plan, du moins cher au plus complet. */
     public static function catalogue(): array
     {
-        return self::$catalogue ??= static::query()->orderBy('ordre')->get()->keyBy('code')->all();
+        if (! app()->bound(self::CLE_CATALOGUE)) {
+            app()->instance(self::CLE_CATALOGUE, static::query()->orderBy('ordre')->get()->keyBy('code')->all());
+        }
+
+        return app(self::CLE_CATALOGUE);
     }
 
     /** À appeler après une modification du catalogue. */
     public static function oublierCatalogue(): void
     {
-        self::$catalogue = null;
+        app()->forgetInstance(self::CLE_CATALOGUE);
     }
 
     public static function parCode(string $code): self

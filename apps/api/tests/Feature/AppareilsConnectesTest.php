@@ -39,6 +39,19 @@ class AppareilsConnectesTest extends TestCase
         $this->assertArrayNotHasKey('name', $appareils[0]);
     }
 
+    /** Un jeton expiré ne connecte plus personne : il n'apparaît pas. */
+    public function test_un_jeton_expire_n_est_pas_un_appareil_connecte(): void
+    {
+        [$proprietaire, $jeton] = $this->inscrireCommercant();
+        $ancien = $proprietaire->createToken('mobile-ancien');
+        $ancien->accessToken->forceFill(['created_at' => now()->subMinutes((int) config('sanctum.expiration') + 60)])->save();
+
+        $appareils = $this->getJson('/api/auth/appareils', $this->entetes($jeton))->assertOk()->json();
+
+        $this->assertCount(1, $appareils);
+        $this->assertTrue($appareils[0]['actuel']);
+    }
+
     public function test_deconnecter_les_autres_garde_cet_appareil(): void
     {
         [$proprietaire, $jeton] = $this->inscrireCommercant();

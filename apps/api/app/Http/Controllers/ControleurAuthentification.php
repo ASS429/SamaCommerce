@@ -414,9 +414,16 @@ class ControleurAuthentification extends Controleur
         $reel = $requete->attributes->get('utilisateur_reel') ?? $requete->user();
         $actuel = $reel->currentAccessToken()?->id;
 
+        // Un jeton expiré ne connecte plus personne : il n'est pas un appareil
+        // connecté (Sanctum ne supprime pas ces lignes de lui-même).
+        $expiration = (int) config('sanctum.expiration', 0);
+        $valide = fn ($jeton) => (! $jeton->expires_at || $jeton->expires_at->isFuture())
+            && (! $expiration || $jeton->created_at?->gt(now()->subMinutes($expiration)));
+
         // Tri en PHP : PostgreSQL place les jetons jamais utilisés (NULL) en
         // tête d'un ORDER BY … DESC, SQLite en queue.
         return response()->json($reel->tokens()->get()
+            ->filter($valide)
             ->sortByDesc(fn ($jeton) => [$jeton->last_used_at?->getTimestamp() ?? 0, $jeton->id])
             ->map(fn ($jeton) => [
                 'id' => $jeton->id,

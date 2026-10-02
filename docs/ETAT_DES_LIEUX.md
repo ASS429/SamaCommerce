@@ -35,7 +35,8 @@ plupart des choix d'exploitation ci-dessous.
 | Administration | Fermée — les identifiants publics ne fonctionnent plus |
 | Sauvegarde | Quotidienne, chiffrée, **restauration testée** |
 | IA | Modèles entraînés servis (`methode: "modele"`) |
-| Tests | PHPUnit 99/99 · Vitest 130/130 · pytest 10/10 (tests de transition retirés avec les passerelles) |
+| Abonnements et administration | En ligne depuis le 02/10/2026 (09h19 UTC) : migration appliquée, 34 contrôles verts en production, parcours « Mon plan » vérifié dans un navigateur (voir 3.6) |
+| Tests | PHPUnit 124/124 · Vitest 154/154 · pytest 10/10 |
 | Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions et retrait des passerelles de transition le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
@@ -111,7 +112,7 @@ vérifiés en production** :
   pour 30 minutes réelles, et « mot de passe oublié » affichait « Code envoyé »
   même quand l'e-mail n'était pas parti. Corrigés.
 
-### 3.6 — Abonnements et panneau d'administration *(prêts sur la branche `abonnements`, à mettre en ligne)*
+### 3.6 — Abonnements et panneau d'administration *(en ligne depuis le 02/10/2026)*
 
 Refonte décidée le 01/10/2026, d'après les maquettes validées dans Claude Design :
 
@@ -135,7 +136,18 @@ Refonte décidée le 01/10/2026, d'après les maquettes validées dans Claude De
   demande jamais validée ou un Premium expiré repasse au Gratuit ; chacun reçoit
   l'essai Pro de 30 jours.
 
-**Après la mise en ligne, à faire par l'administrateur** : saisir dans
+**Mise en ligne du 02/10/2026** : sauvegarde chiffrée lancée à la main juste
+avant (réussie), puis fusion dans `main` (903b04e) ; Render a appliqué la
+migration au démarrage. Vérifié en production : routes nouvelles présentes et
+protégées, anciennes routes retirées, plans et prix servis, compte de
+démonstration en essai Pro jusqu'au 1er novembre, déclaration refusée tant
+qu'aucun numéro n'est saisi, CORS, site et panneau livrés. Seul le panneau
+d'administration lui-même reste à regarder par l'administrateur (il demande
+ses identifiants et le code de vérification en deux étapes).
+L'adresse de santé renvoie désormais le commit en ligne (`commit`, fourni par
+Render) : c'est le repère à vérifier après chaque mise en ligne.
+
+**À faire par l'administrateur** : saisir dans
 *Paramètres* les numéros Wave et Orange Money, le nom du bénéficiaire et le
 numéro WhatsApp de contact (ils ne sont **jamais** écrits dans le code). Tant
 qu'aucun numéro n'est saisi, les commerçants ne peuvent pas payer. Les rappels

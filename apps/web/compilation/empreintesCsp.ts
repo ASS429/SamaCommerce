@@ -27,9 +27,13 @@ const SCRIPT_EN_LIGNE = /<script(?![^>]*\ssrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi
  */
 export function empreintesScriptsEnLigne(html: string): string[] {
   const empreintes = [...html.matchAll(SCRIPT_EN_LIGNE)]
-    .map((m) => m[1])
     // Le navigateur hache le contenu EXACT de la balise, espaces compris : on
-    // ne normalise donc rien. Seules les balises vides sont ignorées.
+    // ne normalise rien, SAUF les fins de ligne, que la norme HTML convertit
+    // en LF avant même de lire la page. Sans cela, un index.html extrait en
+    // CRLF (Git sous Windows) donnait une empreinte que le navigateur ne
+    // reconnaissait pas : le script était bloqué sur ce poste seulement.
+    .map((m) => m[1].replace(/\r\n?/g, '\n'))
+    // Seules les balises vides sont ignorées.
     .filter((code) => code.trim() !== '')
     .map((code) => `'sha256-${createHash('sha256').update(code, 'utf8').digest('base64')}'`)
   return [...new Set(empreintes)]

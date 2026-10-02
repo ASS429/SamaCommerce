@@ -32,6 +32,15 @@ describe('empreintesScriptsEnLigne — CSP des scripts en ligne', () => {
       .not.toBe(empreintesScriptsEnLigne('<script>var x = 1</script>')[0])
   })
 
+  /* La norme HTML convertit CRLF et CR en LF avant de lire la page : un
+     index.html extrait en CRLF (Git sous Windows) doit donner l'empreinte que
+     le navigateur calculera, celle du même script en LF. */
+  it('hache les fins de ligne comme le navigateur les lit', () => {
+    const attendue = empreintesScriptsEnLigne('<script>\n  go()\n</script>')[0]
+    expect(empreintesScriptsEnLigne('<script>\r\n  go()\r\n</script>')[0]).toBe(attendue)
+    expect(empreintesScriptsEnLigne('<script>\r  go()\r</script>')[0]).toBe(attendue)
+  })
+
   it('dédoublonne deux scripts identiques', () => {
     expect(empreintesScriptsEnLigne('<script>go()</script><script>go()</script>')).toHaveLength(1)
   })

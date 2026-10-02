@@ -46,6 +46,11 @@ class ControleurSante extends Controleur
         if ($base['ok'] && Cache::add('rappels-abonnement:'.now()->toDateString(), true, now()->addDay())) {
             dispatch(fn () => \App\Services\RappelsAbonnement::envoyerCeuxDuJour())->afterResponse();
         }
+        // Le compte public de démonstration repart à neuf chaque matin. En
+        // production seulement : ailleurs, ses données servent aux tests.
+        if ($base['ok'] && app()->environment('production') && Cache::add('demo-reinitialisee:'.now()->toDateString(), true, now()->addDay())) {
+            dispatch(fn () => \App\Services\Demonstration::reinitialiser())->afterResponse();
+        }
 
         return response()->json([
             'statut' => $statut,

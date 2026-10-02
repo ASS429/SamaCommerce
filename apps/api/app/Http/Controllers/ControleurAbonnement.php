@@ -38,15 +38,20 @@ class ControleurAbonnement extends Controleur
         $dernier = PaiementAbonnement::leger()->where('utilisateur_id', $proprietaire->id)
             ->where('origine', 'declaration')->latest('cree_le')->first();
         $refus = $dernier && $dernier->statut === 'refuse' && $dernier->decide_le?->gte(Carbon::now()->subDays(7)) ? $dernier : null;
+        // Ni un employé, ni le compte de démonstration (public) : sinon n'importe
+        // quel visiteur remplirait la file de vérification. Les numéros et le nom
+        // du bénéficiaire ne leur sont pas envoyés (ils n'en ont pas l'usage, et
+        // le compte de démonstration est ouvert à tous).
+        $peutPayer = ! $requete->attributes->get('est_employe', false) && ! $proprietaire->estCompteDemo();
 
         return response()->json([
             'etat' => Abonnements::versTableau(Abonnements::etat($proprietaire)),
             'utilisation' => Abonnements::utilisation($proprietaire),
             'plans' => array_values(array_map(fn (Plan $p) => Abonnements::planPublic($p), Plan::catalogue())),
             'paiement' => [
-                'numero_wave' => $reglages->numero_wave,
-                'numero_orange' => $reglages->numero_orange,
-                'nom_beneficiaire' => $reglages->nom_beneficiaire,
+                'numero_wave' => $peutPayer ? $reglages->numero_wave : null,
+                'numero_orange' => $peutPayer ? $reglages->numero_orange : null,
+                'nom_beneficiaire' => $peutPayer ? $reglages->nom_beneficiaire : null,
                 // WhatsApp de l'administrateur (devis Entreprise, question sur un paiement).
                 'lien_contact' => Telephone::lienWhatsApp($reglages->numero_contact,
                     'Bonjour, je vous écris depuis SamaCommerce ('.($proprietaire->nom_commerce ?: $proprietaire->identifiant).') : '),
@@ -56,7 +61,8 @@ class ControleurAbonnement extends Controleur
             ],
             'en_attente' => $enAttente ? self::paiementPublic($enAttente) : null,
             'dernier_refus' => $refus ? self::paiementPublic($refus) : null,
-            'peut_payer' => ! $requete->attributes->get('est_employe', false),
+            'peut_payer' => $peutPayer,
+            'demonstration' => $proprietaire->estCompteDemo(),
         ]);
     }
 
@@ -67,6 +73,12 @@ class ControleurAbonnement extends Controleur
             return response()->json([
                 'erreur' => 'Accès refusé',
                 'message' => 'Seul le propriétaire de la boutique peut payer l’abonnement.',
+            ], 403);
+        }
+        if ($requete->user()->estCompteDemo()) {
+            return response()->json([
+                'erreur' => 'Accès refusé',
+                'message' => 'Compte de démonstration : aucun paiement ne peut y être déclaré. Créez votre compte pour choisir un plan.',
             ], 403);
         }
 

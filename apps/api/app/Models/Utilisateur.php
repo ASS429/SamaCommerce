@@ -93,4 +93,10 @@ class Utilisateur extends Authenticatable
     {
         return $this->boutiques()->where('est_principale', true)->first();
     }
+
+    /** Le compte public de démonstration (« Essayer sans compte »). */
+    public function estCompteDemo(): bool
+    {
+        return $this->identifiant === config('app.compte_demo');
+    }
 }

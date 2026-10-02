@@ -11,41 +11,72 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
-/** Données de démonstration : un commerçant, son employé, un administrateur. */
+/**
+ * Données de démonstration : un commerçant, son employé, un administrateur.
+ *
+ * Découpé en trois parties parce que la remise à zéro quotidienne du compte de
+ * démonstration (App\Services\Demonstration) n'en rejoue que deux : rejouer
+ * aussi l'administrateur lui donnerait un mot de passe aléatoire chaque matin.
+ */
 class AmorceurDemo extends Seeder
 {
     private ?int $boutiqueId = null;
 
     public function run(): void
     {
-        // Commerçant de démonstration
-        $commercant = Utilisateur::updateOrCreate(
-            ['identifiant' => 'demo@samacommerce.sn'],
+        $this->administrateur();
+        $this->remplir($this->commercant());
+
+        $this->command?->info('✅ Démo créée — connexion : demo@samacommerce.sn / password (admin@samacommerce.sn aussi).');
+    }
+
+    /**
+     * Le commerçant de démonstration dans son état d'origine : mot de passe
+     * connu, profil d'usine, et toujours en essai pour que chaque visiteur
+     * puisse tout essayer.
+     */
+    public function commercant(): Utilisateur
+    {
+        return Utilisateur::updateOrCreate(
+            ['identifiant' => config('app.compte_demo')],
             [
                 'mot_de_passe' => Hash::make('password'),
                 'nom_commerce' => 'Ma Boutique',
                 'telephone' => '77 123 45 67',
                 'role' => 'commercant',
-                'plan' => 'Premium',
+                'statut' => 'Actif',
+                'plan' => 'Gratuit',
                 'statut_demande_premium' => 'validé',
+                'essai_jusqu_au' => Carbon::today()->addDays(30),
+                'double_facteur_actif' => false,
+                'photo' => null,
+                'preferences' => null,
             ],
         );
+    }
 
+    /**
+     * Administrateur — mot de passe ALÉATOIRE, jamais une valeur en dur.
+     * La commande `admin:securiser` (lancée au démarrage) y applique ensuite
+     * ADMIN_PASSWORD. Un identifiant écrit ici finirait dans un dépôt public,
+     * comme ce fut le cas avec « password ».
+     */
+    private function administrateur(): void
+    {
+        Utilisateur::updateOrCreate(
+            ['identifiant' => 'admin@samacommerce.sn'],
+            ['mot_de_passe' => Hash::make(\Illuminate\Support\Str::random(48)), 'nom_commerce' => 'Admin', 'role' => 'admin'],
+        );
+    }
+
+    /** Boutiques, employé, catalogue et un mois de ventes du commerçant de démonstration. */
+    public function remplir(Utilisateur $commercant): void
+    {
         // Boutique principale + boutique secondaire de démonstration
         $boutique = $commercant->boutiques()->updateOrCreate(['est_principale' => true], ['nom' => 'Ma Boutique', 'emoji' => '🏪']);
         $commercant->boutiques()->firstOrCreate(['nom' => 'Boutique Marché'], ['emoji' => '🏬', 'est_principale' => false]);
         $commercant->update(['boutique_active_id' => $boutique->id]);
         $this->boutiqueId = $boutique->id;
-
-        // Administrateur — mot de passe ALÉATOIRE, jamais une valeur en dur.
-        // La commande `admin:securiser` (lancée au démarrage) y applique ensuite
-        // ADMIN_PASSWORD. Un identifiant écrit ici finirait dans un dépôt
-        // public, comme ce fut le cas avec « password ».
-        Utilisateur::updateOrCreate(
-            ['identifiant' => 'admin@samacommerce.sn'],
-            ['mot_de_passe' => Hash::make(\Illuminate\Support\Str::random(48)),
-                'nom_commerce' => 'Admin', 'role' => 'admin', 'plan' => 'Premium'],
-        );
 
         // Employé de démonstration (vendeur/caissier) — déjà accepté, permissions vente + caisse
         $employe = Utilisateur::updateOrCreate(
@@ -95,8 +126,6 @@ class AmorceurDemo extends Seeder
 
         // Tontines
         Tontine::firstOrCreate(['nom' => 'Tontine du marché'], ['type' => 'Hebdomadaire', 'montant' => 5000, 'membres' => 12]);
-
-        $this->command?->info('✅ Démo créée — connexion : demo@samacommerce.sn / password (admin@samacommerce.sn aussi).');
     }
 
     private function produit(Utilisateur $u, Categorie $c, string $nom, float $achat, float $vente, int $stock): Produit

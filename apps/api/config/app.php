@@ -105,6 +105,10 @@ return [
     // sauvegarde de nuit (workflow sauvegarde-base.yml).
     'depot_github' => env('DEPOT_GITHUB', 'ASS429/SamaCommerce'),
 
+    // Compte public « Essayer sans compte » : remis à zéro chaque jour, et
+    // aucun paiement d'abonnement ne peut y être déclaré.
+    'compte_demo' => env('COMPTE_DEMO', 'demo@samacommerce.sn'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

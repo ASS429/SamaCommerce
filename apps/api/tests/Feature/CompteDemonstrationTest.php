@@ -75,6 +75,22 @@ class CompteDemonstrationTest extends TestCase
         $this->assertSame(['Mil'], Produit::where('utilisateur_id', $autre->id)->pluck('nom')->all());
     }
 
+    /* `cree_le` n'est pas remplissable : `Vente::create` l'ignorait sans rien
+       dire, et toute l'histoire de la démonstration tombait le jour de la remise
+       à zéro (« Encaissé aujourd'hui » = un mois de ventes, graphiques d'une
+       seule barre). */
+    public function test_la_demonstration_repart_avec_un_mois_de_ventes_datees(): void
+    {
+        $this->assertTrue(Demonstration::reinitialiser());
+
+        CloisonnementBoutique::activer(null);
+        $demo = Utilisateur::where('identifiant', 'demo@samacommerce.sn')->value('id');
+        $this->assertSame(0, Vente::where('utilisateur_id', $demo)->where('cree_le', '>=', now()->startOfDay())->count());
+        $this->assertTrue(Vente::where('utilisateur_id', $demo)->where('cree_le', '<', now()->subDays(29))->exists());
+        $this->assertTrue(Vente::where('utilisateur_id', $demo)->where('moyen_paiement', 'credit')
+            ->whereBetween('cree_le', [now()->subDays(11), now()->subDays(9)])->exists());
+    }
+
     public function test_aucun_paiement_ne_se_declare_sur_le_compte_de_demonstration(): void
     {
         ReglagesAbonnement::courants()->update(['numero_wave' => '77 000 00 01']);

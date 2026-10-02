@@ -138,7 +138,10 @@ class AmorceurDemo extends Seeder
 
     private function vente(Utilisateur $u, Produit $p, int $quantite, string $moyen, Carbon $date, array $complement = []): void
     {
-        Vente::create(array_merge([
+        // `forceCreate` : `cree_le` et `modifie_le` ne sont pas remplissables
+        // (une vente reçue d'un navigateur ne choisit pas sa date) ; `create`
+        // les ignorait, et tout le mois tombait le jour de l'amorçage.
+        Vente::forceCreate(array_merge([
             'utilisateur_id' => $u->id,
             'boutique_id' => $this->boutiqueId,
             'produit_id' => $p->id,

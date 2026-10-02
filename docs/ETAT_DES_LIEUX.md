@@ -52,6 +52,10 @@ doivent appeler pour récupérer leur compte.
 Marche à suivre : acquérir un nom de domaine → Resend → **Domains** → ajouter les
 trois enregistrements DNS chez le registraire. Environ une heure.
 
+*02/10/2026 : toujours aucun nom de domaine. En attendant, les rappels
+d'échéance des abonnements et les codes de vérification en deux étapes ne
+parviennent qu'à l'adresse du titulaire du compte Resend.*
+
 ### 3.2 — Mentions légales *(avant toute ouverture large)*
 
 La plateforme collecte des noms, numéros de téléphone et photos de clients. La
@@ -147,11 +151,9 @@ ses identifiants et le code de vérification en deux étapes).
 L'adresse de santé renvoie désormais le commit en ligne (`commit`, fourni par
 Render) : c'est le repère à vérifier après chaque mise en ligne.
 
-**À faire par l'administrateur** : saisir dans
-*Paramètres* les numéros Wave et Orange Money, le nom du bénéficiaire et le
-numéro WhatsApp de contact (ils ne sont **jamais** écrits dans le code). Tant
-qu'aucun numéro n'est saisi, les commerçants ne peuvent pas payer. Les rappels
-d'échéance par e-mail dépendent du domaine Resend (3.1).
+**Fait par l'administrateur le 02/10/2026** : numéros de paiement et nom du
+bénéficiaire saisis dans *Paramètres* (ils ne sont **jamais** écrits dans le
+code). Les rappels d'échéance par e-mail dépendent du domaine Resend (3.1).
 
 À savoir : les photos de reçu jointes par les commerçants sont stockées en base
 (compressées, 150 Ko au plus). Le test de contrat (`ContratFrancaisTest`)
@@ -160,22 +162,52 @@ remises à zéro) ; tout le reste de la suite passe sur PostgreSQL.
 
 ---
 
+### 3.7 — Dettes techniques soldées *(02/10/2026, branche `dettes-techniques`)*
+
+Les trois dettes de la section 4 qui touchaient au code sont réglées, avec
+d'autres défauts trouvés en chemin :
+
+- **Les quatre écrans qui téléchargeaient tout l'historique des ventes**
+  reçoivent désormais du serveur ce qu'ils affichent : Crédits
+  (`/ventes?moyen=credit`), Inventaire (`/ventes/quantites-par-produit`),
+  Chiffres (`/statistiques/indicateurs`), Retours
+  (`/retours/ventes-retournables`, chargé à l'ouverture de la fenêtre). Le
+  serveur refait **exactement** les calculs du navigateur, retours compris
+  (ventes négatives) : les tests comparent chaque réponse au calcul d'avant.
+- **Le compte de démonstration repart à neuf chaque jour** : le premier appel
+  de `/api/sante` de la journée (contrôle de santé de Render, ou réveil par
+  cron-job.org à 7h) le remet dans son état d'origine, après la réponse, en une
+  seule transaction, et ferme ses sessions (40 accumulées le 02/10). Seul ce
+  compte est touché ; le verrou du jour est dans le cache en base, il survit
+  donc aux redémarrages.
+- **Confidentialité** : un visiteur de la démonstration voyait, à l'étape
+  « Payer », le vrai numéro Wave et le nom du bénéficiaire, et pouvait déclarer
+  de faux paiements dans la file de l'administrateur. Désormais, aucun numéro
+  n'est envoyé au compte de démonstration, les boutons de paiement y sont
+  désactivés, et une déclaration y est refusée (403).
+- **Cloisonnement sûr sous Octane, Swoole ou FrankenPHP** : la boutique active
+  et les caches des plans et réglages vivent dans le conteneur de
+  l'application, remis à zéro au début de chaque requête
+  (`OublierBoutiquePrecedente`). Un test vérifie qu'une boutique ne survit pas
+  à la requête suivante.
+- **« Quitter » ferme aussi la session sur le serveur** (avant : seulement dans
+  le navigateur, le jeton restait valable 7 jours). La liste des appareils
+  connectés n'affiche plus les sessions expirées.
+- **« Mon plan » sur ordinateur** : offres sur trois colonnes, paiement sur deux
+  avec le récapitulatif à droite (maquettes ajoutées au canevas Claude Design,
+  version 5). Le téléphone garde sa présentation.
+- **Divers** : la case « Abonnement » de l'accueil dit le plan (« Essai Pro ») ;
+  l'empreinte CSP du script anti-flash se calcule sur les fins de ligne que lit
+  le navigateur (un `index.html` extrait en CRLF sous Windows bloquait le
+  script en local) ; les derniers noms anglais arrivés avec les abonnements
+  sont traduits (`plan-cta` → `plan-bouton`, `plan-chip` → `plan-pastille`,
+  `adm-compte-2fa` → `adm-compte-double-facteur`, `$mrr` → `$revenuMensuel`).
+
+Tests : PHPUnit 134/134, Vitest 157/157 (dont 8 sur l'empreinte CSP).
+
+---
+
 ## 4. Dette technique connue
-
-**Quatre écrans téléchargent tout l'historique des ventes** — Crédits,
-Inventaire, Chiffres, Retours. L'accueil a été corrigé (35 897 → 55 octets par
-navigation) mais pas ceux-là. Indolore aujourd'hui ; à 20 ventes/jour, l'écran
-Chiffres coûtera plus d'un mégaoctet dans six mois.
-
-**Le compte de démonstration est partagé.** Tous les visiteurs voient les
-modifications des autres et peuvent supprimer des produits. Une remise à zéro
-périodique serait souhaitable.
-
-**`CloisonnementBoutique` (ex-`BoutiqueScope`) et les runtimes persistants.** Le cloisonnement par boutique
-s'enregistre par requête, dans un processus PHP qui meurt avec la réponse.
-Passer à **Octane, Swoole ou FrankenPHP** ferait fuir ce cloisonnement d'une
-requête à l'autre : un commerçant hériterait de la boutique du précédent. À
-traiter impérativement avant tout changement de runtime.
 
 **Le plan gratuit Render.** Les services s'endorment après 15 minutes ; le réveil
 prend 30 à 50 secondes. Un plan payant (~7 $/mois) supprimerait le problème et

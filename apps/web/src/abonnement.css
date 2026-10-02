@@ -1,0 +1,210 @@
+/* ═══════════ Mon plan : abonnement et paiement vérifié (octobre 2026) ═══════════
+   Surfaces pleines de l'identité : carte Pro violette, bandeau d'encre.
+   Le violet et l'encre sont écrits en dur là où le texte est blanc : en mode
+   sombre, --marque s'éclaircit et ne porterait plus un texte blanc lisible. */
+.plan-page { display: flex; flex-direction: column; gap: 16px; padding-bottom: 8px; }
+.plan-sous-titre { margin: 0; font: 700 19px/1.3 var(--police-titre); color: var(--encre); }
+.plan-accroche { margin: 0; font-size: 15px; line-height: 1.45; color: var(--attenue); }
+.plan-aide { display: block; margin: 4px 0 0; font-size: 13px; line-height: 1.45; color: var(--attenue); }
+.plan-erreur { margin: 6px 0 0; font-size: 14px; line-height: 1.45; font-weight: 600; color: #B91C1C; }
+html.sombre .plan-erreur { color: var(--danger); }
+.plan-libelle { display: block; font-size: 12px; font-weight: 700; color: var(--libelle); margin-bottom: 6px; }
+.plan-facultatif { font-weight: 400; color: var(--attenue); }
+
+/* Bandeau d'état */
+.plan-bandeau { display: flex; gap: 12px; padding: 16px; border-radius: 18px; background: #1E1B4B; color: #fff; }
+html.sombre .plan-bandeau { background: #241f45; box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-bandeau-icone { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.1); color: #F9A8D4; }
+.plan-bandeau--paye .plan-bandeau-icone { color: #6EE7B7; }
+.plan-bandeau--grace { background: #78350F; }
+.plan-bandeau--grace .plan-bandeau-icone { color: #FCD34D; }
+.plan-bandeau-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.plan-bandeau-texte strong { font: 700 16px/1.35 var(--police-titre); text-wrap: balance; }
+.plan-bandeau-texte span { font-size: 14px; line-height: 1.45; color: #D9D4F5; }
+.plan-bandeau--grace .plan-bandeau-texte span { color: #FDE68A; }
+
+/* Refus, remarques */
+.plan-refus { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 14px; border-radius: 16px; background: var(--attention-fond); box-shadow: inset 0 0 0 1px var(--attention-bordure); color: #92400E; font-size: 14px; line-height: 1.45; }
+html.sombre .plan-refus { color: #FDE68A; }
+.plan-refus > span { display: flex; flex-direction: column; gap: 4px; }
+.plan-refus svg { flex: none; margin-top: 1px; }
+.plan-note { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); font-size: 14px; line-height: 1.5; color: var(--attenue); }
+.plan-note svg { flex: none; color: var(--marque); }
+
+/* Bascule mois / année : la pastille glisse, le prix se refond. */
+.plan-bascule { position: relative; isolation: isolate; display: flex; padding: 4px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-bascule::before { content: ''; position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 12px; background: #7C3AED; transition: transform 250ms var(--courbe-sortie-expo); }
+.plan-bascule[data-periode="an"]::before { transform: translateX(100%); }
+.plan-bascule button { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 0 8px; border: 0; border-radius: 12px; background: transparent; color: var(--attenue); font: 700 15px var(--police-titre); cursor: pointer; transition: color 150ms ease; }
+.plan-bascule button[aria-pressed="true"] { color: #fff; }
+.plan-remise { padding: 3px 8px; border-radius: 999px; background: var(--succes-fond); color: var(--vert-profond); font-size: 12px; white-space: nowrap; transition: background-color 150ms ease, color 150ms ease; }
+.plan-bascule button[aria-pressed="true"] .plan-remise { background: #fff; color: #5B21B6; }
+
+/* Cartes de plan */
+.plan-carte { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 22px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-carte--vedette { background: #7C3AED; box-shadow: 0 14px 30px -14px rgba(76,29,149,.55); color: #fff; }
+.plan-carte--discrete { gap: 10px; background: var(--marque-teinte); box-shadow: inset 0 0 0 1px var(--marque-bordure); }
+.plan-entete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.plan-nom { margin: 0; font: 700 22px/1.2 var(--police-titre); letter-spacing: -.01em; color: inherit; }
+.plan-carte:not(.plan-carte--vedette) .plan-nom { color: var(--encre); }
+.plan-chip { padding: 4px 10px; border-radius: 8px; background: var(--marque-teinte); color: var(--marque-fonce); font-size: 12px; font-weight: 700; white-space: nowrap; }
+html.sombre .plan-chip { color: var(--marque); }
+.plan-carte--vedette .plan-chip { background: #fff; color: #5B21B6; }
+.plan-carte--discrete .plan-chip { background: var(--surface); }
+.plan-carte--vedette .plan-accroche { color: #EDE9FE; }
+.plan-prix { display: flex; flex-direction: column; gap: 2px; animation: plan-fondu 220ms var(--courbe-sortie-expo); }
+.plan-prix-ligne { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.plan-prix-valeur { font: 800 32px/1.1 var(--police-titre); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan-carte:not(.plan-carte--vedette) .plan-prix-valeur { color: var(--encre); }
+.plan-prix-valeur--petit { font-size: 24px; }
+.plan-prix-periode, .plan-equivalent { font-size: 15px; color: var(--attenue); }
+.plan-carte--vedette .plan-prix-periode, .plan-carte--vedette .plan-equivalent { color: #EDE9FE; }
+.plan-atouts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.4; }
+.plan-carte:not(.plan-carte--vedette) .plan-atouts { color: var(--encre); }
+.plan-atouts li { display: flex; align-items: flex-start; gap: 10px; }
+.plan-atouts svg { flex: none; color: var(--marque); }
+.plan-carte--vedette .plan-atouts svg { color: #fff; }
+.plan-atouts--compact { gap: 6px; font-size: 14px; }
+
+/* Actions */
+.plan-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: #7C3AED; color: #fff; font: 700 16px var(--police-titre); text-decoration: none; cursor: pointer; transition: transform 160ms var(--courbe-sortie-expo), background-color 150ms ease; }
+.plan-cta:active:not(:disabled) { transform: scale(.97); }
+.plan-cta:disabled { opacity: .5; cursor: not-allowed; }
+.plan-carte--vedette .plan-cta { background: #fff; color: #5B21B6; }
+.plan-cta--contour { background: var(--surface); color: var(--marque-fonce); box-shadow: inset 0 0 0 2px var(--marque); }
+html.sombre .plan-cta--contour { color: var(--marque); }
+.plan-lien { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--marque-fonce); font: 600 15px var(--police-titre); text-decoration: none; cursor: pointer; }
+html.sombre .plan-lien { color: var(--marque); }
+@media (hover: hover) and (pointer: fine) {
+  .plan-cta:hover:not(:disabled) { background: #6D28D9; }
+  .plan-carte--vedette .plan-cta:hover:not(:disabled) { background: #F3EFFE; }
+  .plan-cta--contour:hover:not(:disabled) { background: var(--marque-teinte); }
+  .plan-lien:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+/* Ce que vous utilisez */
+.plan-utilisation { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; border-radius: 18px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-utilisation .plan-sous-titre { font-size: 16px; }
+.plan-utilisation dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.plan-utilisation dl > div { padding: 10px 12px; border-radius: 12px; background: var(--fond); }
+.plan-utilisation dt { font-size: 12.5px; font-weight: 600; color: var(--attenue); }
+.plan-utilisation dd { margin: 2px 0 0; display: flex; align-items: center; gap: 6px; font: 700 15px var(--police-titre); font-variant-numeric: tabular-nums; color: var(--encre); }
+.plan-utilisation-proche dd { color: #B45309; }
+html.sombre .plan-utilisation-proche dd { color: var(--attention); }
+
+/* Paiement : étapes */
+.plan-etapes { list-style: none; margin: 0; padding: 0; display: flex; }
+.plan-etape { position: relative; flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.plan-etape:not(:last-child)::after { content: ''; position: absolute; top: 16px; left: calc(50% + 22px); right: calc(-50% + 22px); height: 2px; border-radius: 2px; background: var(--trait); transition: background-color 250ms ease; }
+.plan-etape--faite:not(:last-child)::after { background: var(--marque-clair); }
+.plan-etape-rond { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; background: var(--surface); color: var(--attenue); box-shadow: inset 0 0 0 2px var(--trait); font: 700 15px var(--police-titre); transition: background-color 200ms ease, color 200ms ease; }
+.plan-etape--courante .plan-etape-rond { background: #7C3AED; color: #fff; box-shadow: none; }
+.plan-etape--faite .plan-etape-rond { background: var(--marque-teinte); color: var(--marque-fonce); box-shadow: none; }
+html.sombre .plan-etape--faite .plan-etape-rond { color: var(--marque); }
+.plan-etape-libelle { font-size: 13px; color: var(--attenue); }
+.plan-etape--courante .plan-etape-libelle { color: var(--encre); font-weight: 700; }
+.plan-etape-contenu { display: flex; flex-direction: column; gap: 16px; animation: plan-glisse 220ms var(--courbe-sortie-expo); }
+
+.plan-recap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: 18px; background: #7C3AED; color: #fff; }
+.plan-recap-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 13px; line-height: 1.4; color: #EDE9FE; }
+.plan-recap-texte strong { font: 700 18px var(--police-titre); color: #fff; }
+.plan-recap-montant { font: 800 24px var(--police-titre); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Paiement : moyen et consignes */
+.plan-moyens { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 10px; }
+.plan-moyens legend { padding: 0; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: var(--attenue); }
+.plan-moyen { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 2px var(--trait); cursor: pointer; transition: box-shadow 150ms ease; }
+.plan-moyen--choisi { box-shadow: inset 0 0 0 2px var(--marque); }
+.plan-moyen--indisponible { opacity: .55; cursor: not-allowed; }
+.plan-moyen:focus-within { outline: 3px solid var(--marque-clair); outline-offset: 2px; }
+.plan-moyen input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: #7C3AED; }
+.plan-moyen img { flex: none; border-radius: 12px; }
+.plan-moyen-texte { display: flex; flex-direction: column; }
+.plan-moyen-texte strong { font-size: 16px; color: var(--encre); }
+.plan-moyen-texte span { font-size: 13px; color: var(--attenue); }
+.plan-instructions { list-style: none; margin: 0; padding: 18px; display: flex; flex-direction: column; gap: 16px; border-radius: 18px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-instructions > li { display: flex; gap: 12px; font-size: 15px; line-height: 1.5; color: var(--encre); }
+.plan-instruction-rang { flex: none; width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: var(--marque-teinte); color: var(--marque-fonce); font: 700 14px var(--police-titre); }
+html.sombre .plan-instruction-rang { color: var(--marque); }
+.plan-instruction-bloc { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.plan-fort { white-space: nowrap; }
+.plan-numero { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #1E1B4B; color: #fff; }
+html.sombre .plan-numero { background: #241f45; box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-numero-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.plan-numero-texte strong { font: 700 18px var(--police-titre); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.plan-numero-texte span { font-size: 13px; color: #D9D4F5; }
+.plan-copier { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: #fff; color: #5B21B6; font: 700 14px var(--police-titre); cursor: pointer; transition: transform 160ms var(--courbe-sortie-expo); }
+.plan-copier:active { transform: scale(.97); }
+.plan-copier-contenu { display: inline-flex; align-items: center; gap: 6px; animation: plan-fondu 200ms var(--courbe-sortie-expo); }
+
+/* Paiement : déclaration */
+.plan-champ-montant { position: relative; display: block; }
+.plan-champ-montant input { padding-right: 38px; font-variant-numeric: tabular-nums; }
+.plan-champ-montant > span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--attenue); pointer-events: none; }
+.plan-capture { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 14px; border: 2px dashed var(--marque-clair); background: var(--marque-teinte); color: var(--marque-fonce); font: 600 15px var(--police-titre); cursor: pointer; }
+html.sombre .plan-capture { color: var(--marque); }
+.plan-capture:focus-within { outline: 3px solid var(--marque-clair); outline-offset: 2px; }
+.plan-capture-apercu { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.plan-capture-apercu img { max-width: 100%; max-height: 240px; border-radius: 12px; box-shadow: 0 0 0 1px var(--trait); }
+.plan-capture-apercu .plan-lien { align-self: flex-start; padding-left: 0; }
+
+/* Paiement : vérification en cours */
+.plan-suivi { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 20px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--trait); }
+.plan-suivi-icone { align-self: center; width: 60px; height: 60px; border-radius: 999px; display: grid; place-items: center; background: var(--marque-teinte); color: var(--marque); }
+.plan-suivi > .plan-sous-titre, .plan-suivi > .plan-accroche { text-align: center; text-wrap: balance; }
+.plan-frise { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.plan-frise li { display: flex; align-items: flex-start; gap: 12px; }
+.plan-frise li > span:last-child { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--attenue); }
+.plan-frise strong { font-size: 15px; color: var(--encre); }
+.plan-frise-rond { flex: none; width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; background: var(--surface); box-shadow: inset 0 0 0 2px var(--trait); }
+.plan-frise--faite .plan-frise-rond { background: var(--succes-fond); color: var(--vert-profond); box-shadow: none; }
+.plan-frise--courante .plan-frise-rond { background: #7C3AED; color: #fff; box-shadow: none; }
+.plan-frise--courante > span:last-child > span { color: var(--marque-fonce); font-weight: 600; }
+html.sombre .plan-frise--courante > span:last-child > span { color: var(--marque); }
+.plan-recap-liste { margin: 0; padding: 14px 16px; border-radius: 16px; background: var(--fond); display: flex; flex-direction: column; gap: 8px; }
+.plan-recap-liste div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.plan-recap-liste dt { color: var(--attenue); }
+.plan-recap-liste dd { margin: 0; font-weight: 700; text-align: right; color: var(--encre); }
+.plan-reference { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .03em; overflow-wrap: anywhere; }
+
+/* Carte « Mon plan » : accueil, paramètres, colonne du bureau */
+.carte-plan { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 0; border-radius: 18px; text-align: left; font: inherit; cursor: pointer; transition: transform 160ms var(--courbe-sortie-expo); }
+.carte-plan:active { transform: scale(.98); }
+.carte-plan--accueil { margin-top: 14px; }
+.carte-plan--profil { margin-bottom: 12px; }
+.carte-plan--vedette { background: #7C3AED; color: #fff; }
+.carte-plan--douce { background: var(--surface); color: var(--encre); box-shadow: inset 0 0 0 1px var(--trait); }
+.carte-plan--alerte { background: var(--attention-fond); color: #92400E; box-shadow: inset 0 0 0 1px var(--attention-bordure); }
+html.sombre .carte-plan--alerte { color: #FDE68A; }
+.carte-plan-icone { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.16); }
+.carte-plan--douce .carte-plan-icone { background: var(--marque-teinte); color: var(--marque); }
+.carte-plan--alerte .carte-plan-icone { background: rgba(245,158,11,.16); }
+.carte-plan-texte { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.carte-plan-titre { font: 700 14.5px/1.3 var(--police-titre); }
+.carte-plan-detail { font-size: 12.5px; line-height: 1.4; }
+.carte-plan--vedette .carte-plan-detail { color: #EDE9FE; }
+.carte-plan--douce .carte-plan-detail { color: var(--attenue); }
+.carte-plan-action { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 11px; background: #fff; color: #5B21B6; font: 700 12.5px var(--police-titre); white-space: nowrap; }
+.carte-plan--douce .carte-plan-action { background: var(--marque-teinte); color: var(--marque-fonce); }
+html.sombre .carte-plan--douce .carte-plan-action { color: var(--marque); }
+.carte-plan--alerte .carte-plan-action { color: #92400E; }
+/* Dans la colonne violette du bureau : empilée, sur un voile clair. */
+.carte-plan--bureau { flex-direction: column; align-items: stretch; margin-top: 12px; background: rgba(255,255,255,.1); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+.carte-plan--bureau .carte-plan-detail { color: #E9E5FF; }
+.carte-plan--bureau .carte-plan-icone { background: rgba(255,255,255,.14); color: #fff; }
+.carte-plan--bureau.carte-plan--alerte { background: rgba(251,191,36,.16); color: #FDE68A; box-shadow: inset 0 0 0 1px rgba(251,191,36,.3); }
+.carte-plan--bureau .carte-plan-action { justify-content: center; background: #fff; color: #4C1D95; }
+
+/* Feuille « inclus dans le plan … » */
+.feuille-plan { max-width: 480px; border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.feuille-plan-icone { width: 56px; height: 56px; border-radius: 999px; display: grid; place-items: center; background: var(--marque-teinte); color: var(--marque); }
+.feuille-plan-texte { margin: 0; font-size: 15px; line-height: 1.5; color: var(--attenue); text-wrap: pretty; }
+.feuille-plan-bouton { width: 100%; min-height: 50px; }
+
+@keyframes plan-fondu { from { opacity: 0; filter: blur(2px); } }
+@keyframes plan-glisse { from { opacity: 0; transform: translateX(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .plan-bascule::before { transition: none; }
+  .plan-prix, .plan-etape-contenu, .plan-copier-contenu { animation: none; }
+  .plan-cta, .carte-plan, .plan-copier { transition: none; }
+}

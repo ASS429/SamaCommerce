@@ -35,8 +35,9 @@ export type Utilisateur = {
   boutique_active_id: number | null
   telephone: string | null
   role: string
+  /** Plan PAYÉ (Gratuit, Essentiel, Pro, Entreprise). Ce qui s'applique
+   *  vraiment (essai, délai de grâce, limites) vient de /abonnement. */
   plan: string
-  statut_demande_premium: string
   est_employe?: boolean
   permissions?: Record<string, boolean> | null
   /** Photo de profil (data-URL réduite). */
@@ -125,6 +126,16 @@ const CHEMINS_AUTHENTIFICATION = [
 /** Émis quand le serveur REFUSE le jeton : l'application doit revenir à la connexion. */
 export const EVENEMENT_SESSION_EXPIREE = 'samacommerce:session-expiree'
 
+/** Émis quand une action dépasse le plan du commerçant (réponse 402). */
+export const EVENEMENT_PLAN_REQUIS = 'samacommerce:plan-requis'
+export type DetailPlanRequis = {
+  code: string
+  message: string
+  plan_requis: CodePlan | null
+  plan_requis_nom: string | null
+  fonctionnalite?: string
+}
+
 /*
  * Jeton périmé = retour à l'écran de connexion.
  *
@@ -148,6 +159,12 @@ api.interceptors.response.use(
     if (statut === 401 && lireJeton() && !CHEMINS_AUTHENTIFICATION.some((c) => adresse.startsWith(c))) {
       deconnecter() // purge le jeton mort ; la file hors ligne (IndexedDB) est conservée
       window.dispatchEvent(new CustomEvent(EVENEMENT_SESSION_EXPIREE))
+    }
+    /* 402 = limite ou fonctionnalité du plan. Chaque écran garde sa propre
+       gestion d'erreur ; l'application, elle, ouvre UNE fois la feuille qui
+       explique quel plan le permet (cf. FeuillePlanRequis). */
+    if (statut === 402 && erreur.response?.data?.code) {
+      window.dispatchEvent(new CustomEvent<DetailPlanRequis>(EVENEMENT_PLAN_REQUIS, { detail: erreur.response.data }))
     }
     return Promise.reject(erreur)
   },
@@ -198,6 +215,13 @@ export function deconnecter() {
 export async function deconnecterPartout() {
   try { await api.post('/auth/deconnexion-partout') } catch { /* réseau : on nettoie quand même le local */ }
   deconnecter()
+}
+/** Un appareil connecté au compte (un jeton). */
+export type Appareil = { id: number; type: 'ordinateur' | 'telephone' | 'autre'; derniere_utilisation: string | null; connecte_le: string | null; actuel: boolean }
+export const Appareils = {
+  lister: () => api.get<Appareil[]>('/auth/appareils').then((r) => r.data),
+  /** Déconnecte les autres appareils ; celui-ci reste connecté. */
+  deconnecterAutres: () => api.post<{ message: string; deconnectes: number }>('/auth/deconnexion-autres').then((r) => r.data),
 }
 export async function motDePasseOublie(identifiant: string): Promise<{ message: string; envoye?: boolean; code_dev?: string | null }> {
   const { data } = await api.post('/auth/mot-de-passe-oublie', { identifiant })
@@ -327,23 +351,205 @@ export const Statistiques = {
   marchandage: () => api.get('/statistiques/marchandage').then((r) => r.data),
 }
 
+// --- Abonnement (côté commerçant) ---
+export type CodePlan = 'gratuit' | 'essentiel' | 'pro' | 'entreprise'
+export type CleLimite = 'boutiques' | 'employes' | 'produits' | 'ia'
+/** Limites d'un plan : `null` = illimité. */
+export type LimitesPlan = Record<CleLimite, number | null>
+export type PlanPublic = {
+  code: CodePlan
+  nom: string
+  accroche: string | null
+  prix_mensuel: number
+  /** 12 mois moins les mois offerts ; null pour un plan sur devis. */
+  prix_annuel: number | null
+  sur_devis: boolean
+  prix_a_partir_de: number | null
+  limites: LimitesPlan
+  fonctionnalites: string[]
+  ordre: number
+}
+/** Pourquoi ce plan s'applique : payé, délai de grâce, essai, gratuit. */
+export type SourcePlan = 'paye' | 'grace' | 'essai' | 'gratuit' | 'admin'
+export type EtatAbonnement = {
+  plan: PlanPublic
+  source: SourcePlan
+  plan_paye: CodePlan | null
+  fin_le: string | null
+  grace_jusqu_au: string | null
+  essai_jusqu_au: string | null
+  plan_essai: CodePlan | null
+  plan_expire: CodePlan | null
+  expire_le: string | null
+  jours_restants: number | null
+  limites: LimitesPlan
+  fonctionnalites: string[]
+}
+export type MoyenAbonnement = 'wave' | 'orange' | 'especes' | 'offert'
+export type PaiementAbonnement = {
+  id: number
+  plan: CodePlan
+  plan_nom: string
+  formule: string
+  periode: 'mois' | 'an'
+  montant_attendu: number
+  montant_declare: number
+  moyen: MoyenAbonnement
+  moyen_libelle: string
+  numero_payeur: string | null
+  reference: string | null
+  a_capture: boolean
+  statut: 'en_attente' | 'valide' | 'refuse'
+  motif_refus: string | null
+  origine: 'declaration' | 'admin' | 'reprise'
+  debut_le: string | null
+  fin_le: string | null
+  numero_recu: string | null
+  cree_le: string | null
+  decide_le: string | null
+}
+export type UtilisationPlan = Record<CleLimite, number>
+export type DonneesAbonnement = {
+  etat: EtatAbonnement
+  utilisation: UtilisationPlan
+  plans: PlanPublic[]
+  paiement: {
+    numero_wave: string | null
+    numero_orange: string | null
+    nom_beneficiaire: string | null
+    /** wa.me de l'administrateur, prérempli ; null s'il n'est pas configuré. */
+    lien_contact: string | null
+    reference_obligatoire: boolean
+    capture_autorisee: boolean
+    mois_offerts_annuel: number
+  }
+  en_attente: PaiementAbonnement | null
+  dernier_refus: PaiementAbonnement | null
+  /** Faux pour un employé : seul le propriétaire paie l'abonnement. */
+  peut_payer: boolean
+}
+export type DeclarationPaiement = {
+  plan: CodePlan
+  periode: 'mois' | 'an'
+  moyen: 'wave' | 'orange'
+  numero_payeur: string
+  reference: string
+  montant: number
+  capture?: string | null
+}
+export const Abonnement = {
+  etat: () => api.get<DonneesAbonnement>('/abonnement').then((r) => r.data),
+  declarer: (charge: DeclarationPaiement) =>
+    api.post<{ message: string; paiement: PaiementAbonnement }>('/abonnement/paiements', charge).then((r) => r.data),
+  historique: () => api.get<PaiementAbonnement[]>('/abonnement/paiements').then((r) => r.data),
+}
+
 // --- Administration ---
+export type ControlesPaiement = { montant_conforme: boolean; ecart: number; reference_reutilisee: boolean; numero_du_compte: boolean }
+export type PaiementAdmin = PaiementAbonnement & {
+  commercant: {
+    id: number; nom_commerce: string | null; identifiant: string; telephone: string | null
+    cree_le: string | null; plan_actuel: string; lien_whatsapp: string | null
+  }
+  controles: ControlesPaiement
+  /** Ce qu'ouvrirait une validation maintenant (paiements à vérifier seulement). */
+  effet: { debut_le: string; fin_le: string; texte: string; explication: string } | null
+  /** Photo du SMS : seulement dans la fiche du paiement. */
+  capture?: string | null
+}
+export type StatutCommercant = 'bloque' | 'attente' | 'expire' | 'essai_fin' | 'bientot' | 'essai' | 'actif' | 'gratuit'
+export type FiltreCommercants = 'tous' | 'essai' | 'payants' | 'bientot' | 'expires' | 'bloques' | 'attente'
+export type LigneCommercant = {
+  id: number
+  nom_commerce: string | null
+  identifiant: string
+  telephone: string | null
+  statut_compte: string
+  cree_le: string | null
+  derniere_activite: string | null
+  plan: CodePlan
+  plan_nom: string
+  source: SourcePlan
+  statut: StatutCommercant
+  jours_restants: number | null
+  echeance: string | null
+  fin_le: string | null
+  description: string
+  paiement_en_attente: boolean
+}
+export type FicheCommercant = LigneCommercant & {
+  etat: EtatAbonnement
+  utilisation: UtilisationPlan
+  paiements: PaiementAbonnement[]
+  relance: { texte: string; lien_whatsapp: string | null }
+}
+export type TableauDeBordAdmin = {
+  chiffres: {
+    revenu_mensuel_recurrent: number; abonnes_payants: number; encaisse_mois: number; paiements_valides_mois: number
+    a_verifier: number; expirent_sous_7_jours: number; commercants: number
+  }
+  repartition: Record<string, number>
+  revenus: { mois: string; total: number }[]
+  conversion_essais: { termines: number; convertis: number; mois: string }
+  a_verifier: { id: number; commerce: string | null; formule: string; moyen: MoyenAbonnement; montant_declare: number; ecart: number; cree_le: string | null }[]
+  inscriptions: { id: number; nom_commerce: string; cree_le: string | null; essai_jours_restants: number | null; plan_nom: string; source: SourcePlan }[]
+  sante: {
+    api: { ok: boolean; latence_ms: number }
+    ia: { ok: boolean }
+    sauvegarde: { ok: boolean; etat: string; le: string } | null
+    reveil: { dernier: string | null }
+  }
+}
+export type CompteFinances = { moyen: 'wave' | 'orange' | 'especes'; libelle: string; solde: number; entrees_mois: number; sorties_mois: number }
+export type MouvementFinances = { type: 'entree' | 'retrait' | 'transfert'; date: string; libelle: string; detail: string; compte: string; montant: number }
+export type Finances = { mois: string; comptes: CompteFinances[]; total: number; encaisse_mois: number; retire_mois: number; mouvements: MouvementFinances[] }
+export type ReglagesAbonnement = {
+  duree_essai_jours: number; plan_essai: CodePlan; delai_grace_jours: number; mois_offerts_annuel: number
+  numero_wave: string | null; numero_orange: string | null; nom_beneficiaire: string | null; numero_contact: string | null
+  reference_obligatoire: boolean; capture_autorisee: boolean; rappels: string[] | null; message_relance: string | null
+  rappels_possibles: Record<string, string>
+}
+export type ModificationPlan = Partial<Pick<PlanPublic, 'nom' | 'accroche' | 'prix_mensuel' | 'sur_devis' | 'prix_a_partir_de' | 'fonctionnalites'>> & { limites?: Partial<LimitesPlan> }
+
 export const Admin = {
-  vueEnsemble: () => api.get('/admin/statistiques/vue-ensemble').then((r) => r.data),
-  revenus: (periode = 'mois') => api.get(`/admin/statistiques/revenus?periode=${periode}`).then((r) => r.data),
-  transactions: (limite = 10) => api.get(`/admin/statistiques/transactions?limite=${limite}`).then((r) => r.data),
-  comptes: () => api.get('/admin/statistiques/comptes').then((r) => r.data),
-  evolution: () => api.get('/admin/statistiques/revenus/evolution').then((r) => r.data),
-  utilisateurs: () => api.get('/admin/utilisateurs').then((r) => r.data),
+  tableauDeBord: () => api.get<TableauDeBordAdmin>('/admin/tableau-de-bord').then((r) => r.data),
+
+  paiements: (statut: 'en_attente' | 'valide' | 'refuse' = 'en_attente') =>
+    api.get<{ paiements: PaiementAdmin[]; compteurs: { en_attente: number } }>(`/admin/paiements?statut=${statut}`).then((r) => r.data),
+  paiement: (id: number) => api.get<PaiementAdmin>(`/admin/paiements/${id}`).then((r) => r.data),
+  /** `verifie` : la case « J'ai retrouvé ce paiement », exigée par l'API. */
+  valider: (id: number) => api.post<{ message: string; paiement: PaiementAdmin }>(`/admin/paiements/${id}/valider`, { verifie: true }).then((r) => r.data),
+  refuser: (id: number, motif: string) => api.post<{ message: string; paiement: PaiementAdmin }>(`/admin/paiements/${id}/refuser`, { motif }).then((r) => r.data),
+  annuler: (id: number) => api.post<{ message: string; paiement: PaiementAdmin }>(`/admin/paiements/${id}/annuler`).then((r) => r.data),
+
+  commercants: (filtre: FiltreCommercants = 'tous', recherche = '') =>
+    api.get<{ commercants: LigneCommercant[]; compteurs: Record<FiltreCommercants, number> }>('/admin/commercants', { params: { filtre, recherche } }).then((r) => r.data),
+  commercant: (id: number) => api.get<FicheCommercant>(`/admin/commercants/${id}`).then((r) => r.data),
+  offrir: (id: number, jours: number, plan?: CodePlan) =>
+    api.post<{ message: string; paiement: PaiementAbonnement }>(`/admin/commercants/${id}/offrir`, { jours, plan }).then((r) => r.data),
+  changerPlan: (id: number, charge: { plan: CodePlan; periode: 'mois' | 'an'; moyen: MoyenAbonnement; montant?: number | null }) =>
+    api.post<{ message: string; paiement: PaiementAbonnement }>(`/admin/commercants/${id}/plan`, charge).then((r) => r.data),
+
+  creerCommercant: (charge: { identifiant: string; nom_commerce?: string; telephone?: string }) =>
+    api.post<Utilisateur & { mot_de_passe_provisoire: string }>('/admin/utilisateurs', charge).then((r) => r.data),
   bloquer: (id: number) => api.put(`/admin/utilisateurs/${id}/bloquer`),
   activer: (id: number) => api.put(`/admin/utilisateurs/${id}/activer`),
-  supprimerUtilisateur: (id: number) => api.delete(`/admin/utilisateurs/${id}`),
-  validerPassagePremium: (id: number) => api.put(`/admin/passages-premium/${id}/valider`),
-  refuserPassagePremium: (id: number) => api.put(`/admin/passages-premium/${id}/refuser`),
-  retraits: () => api.get('/admin/retraits').then((r) => r.data),
-  retirer: (montant: number, moyen: string) => api.post('/admin/retraits', { montant, moyen }),
-  transferts: () => api.get('/admin/transferts').then((r) => r.data),
-  transferer: (source: string, destination: string, montant: number) => api.post('/admin/transferts', { source, destination, montant }),
+  supprimer: (id: number) => api.delete(`/admin/utilisateurs/${id}`),
+  relancer: (id: number) =>
+    api.post<{ message: string; texte: string; lien_whatsapp: string | null; email_envoye: boolean }>(`/admin/utilisateurs/${id}/relancer`).then((r) => r.data),
+
+  plans: () => api.get<{ plans: PlanPublic[]; fonctionnalites: Record<string, string> }>('/admin/plans').then((r) => r.data),
+  modifierPlan: (code: CodePlan, champs: ModificationPlan) =>
+    api.put<{ message: string; plan: PlanPublic }>(`/admin/plans/${code}`, champs).then((r) => r.data),
+  reglages: () => api.get<ReglagesAbonnement>('/admin/reglages').then((r) => r.data),
+  modifierReglages: (champs: Partial<Omit<ReglagesAbonnement, 'rappels_possibles'>>) =>
+    api.put<{ message: string; reglages: ReglagesAbonnement }>('/admin/reglages', champs).then((r) => r.data),
+
+  finances: (mois?: string) => api.get<Finances>('/admin/finances', { params: mois ? { mois } : {} }).then((r) => r.data),
+  /** Refusé (422) au-delà du solde du compte. */
+  retirer: (montant: number, moyen: CompteFinances['moyen']) => api.post<{ message: string }>('/admin/retraits', { montant, moyen }).then((r) => r.data),
+  transferer: (source: CompteFinances['moyen'], destination: CompteFinances['moyen'], montant: number) =>
+    api.post<{ message: string }>('/admin/transferts', { source, destination, montant }).then((r) => r.data),
   // Plus de réglage « 2FA » ici : il ne protégeait rien. La vraie vérification
   // en deux étapes passe par basculerDoubleFacteur (outils/doubleFacteur).
 }

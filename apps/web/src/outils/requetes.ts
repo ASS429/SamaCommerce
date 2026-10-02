@@ -18,7 +18,7 @@
  */
 
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Categories, Produits, type Categorie, type Produit } from './api'
+import { Abonnement, Categories, Produits, type Categorie, type DonneesAbonnement, type Produit } from './api'
 
 /* Repli STABLE en attendant la réponse.
  * Écrire `?? []` crée un tableau NEUF à chaque rendu : toute dépendance de
@@ -29,6 +29,7 @@ export const LISTE_VIDE: never[] = []
 export const CLES = {
   produits: ['produits'] as const,
   categories: ['categories'] as const,
+  abonnement: ['abonnement'] as const,
 }
 
 export function creerClientRequetes(): QueryClient {
@@ -69,4 +70,17 @@ export function useRafraichirCatalogue() {
     client.invalidateQueries({ queryKey: CLES.produits })
     client.invalidateQueries({ queryKey: CLES.categories })
   }
+}
+
+/* État d'abonnement : plan qui s'applique, échéance, limites, paiement en
+ * cours. Lu par la carte « Mon plan » de l'accueil, l'écran Mon plan et la
+ * feuille « plan requis » : un seul appel pour les trois. Il change rarement
+ * (une validation par mois au plus) ; on le relit après chaque déclaration. */
+export function useAbonnement(actif = true) {
+  return useQuery<DonneesAbonnement>({ queryKey: CLES.abonnement, queryFn: Abonnement.etat, enabled: actif, staleTime: 5 * 60_000 })
+}
+
+export function useRafraichirAbonnement() {
+  const client = useQueryClient()
+  return () => client.invalidateQueries({ queryKey: CLES.abonnement })
 }

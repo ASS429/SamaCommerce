@@ -8,13 +8,14 @@ import { SECTIONS_MASQUABLES, sectionVisible, afficherSection, toutAfficher, imp
 import { basculerVerificationDeuxEtapes } from '../outils/doubleFacteur'
 import ChoixPhoto from '../composants/ChoixPhoto'
 import Avatar from '../composants/Avatar'
+import CartePlan from '../composants/CartePlan'
 
 const ICONES_ACTIONS: Record<string, string> = {
   vente: '🛒', remboursement: '💰', 'produit.ajout': '➕', 'produit.suppr': '🗑️',
   'caisse.cloture': '🔒', 'equipe.invitation': '✉️', 'equipe.retrait': '👋',
 }
 
-export default function Profil({ utilisateur, surDeconnexion, surPassagePremium }: { utilisateur: Utilisateur | null; surDeconnexion: () => void; surPassagePremium: () => void }) {
+export default function Profil({ utilisateur, surDeconnexion, surMonPlan }: { utilisateur: Utilisateur | null; surDeconnexion: () => void; surMonPlan: () => void }) {
   const [nomCommerce, definirNomCommerce] = useState(utilisateur?.nom_commerce ?? '')
   const [telephone, definirTelephone] = useState(utilisateur?.telephone ?? '')
   const [envoi, definirEnvoi] = useState(false)
@@ -202,16 +203,7 @@ export default function Profil({ utilisateur, surDeconnexion, surPassagePremium 
         </div>
       </div>
 
-      {utilisateur?.plan === 'Gratuit' && !estEmploye && (
-        <button className="premium-carte" style={{ marginBottom: 12 }} onClick={surPassagePremium}>
-          <span className="bandeau-icone" aria-hidden="true">👑</span>
-          <span style={{ minWidth: 0 }}>
-            <span className="premium-titre" style={{ display: 'block' }}>SamaCommerce Premium</span>
-            <span className="premium-sous-titre" style={{ display: 'block' }}>IA, multi-boutique, export illimité</span>
-          </span>
-          <span className="premium-aller">Activer</span>
-        </button>
-      )}
+      {!estEmploye && <CartePlan contexte="profil" surOuvrir={surMonPlan} />}
 
       <div className="carte">
         <div className="carte-titre">🛡️ Sécurité du compte</div>

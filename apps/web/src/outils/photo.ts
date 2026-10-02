@@ -105,11 +105,15 @@ function encoder(toile: HTMLCanvasElement, type: string, qualite: number): strin
   return toile.toDataURL(type, qualite)
 }
 
+/** Capture du SMS de paiement : la référence doit rester LISIBLE par l'administrateur. */
+export const RECU_COTE_MAX = 1000
+export const RECU_OCTETS_MAX = 150 * 1024
+
 /**
  * Réduit et compresse une photo en data-URL prête à enregistrer.
  * @throws ErreurPhoto si le fichier n'est pas une image ou reste trop lourd.
  */
-export async function compresserPhoto(fichier: File, coteMax = PHOTO_COTE_MAX): Promise<string> {
+export async function compresserPhoto(fichier: File, coteMax = PHOTO_COTE_MAX, octetsMax = PHOTO_OCTETS_MAX): Promise<string> {
   // Type VIDE accepté : certains sélecteurs Android (gestionnaire de fichiers,
   // Drive) n'en donnent pas pour une vraie photo. Le décodage tranchera.
   if (fichier.type && !fichier.type.startsWith('image/')) throw new ErreurPhoto('Ce fichier n\'est pas une image')
@@ -134,10 +138,11 @@ export async function compresserPhoto(fichier: File, coteMax = PHOTO_COTE_MAX): 
 
     for (const qualite of [0.72, 0.6, 0.5, 0.4, 0.3]) {
       const encodee = encoder(toile, type, qualite)
-      if (encodee.length <= PHOTO_OCTETS_MAX) return encodee
+      if (encodee.length <= octetsMax) return encodee
     }
-    // Dernier recours : on rétrécit encore une fois.
-    if (coteMax > 128) return compresserPhoto(fichier, 128)
+    // Dernier recours : on rétrécit encore une fois (par paliers pour une
+    // grande image, d'un coup à 128 px pour une vignette).
+    if (coteMax > 128) return compresserPhoto(fichier, coteMax > PHOTO_COTE_MAX ? Math.round(coteMax * 0.7) : 128, octetsMax)
     throw new ErreurPhoto('Photo trop lourde, réessayez avec une image plus simple')
   } finally { source.liberer() }
 }

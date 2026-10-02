@@ -13,7 +13,9 @@ const Credits = lazy(() => import('./sections/Credits'))
 const Inventaire = lazy(() => import('./sections/Inventaire'))
 const TableauBordBoutiques = lazy(() => import('./sections/TableauBordBoutiques'))
 const ApplicationAdmin = lazy(() => import('./sections/admin/ApplicationAdmin'))
-import Premium from './sections/Premium'
+import MonPlan from './sections/MonPlan'
+import CartePlan from './composants/CartePlan'
+import FeuillePlanRequis from './composants/FeuillePlanRequis'
 import VoletPlus from './sections/VoletPlus'
 import PremiersPas from './composants/PremiersPas'
 import VerrouPin from './composants/VerrouPin'
@@ -43,6 +45,7 @@ const TITRES: Record<Ecran, string> = {
   accueil: traduire('titre.accueil'), 'toutes-boutiques': 'Toutes mes boutiques', vente: traduire('titre.vente'), stock: traduire('titre.stock'),
   categories: traduire('titre.categories'), rapports: traduire('titre.rapports'), inventaire: traduire('titre.inventaire'), credits: traduire('titre.credits'),
   clients: traduire('titre.clients'), fournisseurs: traduire('titre.fournisseurs'), caisse: traduire('titre.caisse'), commandes: traduire('titre.commandes'), retours: traduire('titre.retours'), livraisons: traduire('titre.livraisons'), boutiques: traduire('titre.boutiques'), equipe: traduire('titre.equipe'), profil: traduire('titre.profil'), ia: traduire('titre.ia'),
+  plan: traduire('titre.plan'),
 }
 
 // Liste de navigation (colonne latérale sur ordinateur) — emoji + libellé
@@ -71,7 +74,7 @@ const PERMISSION_PAR_ECRAN: Partial<Record<Ecran, string>> = {
   inventaire: 'stock', credits: 'vente', clients: 'clients', fournisseurs: 'fournisseurs',
   caisse: 'caisse', commandes: 'commandes', retours: 'credits', livraisons: 'livraisons', ia: 'stock',
 }
-const RESERVES_AU_PROPRIETAIRE: Ecran[] = ['boutiques', 'equipe', 'toutes-boutiques']
+const RESERVES_AU_PROPRIETAIRE: Ecran[] = ['boutiques', 'equipe', 'toutes-boutiques', 'plan']
 
 /**
  * Deux filtres bien distincts se superposent sur la navigation :
@@ -97,7 +100,6 @@ export default function Application() {
   const [utilisateur, definirUtilisateur] = useState<Utilisateur | null>(lireUtilisateur())
   const [connecte, definirConnecte] = useState(!!lireJeton())
   const [ecran, definirEcran] = useState<Ecran>('accueil')
-  const [premiumOuvert, definirPremiumOuvert] = useState(false)
   const [voletPlusOuvert, definirVoletPlusOuvert] = useState(false)
   const [chiffres, definirChiffres] = useState({ ca: 0, articles: 0, stock: 0 })
   const [bureau, definirBureau] = useState(window.matchMedia('(min-width: 1024px)').matches)
@@ -269,7 +271,7 @@ export default function Application() {
   void versionSections // relit les sections affichées à chaque changement
   const section = !peutAcceder(utilisateur, ecran) ? <AccesRefuse /> : (<Suspense fallback={<ChargementSection />}>
     {ecran === 'toutes-boutiques' && <TableauBordBoutiques surNavigation={definirEcran} />}
-    {ecran === 'accueil' && <Accueil utilisateur={utilisateur} peutVoir={(e) => estVisible(utilisateur, e)} alertesAutorisees={peutLireAlertes} surNavigation={definirEcran} surDeconnexion={seDeconnecter} surPassagePremium={() => definirPremiumOuvert(true)} bureau={bureau} chiffres={chiffres} />}
+    {ecran === 'accueil' && <Accueil utilisateur={utilisateur} peutVoir={(e) => estVisible(utilisateur, e)} alertesAutorisees={peutLireAlertes} surNavigation={definirEcran} surDeconnexion={seDeconnecter} surMonPlan={() => aller('plan')} bureau={bureau} chiffres={chiffres} />}
     {ecran === 'vente' && <Vente />}
     {ecran === 'stock' && <Stock />}
     {ecran === 'categories' && <SectionCategories />}
@@ -285,7 +287,8 @@ export default function Application() {
     {ecran === 'livraisons' && <Livraisons />}
     {ecran === 'boutiques' && <SectionBoutiques />}
     {ecran === 'equipe' && <Equipe />}
-    {ecran === 'profil' && <Profil utilisateur={utilisateur} surDeconnexion={seDeconnecter} surPassagePremium={() => definirPremiumOuvert(true)} />}
+    {ecran === 'profil' && <Profil utilisateur={utilisateur} surDeconnexion={seDeconnecter} surMonPlan={() => aller('plan')} />}
+    {ecran === 'plan' && <MonPlan utilisateur={utilisateur} />}
   </Suspense>)
 
   // Design 3.6 — commandes de la palette (Ctrl+K) : navigation + actions rapides.
@@ -299,7 +302,7 @@ export default function Application() {
   ]
 
   const fenetres = (<>
-    {premiumOuvert && <Premium surFermeture={() => definirPremiumOuvert(false)} surDemandeEnvoyee={() => definirUtilisateur((u) => (u ? { ...u, plan: 'Premium' } : u))} />}
+    <FeuillePlanRequis estEmploye={!!utilisateur?.est_employe} surVoirPlans={() => aller('plan')} />
     {premiersPasOuverts && <PremiersPas surFin={() => definirPremiersPasOuverts(false)} />}
     <VerrouPin />
     <PaletteCommandes commandes={commandes} />
@@ -321,13 +324,7 @@ export default function Application() {
               </button>
             ))}
           </nav>
-          {utilisateur?.plan === 'Gratuit' && !utilisateur?.est_employe && (
-            <div className="bureau-premium" onClick={() => definirPremiumOuvert(true)}>
-              <div style={{ fontSize: 22 }}>👑</div>
-              <div className="bureau-premium-titre">Passer Premium</div>
-              <div className="bureau-premium-sous-titre">IA + multi-boutique</div>
-            </div>
-          )}
+          {!utilisateur?.est_employe && <CartePlan contexte="bureau" surOuvrir={() => aller('plan')} />}
         </aside>
         <div className="bureau-principal">
           {!enLigne && <div className="bandeau-hors-ligne">📴 Hors ligne — les données affichées peuvent être anciennes</div>}

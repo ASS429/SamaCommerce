@@ -4,9 +4,10 @@ import { traduire, lireLangue, choisirLangue, LANGUES, type Langue } from '../ou
 import { changerTheme, lirePreferenceTheme, LIBELLES_THEME, type PreferenceTheme } from '../outils/theme'
 import { bulle } from '../outils/bulles'
 import { extraireJetonInvitation } from '../outils/invitation'
+import CartePlan from '../composants/CartePlan'
 
 export type Ecran = 'accueil' | 'toutes-boutiques' | 'vente' | 'stock' | 'categories' | 'rapports' | 'inventaire' | 'credits'
-  | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'retours' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia'
+  | 'clients' | 'fournisseurs' | 'caisse' | 'commandes' | 'retours' | 'livraisons' | 'boutiques' | 'equipe' | 'profil' | 'ia' | 'plan'
 
 /* Tuiles d'accueil : une couleur PLEINE par destination.
    Avant, six cartes blanches se distinguaient par un mot ; il fallait lire
@@ -24,14 +25,14 @@ const TUILES: { ecran: Ecran; emoji: string; cle: string; sousTitre: string; tei
 /** Événement `beforeinstallprompt` (non typé par TypeScript). */
 type InvitationInstallation = Event & { prompt: () => void; userChoice: Promise<unknown> }
 
-export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = true, surNavigation, surDeconnexion, surPassagePremium, bureau, chiffres }: {
+export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = true, surNavigation, surDeconnexion, surMonPlan, bureau, chiffres }: {
   utilisateur: Utilisateur | null
   peutVoir: (e: Ecran) => boolean
   /** Droit de lire les alertes de stock (l'API les réserve au droit « rapports »). */
   alertesAutorisees?: boolean
   surNavigation: (e: Ecran) => void
   surDeconnexion: () => void
-  surPassagePremium: () => void
+  surMonPlan: () => void
   bureau?: boolean
   chiffres?: { ca: number; articles: number; stock: number }
 }) {
@@ -174,16 +175,7 @@ export default function Accueil({ utilisateur, peutVoir, alertesAutorisees = tru
         ))}
       </div>
 
-      {utilisateur?.plan === 'Gratuit' && !utilisateur?.est_employe && (
-        <button className="premium-carte" style={{ marginTop: 14 }} onClick={surPassagePremium}>
-          <span className="tuile-icone" aria-hidden="true">👑</span>
-          <span>
-            <span className="premium-titre" style={{ display: 'block' }}>SamaCommerce Premium</span>
-            <span className="premium-sous-titre" style={{ display: 'block' }}>IA, multi-boutique, export illimité</span>
-          </span>
-          <span className="premium-aller">Activer</span>
-        </button>
-      )}
+      {!utilisateur?.est_employe && <CartePlan contexte="accueil" surOuvrir={surMonPlan} />}
 
       {/* Réglages d'appareil : utiles, mais ce ne sont pas des actions de vente.
           Ils passent donc en bas, en discret, sous les six destinations. */}

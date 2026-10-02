@@ -48,6 +48,7 @@ const DICTIONNAIRE: Record<string, Record<Langue, string>> = {
   'titre.boutiques': { fr: '🏬 Boutiques', wo: '🏬 Butik', en: '🏬 Shops' },
   'titre.equipe': { fr: '👥 Équipe', wo: '👥 Ekib', en: '👥 Team' },
   'titre.profil': { fr: '👤 Paramètres', wo: '👤 Paramet', en: '👤 Settings' },
+  'titre.plan': { fr: '⭐ Mon plan', wo: '⭐ Sama plan', en: '⭐ My plan' },
   'titre.ia': { fr: '🤖 Réappro IA', wo: '🤖 Yeesal IA', en: '🤖 AI Restock' },
 
   // Boutons d'action principaux (accueil)

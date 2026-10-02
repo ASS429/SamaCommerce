@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  */
 class ControleurFinances extends Controleur
 {
-    private const COMPTES = ['wave' => 'Wave', 'orange' => 'Orange Money', 'especes' => 'Espèces'];
+    public const COMPTES = ['wave' => 'Wave', 'orange' => 'Orange Money', 'especes' => 'Espèces'];
 
     public function afficher(Request $requete)
     {
@@ -23,25 +23,19 @@ class ControleurFinances extends Controleur
         $debutMois = Carbon::createFromFormat('Y-m-d', $mois.'-01')->startOfDay();
         $finMois = $debutMois->copy()->endOfMonth();
 
-        $encaissements = PaiementAbonnement::leger()->with('utilisateur:id,nom_commerce,identifiant')
-            ->where('statut', 'valide')->where('montant_declare', '>', 0)
-            ->whereIn('moyen', array_keys(self::COMPTES))->get();
-        $retraits = Retrait::where('statut', 'validé')->get();
-        $transferts = TransfertAdmin::all();
+        [$encaissements, $retraits, $transferts] = self::mouvements();
+        $soldes = self::soldes($encaissements, $retraits, $transferts);
 
         $comptes = [];
         foreach (self::COMPTES as $moyen => $libelle) {
             $dansLeMois = fn ($date) => $date && Carbon::parse($date)->between($debutMois, $finMois);
             $entrees = $encaissements->where('moyen', $moyen);
             $sorties = $retraits->where('moyen', $moyen);
-            $solde = $entrees->sum('montant_declare') - $sorties->sum(fn ($r) => (int) $r->montant)
-                - $transferts->where('compte_source', $moyen)->sum(fn ($t) => (int) $t->montant)
-                + $transferts->where('compte_destination', $moyen)->sum(fn ($t) => (int) $t->montant);
 
             $comptes[] = [
                 'moyen' => $moyen,
                 'libelle' => $libelle,
-                'solde' => (int) $solde,
+                'solde' => $soldes[$moyen],
                 'entrees_mois' => (int) $entrees->filter(fn ($p) => $dansLeMois($p->decide_le))->sum('montant_declare'),
                 'sorties_mois' => (int) $sorties->filter(fn ($r) => $dansLeMois($r->cree_le))->sum(fn ($r) => (int) $r->montant),
             ];
@@ -82,5 +76,40 @@ class ControleurFinances extends Controleur
             'retire_mois' => array_sum(array_column($comptes, 'sorties_mois')),
             'mouvements' => $mouvements,
         ]);
+    }
+
+    /** Paiements validés, retraits et transferts : tout ce qui fait bouger les comptes. */
+    private static function mouvements(): array
+    {
+        return [
+            PaiementAbonnement::leger()->with('utilisateur:id,nom_commerce,identifiant')
+                ->where('statut', 'valide')->where('montant_declare', '>', 0)
+                ->whereIn('moyen', array_keys(self::COMPTES))->get(),
+            Retrait::where('statut', 'validé')->get(),
+            TransfertAdmin::all(),
+        ];
+    }
+
+    /**
+     * Solde de chaque compte, depuis toujours. Sert aussi à refuser un retrait
+     * ou un transfert plus gros que le compte : sans ce garde-fou, le solde
+     * affiché devenait négatif.
+     *
+     * @return array<string, int>
+     */
+    public static function soldes($encaissements = null, $retraits = null, $transferts = null): array
+    {
+        if ($encaissements === null) {
+            [$encaissements, $retraits, $transferts] = self::mouvements();
+        }
+        $soldes = [];
+        foreach (array_keys(self::COMPTES) as $moyen) {
+            $soldes[$moyen] = (int) ($encaissements->where('moyen', $moyen)->sum('montant_declare')
+                - $retraits->where('moyen', $moyen)->sum(fn ($r) => (int) $r->montant)
+                - $transferts->where('compte_source', $moyen)->sum(fn ($t) => (int) $t->montant)
+                + $transferts->where('compte_destination', $moyen)->sum(fn ($t) => (int) $t->montant));
+        }
+
+        return $soldes;
     }
 }

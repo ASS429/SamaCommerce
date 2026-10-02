@@ -12,7 +12,7 @@ class ReglagesAbonnement extends Modele
 
     protected $fillable = [
         'duree_essai_jours', 'plan_essai', 'delai_grace_jours', 'mois_offerts_annuel',
-        'numero_wave', 'numero_orange', 'nom_beneficiaire', 'reference_obligatoire',
+        'numero_wave', 'numero_orange', 'nom_beneficiaire', 'numero_contact', 'reference_obligatoire',
         'capture_autorisee', 'rappels', 'message_relance',
     ];
 

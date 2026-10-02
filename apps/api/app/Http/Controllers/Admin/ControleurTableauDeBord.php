@@ -26,8 +26,9 @@ class ControleurTableauDeBord extends Controleur
         $repartition = ['gratuit' => 0, 'essai' => 0] + collect(Plan::catalogue())->filter->estPayant()->map(fn () => 0)->all();
         $mrr = 0;
         $expirent = 0;
+        $etats = [];
         foreach ($comptes as $compte) {
-            $etat = Abonnements::etat($compte, $aujourdhui);
+            $etat = $etats[$compte->id] = Abonnements::etat($compte, $aujourdhui);
             if (in_array($etat->source, ['paye', 'grace'], true)) {
                 $repartition[$etat->planPaye->code] = ($repartition[$etat->planPaye->code] ?? 0) + 1;
                 $mrr += $this->valeurMensuelle($compte->id, $aujourdhui);
@@ -90,6 +91,9 @@ class ControleurTableauDeBord extends Controleur
                 'nom_commerce' => $c->nom_commerce ?: $c->identifiant,
                 'cree_le' => $c->cree_le?->toIso8601String(),
                 'essai_jours_restants' => $c->essai_jusqu_au && $c->essai_jusqu_au->gte($aujourdhui) ? (int) $aujourdhui->diffInDays($c->essai_jusqu_au) : null,
+                // Un commerçant qui paie déjà n'est pas « Gratuit » parce que son essai est fini.
+                'plan_nom' => $etats[$c->id]->plan->nom,
+                'source' => $etats[$c->id]->source,
             ])->values(),
             'sante' => $this->sante(),
         ]);

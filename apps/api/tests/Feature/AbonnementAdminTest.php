@@ -27,6 +27,8 @@ class AbonnementAdminTest extends TestCase
 
     private string $jetonAdmin;
 
+    private int $idAdmin;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,6 +39,7 @@ class AbonnementAdminTest extends TestCase
             'identifiant' => 'admin@test.sn', 'mot_de_passe' => bcrypt('Password123'), 'role' => 'admin', 'nom_commerce' => 'Admin',
         ]);
         $this->jetonAdmin = $admin->createToken('admin')->plainTextToken;
+        $this->idAdmin = $admin->id;
     }
 
     /** Commerçant + paiement déclaré ; renvoie [commerçant, jeton, id du paiement]. */
@@ -171,6 +174,9 @@ class AbonnementAdminTest extends TestCase
         $this->assertSame(1, $liste['compteurs']['attente']);
         $this->assertSame(['awa@test.sn'], array_column($this->admin('GET', '/api/admin/commercants?filtre=attente')->json('commercants'), 'identifiant'));
         $this->assertSame(['moussa@test.sn'], array_column($this->admin('GET', '/api/admin/commercants?recherche=mous')->json('commercants'), 'identifiant'));
+        // La référence de transaction se retrouve aussi, tapée autrement.
+        $reference = 'tx '.strtolower(substr(md5('awa@test.sn'), 0, 8));
+        $this->assertSame(['awa@test.sn'], array_column($this->admin('GET', '/api/admin/commercants?recherche='.urlencode($reference))->json('commercants'), 'identifiant'));
 
         $fiche = $this->admin('GET', "/api/admin/commercants/{$awa->id}")->assertOk()->json();
         $this->assertSame('attente', $fiche['statut']);
@@ -236,9 +242,9 @@ class AbonnementAdminTest extends TestCase
         $this->admin('POST', "/api/admin/paiements/{$p1}/valider", ['verifie' => true]);
         $this->admin('POST', "/api/admin/paiements/{$p2}/valider", ['verifie' => true]);
         $this->travel(1)->minutes();
-        Retrait::create(['admin_id' => 1, 'montant' => 2000, 'moyen' => 'wave', 'statut' => 'validé']);
+        Retrait::create(['admin_id' => $this->idAdmin, 'montant' => 2000, 'moyen' => 'wave', 'statut' => 'validé']);
         $this->travel(1)->minutes();
-        TransfertAdmin::create(['admin_id' => 1, 'compte_source' => 'orange', 'compte_destination' => 'especes', 'montant' => 5000]);
+        TransfertAdmin::create(['admin_id' => $this->idAdmin, 'compte_source' => 'orange', 'compte_destination' => 'especes', 'montant' => 5000]);
 
         $finances = $this->admin('GET', '/api/admin/finances')->assertOk()->json();
         $comptes = collect($finances['comptes'])->keyBy('moyen');
@@ -255,6 +261,39 @@ class AbonnementAdminTest extends TestCase
         $this->assertSame(3, $tableau['repartition']['essai']); // périodes payées : après l'essai
         $this->assertSame(['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'], array_column($tableau['revenus'], 'mois'));
         $this->assertSame(30000, $tableau['revenus'][5]['total']);
+    }
+
+    /** Bloquer un compte ferme ses sessions ; le réactiver lui rend la connexion. */
+    public function test_bloquer_ferme_les_sessions_ouvertes(): void
+    {
+        [$commercant, $jeton] = $this->inscrireCommercant('bloque@test.sn');
+        $this->getJson('/api/auth/moi', $this->entetes($jeton))->assertOk();
+
+        $this->admin('PUT', "/api/admin/utilisateurs/{$commercant->id}/bloquer")->assertOk();
+        $this->getJson('/api/auth/moi', $this->entetes($jeton))->assertUnauthorized();
+        $this->postJson('/api/auth/connexion', ['identifiant' => 'bloque@test.sn', 'mot_de_passe' => 'Password123'])->assertStatus(403);
+
+        $this->admin('PUT', "/api/admin/utilisateurs/{$commercant->id}/activer")->assertOk();
+        $this->postJson('/api/auth/connexion', ['identifiant' => 'bloque@test.sn', 'mot_de_passe' => 'Password123'])->assertOk();
+    }
+
+    /** Un retrait ou un transfert ne vide pas un compte au-delà de son solde. */
+    public function test_retraits_et_transferts_restent_dans_le_solde(): void
+    {
+        [, , $p1] = $this->commercantQuiDeclare('awa@test.sn');
+        $this->admin('POST', "/api/admin/paiements/{$p1}/valider", ['verifie' => true]); // Wave : 5 000 F
+
+        $this->admin('POST', '/api/admin/retraits', ['montant' => 6000, 'moyen' => 'wave'])
+            ->assertStatus(422)->assertJsonPath('erreur', 'Le compte Wave n’a que 5 000 F.');
+        $this->admin('POST', '/api/admin/retraits', ['montant' => 100, 'moyen' => 'banque'])->assertStatus(422);
+        $this->admin('POST', '/api/admin/transferts', ['source' => 'wave', 'destination' => 'wave', 'montant' => 100])->assertStatus(422);
+
+        $this->admin('POST', '/api/admin/transferts', ['source' => 'wave', 'destination' => 'especes', 'montant' => 1500])->assertCreated();
+        $this->admin('POST', '/api/admin/retraits', ['montant' => 3500, 'moyen' => 'wave'])->assertCreated();
+        $this->admin('POST', '/api/admin/retraits', ['montant' => 1, 'moyen' => 'wave'])->assertStatus(422);
+
+        $comptes = collect($this->admin('GET', '/api/admin/finances')->json('comptes'))->keyBy('moyen');
+        $this->assertSame([0, 1500], [$comptes['wave']['solde'], $comptes['especes']['solde']]);
     }
 
     public function test_les_rappels_d_echeance_partent_une_seule_fois(): void

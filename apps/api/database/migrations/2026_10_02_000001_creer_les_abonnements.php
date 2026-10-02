@@ -55,6 +55,8 @@ return new class extends Migration
             $table->string('numero_wave', 32)->nullable();
             $table->string('numero_orange', 32)->nullable();
             $table->string('nom_beneficiaire', 120)->nullable();
+            // WhatsApp de l'administrateur : devis Entreprise, questions sur un paiement.
+            $table->string('numero_contact', 32)->nullable();
             $table->boolean('reference_obligatoire')->default(true);
             $table->boolean('capture_autorisee')->default(true);
             $table->json('rappels')->nullable();

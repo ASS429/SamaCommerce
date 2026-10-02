@@ -68,6 +68,9 @@ Route::middleware(['auth:sanctum', 'proprietaire', 'throttle:api'])->group(funct
     Route::get('/auth/moi', [ControleurAuthentification::class, 'moi']);
     Route::post('/auth/deconnexion', [ControleurAuthentification::class, 'deconnecter']);
     Route::post('/auth/deconnexion-partout', [ControleurAuthentification::class, 'deconnecterPartout']);
+    // Appareils connectés (un par jeton) et déconnexion des autres seulement.
+    Route::get('/auth/appareils', [ControleurAuthentification::class, 'appareils']);
+    Route::post('/auth/deconnexion-autres', [ControleurAuthentification::class, 'deconnecterAutres']);
     Route::put('/auth/profil', [ControleurAuthentification::class, 'modifierProfil']);
     // Réglages d'écran du compte connecté (sections masquées, impression auto).
     Route::put('/auth/preferences', [ControleurAuthentification::class, 'modifierPreferences']);

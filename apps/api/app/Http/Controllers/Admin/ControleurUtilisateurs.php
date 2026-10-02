@@ -61,10 +61,16 @@ class ControleurUtilisateurs extends Controleur
         return response()->json($utilisateur->fresh()->toArray() + ['mot_de_passe_provisoire' => $motDePasse], 201);
     }
 
+    /**
+     * Bloquer ferme aussi les sessions ouvertes : la connexion refusait déjà
+     * un compte bloqué, mais ses appareils déjà connectés gardaient l'accès
+     * jusqu'à l'expiration de leur jeton (7 jours).
+     */
     public function bloquer(int $id)
     {
         $utilisateur = Utilisateur::findOrFail($id);
         $utilisateur->update(['statut' => 'Bloqué']);
+        $utilisateur->tokens()->delete();
         return $utilisateur;
     }
 

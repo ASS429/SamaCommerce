@@ -143,6 +143,26 @@ trait RejeuScenario
                     ]]);
                 },
             ],
+            // Un retrait ou un transfert ne dépasse plus le solde du compte (le
+            // solde affiché devenait négatif). Le monde rejoué n'a encaissé aucun
+            // abonnement, l'ancien passage Premium ayant disparu : ses comptes
+            // sont vides, les deux mouvements sont refusés et les listes restent vides.
+            'retrait' => [
+                'defaut' => fn (array $e) => $e['statut'] === 201,
+                'corrige' => fn (array $e) => array_replace($e, ['statut' => 422, 'reponse' => ['error' => 'Le compte Wave n’a que 0 F.']]),
+            ],
+            'retraits' => [
+                'defaut' => fn (array $e) => count($e['reponse']) === 1,
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => []]),
+            ],
+            'transfert' => [
+                'defaut' => fn (array $e) => $e['statut'] === 201,
+                'corrige' => fn (array $e) => array_replace($e, ['statut' => 422, 'reponse' => ['error' => 'Le compte Wave n’a que 0 F.']]),
+            ],
+            'transferts' => [
+                'defaut' => fn (array $e) => count($e['reponse']) === 1,
+                'corrige' => fn (array $e) => array_replace($e, ['reponse' => []]),
+            ],
 
             // 30/09/2026 — le double facteur s'activait d'un clic, et le code de
             // connexion n'était envoyé nulle part. L'activation envoie désormais

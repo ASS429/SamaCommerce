@@ -34,9 +34,16 @@ class ControleurCommercants extends Controleur
 
         $compteurs = collect(self::FILTRES)->mapWithKeys(fn ($f) => [$f => $lignes->filter(fn ($l) => $this->correspond($l, $f))->count()]);
 
+        // Une référence de transaction se retrouve aussi, quelle que soit la
+        // façon dont on la tape (« TX 8F3K-Q2LM » ou « tx8f3kq2lm »).
+        $cle = PaiementAbonnement::cleReference($recherche);
+        $parReference = $cle !== null && strlen($cle) >= 4
+            ? PaiementAbonnement::where('reference_cle', 'like', '%'.$cle.'%')->pluck('utilisateur_id')->map(fn ($id) => (int) $id)->all()
+            : [];
         $visibles = $lignes
             ->filter(fn ($l) => $this->correspond($l, $filtre))
-            ->filter(fn ($l) => $recherche === '' || str_contains(mb_strtolower($l['nom_commerce'].' '.$l['identifiant'].' '.$l['telephone']), $recherche))
+            ->filter(fn ($l) => $recherche === '' || in_array($l['id'], $parReference, true)
+                || str_contains(mb_strtolower($l['nom_commerce'].' '.$l['identifiant'].' '.$l['telephone']), $recherche))
             ->values();
 
         return response()->json(['commercants' => $visibles, 'compteurs' => $compteurs]);

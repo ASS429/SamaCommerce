@@ -6,6 +6,7 @@ use App\Models\PaiementAbonnement;
 use App\Models\Plan;
 use App\Models\ReglagesAbonnement;
 use App\Services\Abonnements;
+use App\Support\Telephone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -46,6 +47,9 @@ class ControleurAbonnement extends Controleur
                 'numero_wave' => $reglages->numero_wave,
                 'numero_orange' => $reglages->numero_orange,
                 'nom_beneficiaire' => $reglages->nom_beneficiaire,
+                // WhatsApp de l'administrateur (devis Entreprise, question sur un paiement).
+                'lien_contact' => Telephone::lienWhatsApp($reglages->numero_contact,
+                    'Bonjour, je vous écris depuis SamaCommerce ('.($proprietaire->nom_commerce ?: $proprietaire->identifiant).') : '),
                 'reference_obligatoire' => $reglages->reference_obligatoire,
                 'capture_autorisee' => $reglages->capture_autorisee,
                 'mois_offerts_annuel' => $reglages->mois_offerts_annuel,

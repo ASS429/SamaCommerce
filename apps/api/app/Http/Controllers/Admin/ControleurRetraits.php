@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controleur;
 use App\Models\Retrait;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ControleurRetraits extends Controleur
 {
@@ -16,9 +17,14 @@ class ControleurRetraits extends Controleur
     public function creer(Request $requete)
     {
         $donnees = $requete->validate([
-            'montant' => ['required', 'numeric', 'min:0'],
-            'moyen' => ['required', 'string'],
-        ]);
+            'montant' => ['required', 'integer', 'min:1'],
+            'moyen' => ['required', Rule::in(array_keys(ControleurFinances::COMPTES))],
+        ], ['moyen.in' => 'Choisissez Wave, Orange Money ou Espèces.']);
+
+        $solde = ControleurFinances::soldes()[$donnees['moyen']];
+        if ($donnees['montant'] > $solde) {
+            return response()->json(['erreur' => 'Le compte '.ControleurFinances::COMPTES[$donnees['moyen']].' n’a que '.number_format($solde, 0, ',', ' ').' F.'], 422);
+        }
 
         $retrait = Retrait::create([
             'admin_id' => $requete->user()->id,

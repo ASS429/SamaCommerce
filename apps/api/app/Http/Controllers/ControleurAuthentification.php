@@ -404,6 +404,42 @@ class ControleurAuthentification extends Controleur
         return response()->json(['message' => 'Déconnecté de tous les appareils.']);
     }
 
+    /**
+     * Les appareils connectés au compte : un par jeton. Le nom du jeton est
+     * l'identifiant d'appareil du client (« ordi-… » ou « mobile-… ») ; seul
+     * son préfixe est montré, l'identifiant lui-même ne dit rien à personne.
+     */
+    public function appareils(Request $requete)
+    {
+        $reel = $requete->attributes->get('utilisateur_reel') ?? $requete->user();
+        $actuel = $reel->currentAccessToken()?->id;
+
+        // Tri en PHP : PostgreSQL place les jetons jamais utilisés (NULL) en
+        // tête d'un ORDER BY … DESC, SQLite en queue.
+        return response()->json($reel->tokens()->get()
+            ->sortByDesc(fn ($jeton) => [$jeton->last_used_at?->getTimestamp() ?? 0, $jeton->id])
+            ->map(fn ($jeton) => [
+                'id' => $jeton->id,
+                'type' => str_starts_with($jeton->name, 'mobile-') ? 'telephone' : (str_starts_with($jeton->name, 'ordi-') ? 'ordinateur' : 'autre'),
+                'derniere_utilisation' => $jeton->last_used_at?->toIso8601String(),
+                'connecte_le' => $jeton->created_at?->toIso8601String(),
+                'actuel' => $jeton->id === $actuel,
+            ])->values());
+    }
+
+    /** Révoque les jetons des AUTRES appareils ; celui-ci reste connecté. */
+    public function deconnecterAutres(Request $requete)
+    {
+        $reel = $requete->attributes->get('utilisateur_reel') ?? $requete->user();
+        $actuel = $reel->currentAccessToken()?->id;
+        $nombre = $reel->tokens()->when($actuel, fn ($q) => $q->where('id', '<>', $actuel))->delete();
+
+        return response()->json([
+            'message' => $nombre ? ($nombre > 1 ? "{$nombre} appareils déconnectés." : '1 appareil déconnecté.') : 'Aucun autre appareil n’était connecté.',
+            'deconnectes' => $nombre,
+        ]);
+    }
+
     /** Mise à jour du profil / de la boutique principale. */
     public function modifierProfil(Request $requete)
     {

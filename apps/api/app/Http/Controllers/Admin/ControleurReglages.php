@@ -27,6 +27,7 @@ class ControleurReglages extends Controleur
             'numero_wave' => $numero,
             'numero_orange' => $numero,
             'nom_beneficiaire' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'numero_contact' => $numero,
             'reference_obligatoire' => ['sometimes', 'boolean'],
             'capture_autorisee' => ['sometimes', 'boolean'],
             'rappels' => ['sometimes', 'array'],
@@ -35,6 +36,7 @@ class ControleurReglages extends Controleur
         ], [
             'numero_wave.regex' => 'Numéro Wave invalide.',
             'numero_orange.regex' => 'Numéro Orange Money invalide.',
+            'numero_contact.regex' => 'Numéro WhatsApp invalide.',
         ]);
 
         $reglages = ReglagesAbonnement::courants();
@@ -48,7 +50,7 @@ class ControleurReglages extends Controleur
     {
         return $r->only([
             'duree_essai_jours', 'plan_essai', 'delai_grace_jours', 'mois_offerts_annuel', 'numero_wave',
-            'numero_orange', 'nom_beneficiaire', 'reference_obligatoire', 'capture_autorisee', 'rappels', 'message_relance',
+            'numero_orange', 'nom_beneficiaire', 'numero_contact', 'reference_obligatoire', 'capture_autorisee', 'rappels', 'message_relance',
         ]) + ['rappels_possibles' => ReglagesAbonnement::RAPPELS];
     }
 }

@@ -1,6 +1,6 @@
 # SamaCommerce — état des lieux
 
-*Dernière mise à jour : 30 septembre 2026.*
+*Dernière mise à jour : 2 octobre 2026.*
 
 Ce document dit **où en est la plateforme**, **ce qui reste à faire** et **comment
 l'exploiter au quotidien**. Il est fait pour être relu dans trois mois, quand le
@@ -110,6 +110,41 @@ vérifiés en production** :
 - Au passage : l'e-mail de réinitialisation annonçait un code valable 1 heure
   pour 30 minutes réelles, et « mot de passe oublié » affichait « Code envoyé »
   même quand l'e-mail n'était pas parti. Corrigés.
+
+### 3.6 — Abonnements et panneau d'administration *(prêts sur la branche `abonnements`, à mettre en ligne)*
+
+Refonte décidée le 01/10/2026, d'après les maquettes validées dans Claude Design :
+
+- **Quatre plans** (Gratuit, Essentiel 2 500 F, Pro 5 000 F, Entreprise sur devis),
+  réglables depuis l'administration sans redéployer. Essai Pro de 30 jours à
+  l'inscription ; délai de grâce de 7 jours, puis retour au Gratuit **sans perte
+  de données** (seuls les ajouts au-delà des limites sont refusés, réponse 402).
+- **Paiement manuel vérifié** : le commerçant paie par Wave ou Orange Money puis
+  déclare la référence ; rien ne s'active avant la validation de
+  l'administrateur, qui doit cocher « J'ai retrouvé ce paiement ». Montant
+  attendu calculé par le serveur, référence unique par moyen, reçus `SC-0001`.
+- **Panneau d'administration réécrit** (six vues : tableau de bord, paiements à
+  vérifier, commerçants, plans et tarifs, finances, paramètres), sur téléphone
+  comme sur ordinateur. Au passage : bloquer un compte ferme maintenant ses
+  sessions ouvertes (avant : 7 jours d'accès restant), un retrait ou un
+  transfert ne peut plus dépasser le solde du compte, la recherche retrouve un
+  commerçant par sa référence de paiement, et la liste des appareils connectés
+  permet de déconnecter les autres.
+- **Migration des comptes** éprouvée sur PostgreSQL 17 le 02/10 : un Premium
+  validé et en cours devient une période Pro payée jusqu'à son échéance ; une
+  demande jamais validée ou un Premium expiré repasse au Gratuit ; chacun reçoit
+  l'essai Pro de 30 jours.
+
+**Après la mise en ligne, à faire par l'administrateur** : saisir dans
+*Paramètres* les numéros Wave et Orange Money, le nom du bénéficiaire et le
+numéro WhatsApp de contact (ils ne sont **jamais** écrits dans le code). Tant
+qu'aucun numéro n'est saisi, les commerçants ne peuvent pas payer. Les rappels
+d'échéance par e-mail dépendent du domaine Resend (3.1).
+
+À savoir : les photos de reçu jointes par les commerçants sont stockées en base
+(compressées, 150 Ko au plus). Le test de contrat (`ContratFrancaisTest`)
+suppose SQLite : sur PostgreSQL, les identifiants diffèrent (séquences non
+remises à zéro) ; tout le reste de la suite passe sur PostgreSQL.
 
 ---
 

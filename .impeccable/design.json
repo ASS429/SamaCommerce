@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T23:13:12+00:00",
+  "title": "Design System: SamaCommerce",
+  "extensions": {
+    "colorMeta": {
+      "violet-marche": {
+        "role": "primary",
+        "displayName": "Violet du marché",
+        "canonical": "oklch(54.1% 0.247 293.0)",
+        "tonalRamp": [
+          "#17003B",
+          "#340072",
+          "#5312AA",
+          "#7631E5",
+          "#956AFD",
+          "#B4A1FA",
+          "#D5CDFC",
+          "#F2F0FF"
+        ],
+        "darkValue": "#A78BFA"
+      },
+      "violet-profond": {
+        "role": "primary",
+        "displayName": "Violet profond",
+        "canonical": "oklch(43.2% 0.211 292.8)",
+        "tonalRamp": [
+          "#17003B",
+          "#340073",
+          "#5311AB",
+          "#7242D4",
+          "#946AFE",
+          "#B4A1FB",
+          "#D5CDFC",
+          "#F2F0FF"
+        ],
+        "darkValue": "#7C3AED"
+      },
+      "violet-clair": {
+        "role": "primary",
+        "displayName": "Violet clair",
+        "canonical": "oklch(70.9% 0.159 293.5)",
+        "tonalRamp": [
+          "#17003A",
+          "#340170",
+          "#4F2C93",
+          "#7051BA",
+          "#9276E2",
+          "#B5A0FE",
+          "#D6CCFE",
+          "#F2F0FE"
+        ],
+        "darkValue": "#C4B5FD"
+      },
+      "rose-bissap": {
+        "role": "secondary",
+        "displayName": "Rose bissap",
+        "canonical": "oklch(65.6% 0.212 354.3)",
+        "tonalRamp": [
+          "#2A0014",
+          "#53012F",
+          "#84004D",
+          "#BB0570",
+          "#E64294",
+          "#FA85B7",
+          "#FEC0D7",
+          "#FFECF3"
+        ],
+        "darkValue": "#F472B6"
+      },
+      "rose-compteur": {
+        "role": "secondary",
+        "displayName": "Rose compteur",
+        "canonical": "oklch(52.5% 0.199 4.0)",
+        "tonalRamp": [
+          "#2A000E",
+          "#560024",
+          "#84093E",
+          "#BC155C",
+          "#E7487E",
+          "#FB88A7",
+          "#FFC1CF",
+          "#FEEDF0"
+        ]
+      },
+      "encre-de-nuit": {
+        "role": "neutral",
+        "displayName": "Encre de nuit",
+        "canonical": "oklch(25.7% 0.086 281.3)",
+        "tonalRamp": [
+          "#0E0735",
+          "#252454",
+          "#404175",
+          "#606399",
+          "#8386C0",
+          "#A7ABE7",
+          "#CDD0FD",
+          "#EFF1FF"
+        ],
+        "darkValue": "#F1F0FF"
+      },
+      "fond-lilas": {
+        "role": "neutral",
+        "displayName": "Fond lilas",
+        "canonical": "oklch(96.9% 0.016 293.8)",
+        "tonalRamp": [
+          "#121018",
+          "#2C2A33",
+          "#484650",
+          "#696772",
+          "#8C8A95",
+          "#B1AFBB",
+          "#D4D2DE",
+          "#F2F0FC"
+        ],
+        "darkValue": "#13111F"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#121212",
+          "#2B2B2B",
+          "#484848",
+          "#696969",
+          "#8C8C8C",
+          "#B1B1B1",
+          "#D4D4D4",
+          "#F2F2F2"
+        ],
+        "darkValue": "#1E1B2E"
+      },
+      "teinte-violette": {
+        "role": "neutral",
+        "displayName": "Teinte violette",
+        "canonical": "oklch(96.0% 0.020 298.2)",
+        "tonalRamp": [
+          "#131019",
+          "#2C2934",
+          "#494551",
+          "#6A6773",
+          "#8D8A97",
+          "#B2AFBD",
+          "#D6D2E0",
+          "#F3EFFE"
+        ],
+        "darkValue": "#2A1F47"
+      },
+      "trait-lavande": {
+        "role": "neutral",
+        "displayName": "Trait lavande",
+        "canonical": "oklch(92.3% 0.029 296.7)",
+        "tonalRamp": [
+          "#130F1D",
+          "#2D2838",
+          "#494556",
+          "#6A6678",
+          "#8E899C",
+          "#B2AEC2",
+          "#D6D1E5",
+          "#F3EFFE"
+        ],
+        "darkValue": "#34304A"
+      },
+      "trait-doux": {
+        "role": "neutral",
+        "displayName": "Trait doux",
+        "canonical": "oklch(93.8% 0.027 297.3)",
+        "tonalRamp": [
+          "#130F1C",
+          "#2D2937",
+          "#494555",
+          "#6A6677",
+          "#8E899B",
+          "#B3AEC1",
+          "#D6D1E4",
+          "#F3EFFF"
+        ],
+        "darkValue": "#2C2840"
+      },
+      "gris-attenue": {
+        "role": "neutral",
+        "displayName": "Gris atténué",
+        "canonical": "oklch(55.1% 0.023 264.4)",
+        "tonalRamp": [
+          "#0C111C",
+          "#252B37",
+          "#414855",
+          "#626977",
+          "#858C9B",
+          "#AAB1C0",
+          "#CDD4E4",
+          "#ECF2FF"
+        ],
+        "darkValue": "#A39EC0"
+      },
+      "libelle-violet": {
+        "role": "neutral",
+        "displayName": "Libellé violet",
+        "canonical": "oklch(53.2% 0.141 288.6)",
+        "tonalRamp": [
+          "#14003D",
+          "#2E116B",
+          "#48348D",
+          "#6857B4",
+          "#8A7CDC",
+          "#AEA3FE",
+          "#D2CEFE",
+          "#F1F0FE"
+        ],
+        "darkValue": "#C4B5FD"
+      },
+      "vert-paye": {
+        "role": "status",
+        "displayName": "Vert payé",
+        "canonical": "oklch(69.6% 0.149 162.5)",
+        "tonalRamp": [
+          "#00170C",
+          "#003521",
+          "#09553A",
+          "#157C56",
+          "#0DA573",
+          "#39CE94",
+          "#67F2B7",
+          "#CFFFE6"
+        ]
+      },
+      "vert-paye-texte": {
+        "role": "status",
+        "displayName": "Vert payé, texte",
+        "canonical": "oklch(50.8% 0.105 165.6)",
+        "tonalRamp": [
+          "#00170D",
+          "#023424",
+          "#04553D",
+          "#0E7C5A",
+          "#42A07D",
+          "#6AC6A1",
+          "#8EEBC4",
+          "#CEFFE9"
+        ]
+      },
+      "ambre-bientot": {
+        "role": "status",
+        "displayName": "Ambre bientôt",
+        "canonical": "oklch(76.9% 0.165 70.1)",
+        "tonalRamp": [
+          "#1E0D00",
+          "#402400",
+          "#643E04",
+          "#905C0C",
+          "#BD7C1F",
+          "#F29B00",
+          "#FFC98B",
+          "#FFEFDE"
+        ]
+      },
+      "ambre-bientot-texte": {
+        "role": "status",
+        "displayName": "Ambre bientôt, texte",
+        "canonical": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#250700",
+          "#4A1C00",
+          "#733304",
+          "#A44C0D",
+          "#D16D30",
+          "#FA9257",
+          "#FEC6A9",
+          "#FFEEE6"
+        ]
+      },
+      "rouge-expire": {
+        "role": "status",
+        "displayName": "Rouge expiré",
+        "canonical": "oklch(63.7% 0.208 25.3)",
+        "tonalRamp": [
+          "#2D0000",
+          "#570108",
+          "#8A0112",
+          "#C5081F",
+          "#F04545",
+          "#FC8C84",
+          "#FCC5BF",
+          "#FEEDEB"
+        ]
+      },
+      "rouge-expire-texte": {
+        "role": "status",
+        "displayName": "Rouge expiré, texte",
+        "canonical": "oklch(50.5% 0.190 27.5)",
+        "tonalRamp": [
+          "#2D0000",
+          "#570204",
+          "#8A030A",
+          "#BE2321",
+          "#E95046",
+          "#FC8D80",
+          "#FCC5BD",
+          "#FEEDEB"
+        ]
+      },
+      "bleu-essai": {
+        "role": "status",
+        "displayName": "Bleu essai",
+        "canonical": "oklch(62.3% 0.188 259.8)",
+        "tonalRamp": [
+          "#000A3B",
+          "#002567",
+          "#02409B",
+          "#1961D2",
+          "#4087FC",
+          "#86B2F9",
+          "#BCD6FF",
+          "#EBF2FE"
+        ]
+      },
+      "bleu-essai-texte": {
+        "role": "status",
+        "displayName": "Bleu essai, texte",
+        "canonical": "oklch(48.8% 0.217 264.4)",
+        "tonalRamp": [
+          "#01004A",
+          "#01008C",
+          "#072FBA",
+          "#2559E3",
+          "#5285FA",
+          "#8AB0FE",
+          "#C0D5FE",
+          "#ECF2FE"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Titre d’un écran de l’administration."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Titre d’une page du commerçant."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Titre d’une carte ou d’une section."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texte courant, sous-titres."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Libellés de champ, pastilles, légendes."
+      },
+      "montant": {
+        "displayName": "Montant",
+        "purpose": "Chiffres clés, soldes et prix, en chiffres tabulaires."
+      }
+    },
+    "shadows": [
+      {
+        "name": "carte-commercant",
+        "value": "0 6px 16px rgba(124,58,237,.07)",
+        "purpose": "Cartes des écrans du commerçant."
+      },
+      {
+        "name": "bouton-principal-commercant",
+        "value": "0 6px 16px rgba(124,58,237,.25)",
+        "purpose": "Le geste principal d’un écran du commerçant."
+      },
+      {
+        "name": "carte-action",
+        "value": "0 10px 30px -18px rgba(30,27,75,.35)",
+        "purpose": "Carte violette « à faire maintenant », plan recommandé."
+      },
+      {
+        "name": "barre-flottante",
+        "value": "0 16px 40px -16px rgba(30,27,75,.6)",
+        "purpose": "Barre « modifications non enregistrées »."
+      }
+    ],
+    "motion": [
+      {
+        "name": "appui",
+        "value": "transform 160ms cubic-bezier(.23,1,.32,1)",
+        "purpose": "scale(.97) à l’appui d’un bouton, (.98) d’une carte."
+      },
+      {
+        "name": "sortie-expo",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Entrées des éléments du commerçant (thème, --courbe-sortie-expo)."
+      },
+      {
+        "name": "tiroir",
+        "value": "260-300ms cubic-bezier(.32,.72,0,1)",
+        "purpose": "Volet plein écran et feuille « Plus » sur téléphone."
+      },
+      {
+        "name": "pousse",
+        "value": "500ms cubic-bezier(.23,1,.32,1)",
+        "purpose": "Barres et jauges qui poussent au chargement (désactivé si mouvement réduit)."
+      },
+      {
+        "name": "couleur",
+        "value": "150ms ease",
+        "purpose": "Survol et changement de couleur."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "telephone",
+        "value": "< 1024px",
+        "purpose": "Une colonne, barre du bas, volets plein écran."
+      },
+      {
+        "name": "bureau",
+        "value": "1024px",
+        "purpose": "Colonne de navigation, liste et détail côte à côte."
+      },
+      {
+        "name": "tableau-de-bord-large",
+        "value": "1100px",
+        "purpose": "Revenus et file prioritaire côte à côte."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "bouton-principal",
+      "description": "Le geste principal d’un écran : valider, enregistrer, ajouter.",
+      "html": "<button class=\"ds-btn-principal\">Enregistrer le plan</button>",
+      "css": ".ds-btn-principal { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--marque, #7C3AED); color: #fff; font: 700 14px 'DM Sans', system-ui, sans-serif; cursor: pointer; transition: transform 160ms cubic-bezier(.23,1,.32,1), background-color 150ms ease; } .ds-btn-principal:hover { background: #6D28D9; } .ds-btn-principal:active { transform: scale(.97); } .ds-btn-principal:focus-visible { outline: 3px solid #A78BFA; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton contour",
+      "kind": "button",
+      "refersTo": "bouton-contour",
+      "description": "Geste secondaire à côté du principal : annuler, exporter, transférer.",
+      "html": "<button class=\"ds-btn-contour\">Annuler</button>",
+      "css": ".ds-btn-contour { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--surface, #FFFFFF); color: var(--encre, #1E1B4B); box-shadow: inset 0 0 0 1px var(--trait, #E7E2F7); font: 700 14px 'DM Sans', system-ui, sans-serif; cursor: pointer; transition: transform 160ms cubic-bezier(.23,1,.32,1); } .ds-btn-contour:hover { background: #FAF8FF; } .ds-btn-contour:active { transform: scale(.97); } .ds-btn-contour:focus-visible { outline: 3px solid #A78BFA; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton doux",
+      "kind": "button",
+      "refersTo": "bouton-doux",
+      "description": "Geste fréquent mais non principal : offrir des jours, ouvrir une file.",
+      "html": "<button class=\"ds-btn-doux\">Offrir des jours</button>",
+      "css": ".ds-btn-doux { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--marque-teinte, #F3EFFE); color: #5B21B6; font: 700 14px 'DM Sans', system-ui, sans-serif; cursor: pointer; } .ds-btn-doux:hover { background: #EDE9FE; } .ds-btn-doux:active { transform: scale(.97); } .ds-btn-doux:focus-visible { outline: 3px solid #A78BFA; outline-offset: 2px; }"
+    },
+    {
+      "name": "Champ avec libellé",
+      "kind": "input",
+      "refersTo": "champ",
+      "description": "Champ de formulaire : libellé visible au-dessus, aide en dessous.",
+      "html": "<label class=\"ds-champ\"><span>Numéro Wave</span><input placeholder=\"Ex. : 77 000 00 00\"><small>Visible par les commerçants dans Mon plan.</small></label>",
+      "css": ".ds-champ { display: flex; flex-direction: column; gap: 6px; font-family: 'DM Sans', system-ui, sans-serif; } .ds-champ span { font-size: 13px; font-weight: 700; color: #4B4572; } .ds-champ input { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--surface, #FFFFFF); box-shadow: inset 0 0 0 1px #D6CFF0; font-size: 15px; color: var(--encre, #1E1B4B); } .ds-champ input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--marque, #7C3AED); } .ds-champ small { font-size: 13px; color: #5C5878; }"
+    },
+    {
+      "name": "Pastilles d’état",
+      "kind": "chip",
+      "refersTo": "pastille-essai",
+      "description": "Un état, une couleur, toujours un mot.",
+      "html": "<span class=\"ds-pastille ds-ok\">Actif</span> <span class=\"ds-pastille ds-info\">Essai · 30 j</span> <span class=\"ds-pastille ds-attention\">Expire dans 3 j</span> <span class=\"ds-pastille ds-danger\">Expiré · grâce 2 j</span> <span class=\"ds-pastille ds-violet\">Paiement à vérifier</span> <span class=\"ds-pastille ds-neutre\">Bloqué</span>",
+      "css": ".ds-pastille { display: inline-flex; padding: 3px 9px; border-radius: 8px; font: 700 12px 'DM Sans', system-ui, sans-serif; white-space: nowrap; } .ds-ok { background: #ECFDF5; color: #047857; } .ds-info { background: #DBEAFE; color: #1D4ED8; } .ds-attention { background: #FFF7ED; color: #B45309; } .ds-danger { background: #FEF2F2; color: #B91C1C; } .ds-violet { background: #F3EFFE; color: #5B21B6; } .ds-neutre { background: #F3F4F6; color: #374151; }"
+    },
+    {
+      "name": "Carte",
+      "kind": "card",
+      "refersTo": "carte",
+      "description": "Conteneur blanc à bord lavande, plat au repos.",
+      "html": "<section class=\"ds-carte\"><h3>Revenus encaissés</h3><p>6 derniers mois, paiements validés</p></section>",
+      "css": ".ds-carte { padding: 22px; border-radius: 18px; background: var(--surface, #FFFFFF); box-shadow: inset 0 0 0 1px var(--trait, #E7E2F7); font-family: 'DM Sans', system-ui, sans-serif; } .ds-carte h3 { margin: 0 0 6px; font: 700 17px Sora, system-ui, sans-serif; color: var(--encre, #1E1B4B); } .ds-carte p { margin: 0; font-size: 13px; color: #5C5878; }"
+    },
+    {
+      "name": "Carte d’action",
+      "kind": "custom",
+      "refersTo": "carte-action",
+      "description": "Le chiffre qui demande d’agir maintenant (paiements à vérifier).",
+      "html": "<button class=\"ds-action\"><span>Paiements à vérifier</span><strong>3</strong><em>Vérifier maintenant <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></em></button>",
+      "css": ".ds-action { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 0; border-radius: 18px; background: #7C3AED; color: #fff; text-align: left; box-shadow: 0 10px 30px -18px rgba(30,27,75,.35); cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif; transition: transform 160ms cubic-bezier(.23,1,.32,1); } .ds-action:active { transform: scale(.98); } .ds-action span { font-size: 13px; font-weight: 600; color: #EDE9FE; } .ds-action strong { font: 700 28px/1.1 Sora, system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-action em { display: flex; align-items: center; gap: 6px; font-style: normal; font-size: 13px; font-weight: 600; color: #EDE9FE; } .ds-action:focus-visible { outline: 3px solid #A78BFA; outline-offset: 2px; }"
+    },
+    {
+      "name": "Navigation de l’administration",
+      "kind": "nav",
+      "refersTo": "colonne-admin",
+      "description": "Colonne d’encre ; rubrique active en violet plein ; compteur rose foncé.",
+      "html": "<nav class=\"ds-colonne\"><a class=\"ds-lien ds-actif\" href=\"#\">Tableau de bord</a><a class=\"ds-lien\" href=\"#\">Paiements à vérifier <b>3</b></a><a class=\"ds-lien\" href=\"#\">Commerçants</a></nav>",
+      "css": ".ds-colonne { display: flex; flex-direction: column; gap: 4px; width: 264px; padding: 24px 14px; background: #1E1B4B; font-family: 'DM Sans', system-ui, sans-serif; } .ds-lien { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 10px 12px; border-radius: 12px; color: #D9D4F5; font-size: 14px; font-weight: 500; text-decoration: none; transition: background-color 150ms ease; } .ds-lien:hover { background: rgba(255,255,255,.07); } .ds-actif, .ds-actif:hover { background: #7C3AED; color: #fff; font-weight: 600; } .ds-lien b { min-width: 24px; height: 22px; padding: 0 7px; border-radius: 999px; display: grid; place-items: center; background: #BE185D; color: #fff; font-size: 12px; } .ds-lien:focus-visible { outline: 3px solid #A78BFA; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le comptoir lisible",
+    "overview": "SamaCommerce remplace le cahier du boutiquier. Tout le système se juge à une seule question : un commerçant, au comptoir, entre deux clients, sur un téléphone de n'importe quelle gamme, comprend-il l'écran d'un coup d'œil ? D'où des chiffres grands et en Sora, des phrases courtes, des pictogrammes, et des surfaces franches plutôt que des nuances.\n\nLe monde est violet et encre sur un fond lilas : un violet de marque (#7C3AED) pour ce qui se fait (agir, choisir, valider), une encre profonde (#1E1B4B) pour ce qui se lit et pour les zones d'autorité (colonne de l'administration, bloc « plan actuel », total des finances), des cartes blanches à bord lavande pour tout le reste. La couleur porte un sens, jamais une décoration : vert payé, bleu essai, ambre bientôt, rouge expiré, gris bloqué, violet à vérifier, chaque fois doublés d'un mot.\n\nDeux registres partagent ce monde. Les écrans du commerçant sont généreux, colorés par grandes surfaces (lot « surfaces en couleur ») et pensés téléphone d'abord avec une disposition bureau. Le panneau d'administration est un outil de travail : plus dense, une colonne d'encre, une décision par minute (« ce paiement est-il réel ? »). Le mode sombre est un vrai second thème, pas une inversion.",
+    "keyCharacteristics": [
+      "Violet pour l'action et la sélection, encre pour l'autorité, lilas pour le fond.",
+      "Montants et titres en Sora, texte en DM Sans, chiffres alignés (tabular).",
+      "Chaque état coloré est aussi écrit.",
+      "Cibles tactiles de 44 px au moins, sur téléphone comme sur ordinateur.",
+      "Mouvement court et utile : réponse au toucher, entrée des volets, pousse des barres."
+    ],
+    "rules": [
+      {
+        "name": "La règle du violet qui agit",
+        "body": "Le violet plein désigne ce que l'on peut faire ou ce qui est choisi. Un bloc purement informatif n'est jamais violet plein ; il prend la surface, la teinte ou l'encre.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle du mot",
+        "body": "Aucune couleur d'état ne parle seule : la pastille porte toujours un mot (« Payé », « Essai · 30 j », « Expire dans 3 j »), et la couleur ne fait que le renforcer.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle du texte sur teinte",
+        "body": "Sur un fond d'état clair, le texte prend la variante « texte » foncée (vert-paye-texte, ambre-bientot-texte…) : la couleur vive seule n'atteint pas le contraste AA sur sa propre teinte.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle de l'argent en Sora",
+        "body": "Tout montant qui se lit (chiffre clé, solde, prix, montant d'une ligne) est en Sora, chiffres tabulaires, sans retour à la ligne. Le texte autour reste en DM Sans.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle du plat par défaut",
+        "body": "Une surface au repos n'a pas d'ombre dans l'administration ; le bord fait le travail. L'ombre signale ce qui flotte ou ce qui réclame l'attention.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** réserver le violet plein (#7C3AED) à l'action et à la sélection.",
+      "**Do** écrire l'état en toutes lettres dans chaque pastille colorée.",
+      "**Do** mettre les montants en Sora avec des chiffres tabulaires.",
+      "**Do** garder 44px de cible tactile minimum, sur toutes les tailles d'écran.",
+      "**Do** donner à chaque écran ses états vide, chargement (squelette de la forme finale) et erreur avec « Réessayer ».",
+      "**Do** définir chaque nouvelle couleur pour les deux thèmes (`:root` et `html.sombre`).",
+      "**Do** utiliser les icônes Lucide au trait de 2px dans l'administration."
+    ],
+    "donts": [
+      "**Don't** poser un libellé décoratif au-dessus d'un titre (surtitre) : le titre parle seul.",
+      "**Don't** utiliser le rouge pour autre chose qu'une expiration, un refus ou une destruction.",
+      "**Don't** ouvrir une fenêtre modale pour une tâche simple : formulaire en ligne ou volet ; la modale reste réservée aux confirmations destructrices et aux codes de sécurité.",
+      "**Don't** écrire un numéro de paiement réel dans le code : il se règle dans les paramètres d'administration.",
+      "**Don't** annoncer à l'écran ce qui n'a pas eu lieu (un reçu « envoyé » qui n'est que consultable, un écran vide qui masque une panne).",
+      "**Don't** mettre d'ombre noire : une ombre est teintée de violet ou d'encre."
+    ]
+  }
+}

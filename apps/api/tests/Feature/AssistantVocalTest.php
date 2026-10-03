@@ -68,6 +68,14 @@ class AssistantVocalTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_l_identifiant_recopie_dans_render_tolere_majuscules_et_espaces(): void
+    {
+        config(['assistant_vocal.comptes' => ['autre@test.sn', ' Proprietaire@TEST.sn ']]);
+
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))
+            ->assertOk()->assertJson(['disponible' => true]);
+    }
+
     public function test_sans_cles_d_api_l_assistant_reste_ferme(): void
     {
         config(['assistant_vocal.comptes' => ['*'], 'assistant_vocal.soynade.cle' => null]);

@@ -56,13 +56,19 @@ final class AssistantVocal
         if (! self::estActive()) {
             return false;
         }
-        $comptes = config('assistant_vocal.comptes', []);
-        if (in_array('*', $comptes, true) || in_array($proprietaire->identifiant, $comptes, true)) {
+        $comptes = array_map(self::normaliserIdentifiant(...), config('assistant_vocal.comptes', []));
+        if (in_array('*', $comptes, true) || in_array(self::normaliserIdentifiant($proprietaire->identifiant), $comptes, true)) {
             return true;
         }
         $etat = Abonnements::etat($proprietaire);
 
         return in_array($etat->source, ['paye', 'grace'], true) && $etat->inclut(self::FONCTIONNALITE);
+    }
+
+    /** Recopié à la main dans Render : « Fatou@Mail.sn » ou « 77 123 45 67 » désignent le même compte. */
+    private static function normaliserIdentifiant(string $identifiant): string
+    {
+        return mb_strtolower((string) preg_replace('/\s+/u', '', $identifiant));
     }
 
     public static function questionsRestantes(Utilisateur $proprietaire): int

@@ -1,6 +1,6 @@
 # SamaCommerce — état des lieux
 
-*Dernière mise à jour : 2 octobre 2026.*
+*Dernière mise à jour : 3 octobre 2026.*
 
 Ce document dit **où en est la plateforme**, **ce qui reste à faire** et **comment
 l'exploiter au quotidien**. Il est fait pour être relu dans trois mois, quand le
@@ -221,6 +221,60 @@ pas remplissable, et `Vente::create` l'ignorait sans rien dire (défaut d'origin
 de l'amorceur, devenu visible chaque jour avec la remise à zéro). L'amorceur
 date désormais ses ventes sur les 30 derniers jours ; effet à la remise à zéro
 suivante.
+
+### 3.8 — Assistant vocal en wolof et en français *(prêt, pas encore en ligne)*
+
+Le commerçant **maintient le micro vert, comme pour un vocal WhatsApp**, et
+pose sa question en wolof ou en français. L'assistant répond par écrit puis à
+voix haute, dans une discussion présentée comme celle de WhatsApp. Il
+**consulte** (ventes du jour, stock d'un produit, produits bientôt finis, dette
+d'un client) ou **guide** : il ouvre la page où agir et entoure le bouton à
+toucher. **Il n'enregistre rien lui-même.**
+
+- **Chaîne** (choisie après les essais du 1er et du 2 octobre, voir le dossier
+  de tests `test-vocal`) : oreille Soynade (`oolel-speech-v1`) pour le wolof,
+  Gemini pour le français ; cerveau Gemini, qui lit le wolof directement et
+  appelle des outils en lecture seule ; voix Oolel-Voices, demandée à part
+  pour que la réponse écrite n'attende pas. Les nombres sont écrits en lettres
+  avant la voix (« 2 000 » était lu « deux zéro »).
+- **Qui l'a** : les abonnés dont le plan inclut la fonctionnalité « Assistant
+  vocal » (cochée pour Essentiel, Pro et Entreprise, réglable dans l'écran
+  Plans de l'administration) — période payée, offerte ou en délai de grâce ;
+  **pas pendant l'essai gratuit**. L'employé profite du plan de son patron et
+  ne lit que ce que ses droits lui ouvrent. Le compte de démonstration ne l'a
+  jamais. Sans `CLE_API_SOYNADE` et `CLE_API_GEMINI`, personne ne l'a.
+- **Garde-fous** : 40 questions par jour et par commerçant ; message de
+  30 secondes au plus ; aucun son conservé (la table `questions_assistant`
+  garde le texte, les outils appelés et la durée de chaque étape) ; un nom de
+  client ou de produit inconnu n'est jamais inventé (l'assistant propose les
+  noms proches et demande) ; la langue est demandée au tout premier appui (un
+  message wolof écouté « en français » donnait du charabia).
+- **Code** : `app/Services/AssistantVocal/`, `ControleurAssistantVocal`
+  (`GET /assistant-vocal/etat`, `POST /assistant-vocal/questions`,
+  `POST /assistant-vocal/questions/{id}/voix`) ; côté site
+  `composants/BoutonVocal.tsx`, `DiscussionAssistant.tsx`, `AssistantVocal.tsx`
+  (chargé seulement pour ceux qui y ont droit), `outils/enregistreurVocal.ts`
+  (WAV 16 kHz fabriqué dans le navigateur).
+- **Tests** : PHPUnit 183/183, Vitest 192/192 ; essais réels avec les clés
+  (Soynade transcrit parfaitement l'enregistrement fait par le navigateur) et
+  parcours dans un navigateur (téléphone, ordinateur, thème sombre).
+
+**Risques acceptés pour l'instant** (Gemini reste sur l'offre **gratuite** :
+Google refuse les cartes prépayées, seules disponibles) :
+
+- le quota gratuit de Google est **partagé par tous les commerçants** et s'est
+  épuisé le 02/10 après quelques dizaines d'appels : l'assistant répondra
+  alors « ne répond pas pour le moment » ;
+- sur l'offre gratuite, Google peut utiliser les questions (noms de clients,
+  montants) pour améliorer ses produits : à dire dans les mentions légales
+  (voir 3.2) ;
+- Soynade reste payant : ≈ 13 à 21 F par question ;
+- l'API n'a que 4 processus Apache, et une question en occupe un 5 à 60
+  secondes : à surveiller au-delà de quelques utilisateurs simultanés.
+
+**À valider** : trois phrases en wolof écrites sans locuteur natif
+(« Dégguma bu baax. Mën nga ko waxaat ? », « Bësal fii », « Tey ñaata laa
+jaay ? »).
 
 ---
 

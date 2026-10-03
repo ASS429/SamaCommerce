@@ -68,10 +68,14 @@ Copie la sortie complète (`base64:....`). Tu la colleras dans Render.
    | `EMAIL_ADMIN` | votre adresse e-mail : les codes de la vérification en 2 étapes du compte administrateur y sont envoyés (`admin@samacommerce.sn` n'est pas une vraie boîte). Vide = l'administrateur ne peut pas activer cette vérification. Tant que votre domaine n'est pas vérifié chez Resend, mettez l'adresse du **titulaire du compte Resend**, la seule qui reçoit |
    | `RESEND_API_KEY` | clé Resend (`re_...`) pour envoyer les codes « mot de passe oublié ». Sans elle, le code n'est envoyé nulle part |
    | `SENTRY_LARAVEL_DSN` | facultatif : DSN d'un projet Sentry pour recevoir les erreurs de l'API et du navigateur. Vide = inerte |
+   | `CLE_API_SOYNADE` | clé de l'API Soynade (oreille wolof et voix de l'assistant vocal). Sans elle **ou** sans la suivante, le micro ne s'affiche pour personne |
+   | `CLE_API_GEMINI` | clé Google AI Studio (cerveau de l'assistant, et oreille du français) |
+   | `COMPTES_ASSISTANT_VOCAL` | facultatif : identifiants qui ont l'assistant **en plus** des abonnés dont le plan l'inclut (séparés par des virgules ; `*` = tout le monde). Utile pour l'essayer sur son propre compte |
 
    Déjà renseignées en clair dans `render.yaml` : `ORIGINES_CORS_AUTORISEES` et
    `URL_SITE_WEB` (adresse du site), `URL_SERVICE_IA` (adresse du service IA),
-   `VITE_URL_API` (adresse de l'API, côté site). Si les adresses Render de tes
+   `VITE_URL_API` (adresse de l'API, côté site), `QUOTA_ASSISTANT_VOCAL`
+   (questions par jour et par commerçant, 40). Si les adresses Render de tes
    services diffèrent, corrige-les **dans `render.yaml`**, pas dans le tableau de bord.
 
 4. **Apply** → Render construit les trois services (le premier build Docker prend

@@ -21,6 +21,8 @@ type Proprietes = {
   ecran: Ecran
   /** Ouvre un écran, dans la limite des droits de l'employé. */
   surNavigation: (ecran: Ecran) => void
+  /** État déjà lu par AssistantVocalDiffere : inutile de le redemander. */
+  etatInitial?: EtatAssistant
 }
 
 type Question = { audio: Blob } | { texte: string }
@@ -32,8 +34,8 @@ const DUREE_GUIDAGE_MS = 15_000
 
 const heureActuelle = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-export default function AssistantVocal({ bureau, ecran, surNavigation }: Proprietes) {
-  const [etat, definirEtat] = useState<EtatAssistant | null>(null)
+export default function AssistantVocal({ bureau, ecran, surNavigation, etatInitial }: Proprietes) {
+  const [etat, definirEtat] = useState<EtatAssistant | null>(etatInitial ?? null)
   const [langue, definirLangue] = useState<LangueAssistant>(lireLangueAssistant)
   const [langueChoisie, definirLangueChoisie] = useState(langueAssistantChoisie)
   const [messages, definirMessages] = useState<MessageDiscussion[]>([])
@@ -54,10 +56,11 @@ export default function AssistantVocal({ bureau, ecran, surNavigation }: Proprie
   navigation.current = surNavigation
 
   useEffect(() => {
+    if (etatInitial) return
     let actif = true
     ApiAssistant.etat().then((reponse) => { if (actif) definirEtat(reponse) }).catch(() => {})
     return () => { actif = false }
-  }, [])
+  }, [etatInitial])
 
   useEffect(() => () => {
     lecteur.current?.pause()

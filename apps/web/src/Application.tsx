@@ -40,7 +40,7 @@ import Equipe from './sections/Equipe'
 import Profil from './sections/Profil'
 import IaReappro from './sections/IaReappro'
 import Logo from './composants/Logo'
-import AssistantVocal from './composants/AssistantVocal'
+import AssistantVocal from './composants/AssistantVocalDiffere'
 
 const TITRES: Record<Ecran, string> = {
   accueil: traduire('titre.accueil'), 'toutes-boutiques': 'Toutes mes boutiques', vente: traduire('titre.vente'), stock: traduire('titre.stock'),

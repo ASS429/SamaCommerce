@@ -45,7 +45,7 @@ export default function Fournisseurs() {
 
   return (
     <>
-      <div className="page-entete"><h2>🚚 Fournisseurs</h2><button className="bouton-principal" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
+      <div className="page-entete"><h2>🚚 Fournisseurs</h2><button className="bouton-principal" data-guide="fournisseurs-ajouter" onClick={() => { definirEnEdition(null); definirFenetreOuverte(true) }}>+ Ajouter</button></div>
       <input className="barre-recherche" placeholder="🔍 Rechercher un fournisseur..." value={recherche} onChange={(e) => definirRecherche(e.target.value)} />
 
       {chargement && <ListeSquelette nombre={3} />}

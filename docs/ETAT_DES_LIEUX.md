@@ -38,7 +38,7 @@ plupart des choix d'exploitation ci-dessous.
 | Abonnements et administration | En ligne depuis le 02/10/2026 (09h19 UTC) : migration appliquée, 34 contrôles verts en production, parcours « Mon plan » vérifié dans un navigateur (voir 3.6) |
 | Dettes techniques soldées | En ligne depuis le 02/10/2026 (14h30 UTC) : 23 contrôles verts en production, parcours dans un navigateur (ordinateur, téléphone, compte de démonstration) sans erreur (voir 3.7) |
 | Assistant vocal (wolof, français) | En ligne depuis le 03/10/2026 (01h12 UTC), réservé aux abonnés : 26 contrôles verts en production sur 27 (le rouge concerne la remise à zéro de la démonstration, voir 3.8), parcours dans un navigateur sans erreur ; essai réel sur téléphone à faire par le propriétaire |
-| Tests | PHPUnit 184/184 · Vitest 192/192 · pytest 10/10 |
+| Tests | PHPUnit 187/187 · Vitest 192/192 · pytest 10/10 |
 | Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions et retrait des passerelles de transition le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
@@ -296,6 +296,25 @@ verrou bloque la journée. Sans gravité (la démonstration fonctionne avec les
 ventes de la veille) ; à revérifier le 04/10. À corriger : ne poser le verrou
 du jour qu'après la réussite (avec un verrou court « en cours »), et ne pas
 mettre en ligne juste après le premier appel de la journée.
+
+**Premier essai du propriétaire, le 03/10 au matin** : l'assistant fonctionne
+(« pour une V1 c'est parfait »), mais il est **lent** : le cerveau Gemini 3.8 de
+l'offre gratuite met 24 à 45 secondes. Le propriétaire a placé
+`gemini-3.5-flash-lite` en tête de `MODELES_GEMINI` dans Render (1,6 à 3,5 s,
+bons outils, wolof un peu moins naturel). Les autres pistes sont rangées pour
+la V2 (cerveau en un seul appel, modèle selon la langue, transcription affichée
+dès l'oreille, Gemini payant).
+
+**V1.1, le même jour** — défauts vus sur ses captures, corrigés : l'assistant
+annonçait « le bouton qui clignote » sur des pages où rien n'est entouré
+(chaque page dit désormais ce qu'on y fait, et l'outil précise s'il y a un
+bouton entouré : « + Nouvelle » des commandes, « + Ajouter » des
+fournisseurs et « 🔒 Clôturer la journée » de la caisse le sont devenus) ; il
+répondait parfois en français en mode wolof (la langue est rappelée à la fin
+des consignes et sous chaque question) ; il inventait la couleur des boutons ;
+« acheter un produit » ouvrait la vente au lieu des commandes ; il tutoyait en
+français. Rejoué sur les questions du propriétaire avec Flash-Lite : réponses
+dans la bonne langue, bons boutons, 1,5 à 2,8 s.
 
 **Défaut ancien corrigé dans la foulée** : le bouton « Essayer sans compte »
 de l'écran de connexion avait gardé son texte blanc, dessiné pour l'ancien fond

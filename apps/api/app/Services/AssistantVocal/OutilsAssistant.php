@@ -23,23 +23,41 @@ final class OutilsAssistant
 {
     /**
      * Pages vers lesquelles l'assistant peut guider : l'écran de l'application,
-     * le bouton à faire clignoter (attribut `data-guide`), la permission qui
-     * ouvre l'écran à un employé (même table que PERMISSION_PAR_ECRAN côté web),
-     * les noms affichés dans le menu (français, wolof) et le libellé du bouton.
+     * le bouton entouré à l'écran (attribut `data-guide`) et son libellé exact,
+     * la permission qui ouvre l'écran à un employé (même table que
+     * PERMISSION_PAR_ECRAN côté web), les noms du menu (français, wolof), et ce
+     * qu'on fait sur la page — dit au cerveau pour qu'il n'annonce jamais un
+     * bouton entouré là où il n'y en a pas (défaut vu en production le 03/10/2026).
      */
     public const CIBLES = [
-        'vente' => ['ecran' => 'vente', 'bouton' => null, 'permission' => 'vente', 'page' => 'Vendre', 'page_wolof' => 'Jaay'],
-        'stock' => ['ecran' => 'stock', 'bouton' => null, 'permission' => 'stock', 'page' => 'Stock', 'page_wolof' => 'Marsandiis'],
-        'stock-ajouter' => ['ecran' => 'stock', 'bouton' => 'stock-ajouter', 'permission' => 'stock', 'page' => 'Stock', 'page_wolof' => 'Marsandiis', 'appuyer' => '+ Ajouter'],
-        'credits' => ['ecran' => 'credits', 'bouton' => null, 'permission' => 'vente', 'page' => 'Crédits', 'page_wolof' => 'Bor'],
-        'clients' => ['ecran' => 'clients', 'bouton' => null, 'permission' => 'clients', 'page' => 'Clients', 'page_wolof' => 'Kliyaan'],
-        'clients-ajouter' => ['ecran' => 'clients', 'bouton' => 'clients-ajouter', 'permission' => 'clients', 'page' => 'Clients', 'page_wolof' => 'Kliyaan', 'appuyer' => '+ Ajouter'],
-        'retours-nouveau' => ['ecran' => 'retours', 'bouton' => 'retours-nouveau', 'permission' => 'credits', 'page' => 'Retours', 'page_wolof' => 'Dellu', 'appuyer' => '+ Nouveau retour'],
-        'caisse' => ['ecran' => 'caisse', 'bouton' => null, 'permission' => 'caisse', 'page' => 'Caisse', 'page_wolof' => 'Kees'],
-        'rapports' => ['ecran' => 'rapports', 'bouton' => null, 'permission' => 'rapports', 'page' => 'Chiffres', 'page_wolof' => 'Limu'],
-        'inventaire' => ['ecran' => 'inventaire', 'bouton' => null, 'permission' => 'stock', 'page' => 'Inventaire', 'page_wolof' => 'Teew'],
-        'fournisseurs' => ['ecran' => 'fournisseurs', 'bouton' => null, 'permission' => 'fournisseurs', 'page' => 'Fournisseurs', 'page_wolof' => 'Jaaykat'],
-        'commandes' => ['ecran' => 'commandes', 'bouton' => null, 'permission' => 'commandes', 'page' => 'Commandes', 'page_wolof' => 'Komaand'],
+        'vente' => ['ecran' => 'vente', 'bouton' => null, 'permission' => 'vente', 'page' => 'Vendre', 'page_wolof' => 'Jaay',
+            'a_faire' => 'toucher les produits vendus pour les mettre au panier, puis « 💰 ENCAISSER » ; pour une vente à crédit, choisir « Crédit » au moment de payer'],
+        'stock' => ['ecran' => 'stock', 'bouton' => null, 'permission' => 'stock', 'page' => 'Stock', 'page_wolof' => 'Marsandiis',
+            'a_faire' => 'pour changer le prix ou la quantité d’un produit : « ✏️ Modifier » sur sa fiche'],
+        'stock-ajouter' => ['ecran' => 'stock', 'bouton' => 'stock-ajouter', 'permission' => 'stock', 'page' => 'Stock', 'page_wolof' => 'Marsandiis', 'appuyer' => '+ Ajouter',
+            'a_faire' => 'appuyer sur « + Ajouter », puis remplir la fiche du nouveau produit'],
+        'credits' => ['ecran' => 'credits', 'bouton' => null, 'permission' => 'vente', 'page' => 'Crédits', 'page_wolof' => 'Bor',
+            'a_faire' => 'pour un remboursement : « 💰 Il a payé » sur la ligne du client ; pour un nouveau crédit : remplir le formulaire, puis « 💾 Enregistrer à crédit »'],
+        'clients' => ['ecran' => 'clients', 'bouton' => null, 'permission' => 'clients', 'page' => 'Clients', 'page_wolof' => 'Kliyaan',
+            'a_faire' => 'la liste des clients s’affiche ; toucher un client pour voir sa fiche'],
+        'clients-ajouter' => ['ecran' => 'clients', 'bouton' => 'clients-ajouter', 'permission' => 'clients', 'page' => 'Clients', 'page_wolof' => 'Kliyaan', 'appuyer' => '+ Ajouter',
+            'a_faire' => 'appuyer sur « + Ajouter », puis remplir la fiche du client'],
+        'retours-nouveau' => ['ecran' => 'retours', 'bouton' => 'retours-nouveau', 'permission' => 'credits', 'page' => 'Retours', 'page_wolof' => 'Dellu', 'appuyer' => '+ Nouveau retour',
+            'a_faire' => 'appuyer sur « + Nouveau retour », puis choisir la vente concernée'],
+        'caisse' => ['ecran' => 'caisse', 'bouton' => 'caisse-cloturer', 'permission' => 'caisse', 'page' => 'Caisse', 'page_wolof' => 'Kees', 'appuyer' => '🔒 Clôturer la journée',
+            'a_faire' => 'vérifier les montants du jour, puis appuyer sur « 🔒 Clôturer la journée »'],
+        'rapports' => ['ecran' => 'rapports', 'bouton' => null, 'permission' => 'rapports', 'page' => 'Chiffres', 'page_wolof' => 'Limu',
+            'a_faire' => 'les chiffres et les graphiques de la boutique s’affichent'],
+        'inventaire' => ['ecran' => 'inventaire', 'bouton' => null, 'permission' => 'stock', 'page' => 'Inventaire', 'page_wolof' => 'Teew',
+            'a_faire' => 'la liste des produits à compter s’affiche, avec le stock attendu'],
+        'fournisseurs' => ['ecran' => 'fournisseurs', 'bouton' => null, 'permission' => 'fournisseurs', 'page' => 'Fournisseurs', 'page_wolof' => 'Jaaykat',
+            'a_faire' => 'la liste des fournisseurs s’affiche'],
+        'fournisseurs-ajouter' => ['ecran' => 'fournisseurs', 'bouton' => 'fournisseurs-ajouter', 'permission' => 'fournisseurs', 'page' => 'Fournisseurs', 'page_wolof' => 'Jaaykat', 'appuyer' => '+ Ajouter',
+            'a_faire' => 'appuyer sur « + Ajouter », puis remplir la fiche du fournisseur'],
+        'commandes' => ['ecran' => 'commandes', 'bouton' => null, 'permission' => 'commandes', 'page' => 'Commandes', 'page_wolof' => 'Komaand',
+            'a_faire' => 'la liste des commandes aux fournisseurs s’affiche'],
+        'commandes-nouvelle' => ['ecran' => 'commandes', 'bouton' => 'commandes-nouvelle', 'permission' => 'commandes', 'page' => 'Commandes', 'page_wolof' => 'Komaand', 'appuyer' => '+ Nouvelle',
+            'a_faire' => 'appuyer sur « + Nouvelle » pour commander de la marchandise à un fournisseur'],
     ];
 
     /** Stock « bientôt fini » : 5 unités d'affichage ou moins (5 pièces, 5 kg, 5 L). */
@@ -114,10 +132,12 @@ final class OutilsAssistant
                         'cible' => [
                             'type' => 'string',
                             'enum' => array_keys(self::CIBLES),
-                            'description' => 'vente : encaisser une vente (comptant ou à crédit) ; stock-ajouter : créer un produit ; '
+                            'description' => 'vente : un client achète, encaisser une vente (comptant ou à crédit) ; stock-ajouter : créer un produit ; '
                                 .'stock : voir ou corriger le stock, changer un prix ; credits : dettes et remboursements ; '
                                 .'clients-ajouter : créer un client ; retours-nouveau : annuler une vente ou reprendre une marchandise ; '
-                                .'caisse : clôturer la journée ; rapports : chiffres et graphiques.',
+                                .'caisse : clôturer la journée ; rapports : chiffres et graphiques ; '
+                                .'commandes-nouvelle : le commerçant veut ACHETER ou commander de la marchandise à un fournisseur (se réapprovisionner) ; '
+                                .'fournisseurs-ajouter : créer un fournisseur.',
                         ],
                     ],
                 ],
@@ -281,12 +301,19 @@ final class OutilsAssistant
         }
         $this->action = ['type' => 'guider', 'ecran' => $page['ecran'], 'bouton' => $page['bouton']];
 
-        return array_filter([
+        $retour = [
             'statut' => 'page ouverte',
             'page' => $page['page'],
             'page_en_wolof' => $page['page_wolof'],
-            'bouton_qui_clignote' => $page['appuyer'] ?? null,
-        ]);
+            'a_faire' => $page['a_faire'],
+        ];
+        if (isset($page['appuyer'])) {
+            $retour['bouton_entoure'] = $page['appuyer'];
+        } else {
+            $retour['remarque'] = 'Aucun bouton n’est entouré sur cette page : dis seulement quoi y faire.';
+        }
+
+        return $retour;
     }
 
     /** @return Produit[] les produits dont le nom contient la recherche, le plus court d'abord */

@@ -113,7 +113,7 @@ export default function Caisse() {
           <div className="panneau-chiffre"><b>{fcfa(jour.wave)}</b><span>📱 Wave</span></div>
           <div className="panneau-chiffre"><b>{fcfa(jour.orange)}</b><span>📞 Orange</span></div>
         </div>
-        <button className="panneau-appel" onClick={cloturer} disabled={cloture}>
+        <button className="panneau-appel" data-guide="caisse-cloturer" onClick={cloturer} disabled={cloture}>
           {cloture ? 'Clôture en cours…' : '🔒 Clôturer la journée'}
         </button>
       </div>

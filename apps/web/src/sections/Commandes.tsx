@@ -52,7 +52,7 @@ export default function Commandes() {
 
   return (
     <>
-      <div className="page-entete"><h2>📋 Commandes</h2><button className="bouton-principal" onClick={() => definirFenetreOuverte(true)}>+ Nouvelle</button></div>
+      <div className="page-entete"><h2>📋 Commandes</h2><button className="bouton-principal" data-guide="commandes-nouvelle" onClick={() => definirFenetreOuverte(true)}>+ Nouvelle</button></div>
 
       {chargement && <ListeSquelette nombre={3} />}
       {!chargement && erreur && <ErreurChargement erreur={erreur} surReessai={charger} />}

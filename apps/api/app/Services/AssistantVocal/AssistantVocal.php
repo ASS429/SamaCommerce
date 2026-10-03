@@ -109,7 +109,7 @@ final class AssistantVocal
                 $reponse = self::PAS_ENTENDU[$langue];
             } else {
                 $debut = hrtime(true);
-                [$reponse, $modele] = $this->cerveau->repondre($transcription, Consignes::pour($proprietaire, $langue), $outils);
+                [$reponse, $modele] = $this->cerveau->repondre(Consignes::message($transcription, $langue), Consignes::pour($proprietaire, $langue), $outils);
                 $journal->duree_cerveau_ms = self::millisecondesDepuis($debut);
                 $journal->modele = $modele;
             }

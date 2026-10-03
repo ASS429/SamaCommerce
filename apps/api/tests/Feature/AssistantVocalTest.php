@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\QuestionAssistant;
 use App\Models\Utilisateur;
 use App\Services\AssistantVocal\AssistantVocal;
+use App\Services\AssistantVocal\OutilsAssistant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
@@ -224,7 +225,7 @@ class AssistantVocalTest extends TestCase
             && collect($r->data())->firstWhere('name', 'language')['contents'] === 'wo');
         // Le cerveau reçoit le wolof tel quel (pas de traduction, pas de son) et répond en wolof.
         Http::assertSent(fn (Request $r) => str_starts_with($r->url(), self::GEMINI)
-            && $r['contents'][0]['parts'][0]['text'] === 'Tey niata laa jaay ?'
+            && str_starts_with($r['contents'][0]['parts'][0]['text'], 'Tey niata laa jaay ?')
             && str_contains($r['system_instruction']['parts'][0]['text'], 'Réponds uniquement en wolof'));
         Http::assertSent(fn (Request $r) => $r->url() === self::VOIX && $r['language'] === 'wo');
         $this->assertSame('voix', QuestionAssistant::sole()->mode);
@@ -329,11 +330,68 @@ class AssistantVocalTest extends TestCase
             ->assertOk()
             ->assertJson(['action' => ['type' => 'guider', 'ecran' => 'stock', 'bouton' => 'stock-ajouter']]);
 
-        $this->assertSame(
-            ['statut' => 'page ouverte', 'page' => 'Stock', 'page_en_wolof' => 'Marsandiis', 'bouton_qui_clignote' => '+ Ajouter'],
-            $this->reponsesDesOutils()[0],
-        );
+        $this->assertSame([
+            'statut' => 'page ouverte', 'page' => 'Stock', 'page_en_wolof' => 'Marsandiis',
+            'a_faire' => 'appuyer sur « + Ajouter », puis remplir la fiche du nouveau produit',
+            'bouton_entoure' => '+ Ajouter',
+        ], $this->reponsesDesOutils()[0]);
         $this->assertSame('stock', QuestionAssistant::sole()->action);
+    }
+
+    public function test_une_page_sans_bouton_entoure_ne_fait_rien_annoncer_de_tel(): void
+    {
+        Http::fake([
+            self::GEMINI.'*' => Http::sequence()
+                ->push($this->appelOutil('guider', ['cible' => 'vente']))
+                ->push($this->texteGemini('Touchez les produits vendus, puis « 💰 ENCAISSER ».')),
+            self::VOIX => Http::response('MP3', 200, ['Content-Type' => 'audio/mpeg']),
+        ]);
+
+        $this->postJson('/api/assistant-vocal/questions', ['langue' => 'wo', 'texte' => 'Jaay naa benn peeru daal'], $this->entetes($this->jeton))
+            ->assertOk()
+            ->assertJson(['action' => ['type' => 'guider', 'ecran' => 'vente', 'bouton' => null]]);
+
+        // Défaut vu en production le 03/10 : « appuyez sur le bouton qui clignote » sur une page où rien ne clignote.
+        $retour = $this->reponsesDesOutils()[0];
+        $this->assertArrayNotHasKey('bouton_entoure', $retour);
+        $this->assertStringContainsString('ENCAISSER', $retour['a_faire']);
+        $this->assertStringContainsString('Aucun bouton', $retour['remarque']);
+    }
+
+    public function test_les_commandes_et_la_caisse_ont_leur_bouton_entoure(): void
+    {
+        $this->assertSame('commandes-nouvelle', OutilsAssistant::CIBLES['commandes-nouvelle']['bouton']);
+        $this->assertSame('+ Nouvelle', OutilsAssistant::CIBLES['commandes-nouvelle']['appuyer']);
+        $this->assertSame('caisse-cloturer', OutilsAssistant::CIBLES['caisse']['bouton']);
+        foreach (OutilsAssistant::CIBLES as $cible => $page) {
+            $this->assertNotEmpty($page['a_faire'], "a_faire de {$cible}");
+            $this->assertSame(isset($page['appuyer']), $page['bouton'] !== null, "bouton et libellé de {$cible}");
+        }
+    }
+
+    public function test_la_langue_de_la_reponse_est_rappelee_au_cerveau(): void
+    {
+        Http::fake([
+            self::GEMINI.'*' => Http::response($this->texteGemini('Bësal ci « + Ajouter ».')),
+            self::VOIX => Http::response('MP3', 200, ['Content-Type' => 'audio/mpeg']),
+        ]);
+
+        // Défaut vu en production le 03/10 : ce message écrit avait reçu une réponse en français.
+        $this->postJson('/api/assistant-vocal/questions', ['langue' => 'wo', 'texte' => 'Dama beug dougueul produit bou bess'], $this->entetes($this->jeton))
+            ->assertOk();
+
+        Http::assertSent(function (Request $r) {
+            if (! str_starts_with($r->url(), self::GEMINI)) {
+                return false;
+            }
+            $consignes = $r['system_instruction']['parts'][0]['text'];
+            $question = $r['contents'][0]['parts'][0]['text'];
+
+            return str_starts_with($question, 'Dama beug dougueul produit bou bess')
+                && str_contains($question, 'Réponds en WOLOF')
+                && str_contains($consignes, 'RAPPEL : Réponds en WOLOF')
+                && str_contains($consignes, 'ne décris jamais leur couleur');
+        });
     }
 
     public function test_un_client_inconnu_n_est_jamais_invente(): void

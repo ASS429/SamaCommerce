@@ -37,7 +37,8 @@ plupart des choix d'exploitation ci-dessous.
 | IA | Modèles entraînés servis (`methode: "modele"`) |
 | Abonnements et administration | En ligne depuis le 02/10/2026 (09h19 UTC) : migration appliquée, 34 contrôles verts en production, parcours « Mon plan » vérifié dans un navigateur (voir 3.6) |
 | Dettes techniques soldées | En ligne depuis le 02/10/2026 (14h30 UTC) : 23 contrôles verts en production, parcours dans un navigateur (ordinateur, téléphone, compte de démonstration) sans erreur (voir 3.7) |
-| Tests | PHPUnit 135/135 · Vitest 157/157 · pytest 10/10 |
+| Assistant vocal (wolof, français) | En ligne depuis le 03/10/2026 (01h12 UTC), réservé aux abonnés : 26 contrôles verts en production sur 27 (le rouge concerne la remise à zéro de la démonstration, voir 3.8), parcours dans un navigateur sans erreur ; essai réel sur téléphone à faire par le propriétaire |
+| Tests | PHPUnit 184/184 · Vitest 192/192 · pytest 10/10 |
 | Code en français | API, base de données et IA depuis le 29/09/2026 ; site depuis le 30/09/2026 ; finitions et retrait des passerelles de transition le 01/10/2026 (détail : [`GLOSSAIRE_NOMMAGE.md`](GLOSSAIRE_NOMMAGE.md), section 12) |
 
 ---
@@ -222,7 +223,7 @@ de l'amorceur, devenu visible chaque jour avec la remise à zéro). L'amorceur
 date désormais ses ventes sur les 30 derniers jours ; effet à la remise à zéro
 suivante.
 
-### 3.8 — Assistant vocal en wolof et en français *(prêt, pas encore en ligne)*
+### 3.8 — Assistant vocal en wolof et en français *(en ligne depuis le 03/10/2026)*
 
 Le commerçant **maintient le micro vert, comme pour un vocal WhatsApp**, et
 pose sa question en wolof ou en français. L'assistant répond par écrit puis à
@@ -275,6 +276,31 @@ Google refuse les cartes prépayées, seules disponibles) :
 **À valider** : trois phrases en wolof écrites sans locuteur natif
 (« Dégguma bu baax. Mën nga ko waxaat ? », « Bësal fii », « Tey ñaata laa
 jaay ? »).
+
+**Mise en ligne du 03/10/2026** : sauvegarde chiffrée lancée à la main juste
+avant (réussie), puis `main` avancé de `18cddc9` à `834b16d` ; en ligne à
+01h12 UTC, six minutes après l'envoi. Les clés Soynade et Gemini ont été
+posées par le propriétaire dans Render. Vérifié en production : les quatre
+adresses neuves refusent un appel sans jeton (401), CORS accepte l'envoi
+depuis le site, le compte de démonstration n'a ni le micro ni le droit de
+poser une question (403), la migration a coché l'assistant dans Essentiel,
+Pro et Entreprise (pas dans Gratuit), le site ne télécharge le code de
+l'assistant que pour ceux qui y ont droit, « Mon plan » le présente ; parcours
+dans un navigateur sur téléphone et ordinateur, sans erreur.
+
+**Remise à zéro de la démonstration coupée ce jour-là** : elle se lance après
+le premier appel de `/api/sante` de la journée, mais le verrou du jour est
+posé AVANT le travail. Le premier appel du 03/10 (01h11, ancienne version) l'a
+lancée, et le remplacement du conteneur par la mise en ligne l'a coupée : le
+verrou bloque la journée. Sans gravité (la démonstration fonctionne avec les
+ventes de la veille) ; à revérifier le 04/10. À corriger : ne poser le verrou
+du jour qu'après la réussite (avec un verrou court « en cours »), et ne pas
+mettre en ligne juste après le premier appel de la journée.
+
+**Défaut ancien corrigé dans la foulée** : le bouton « Essayer sans compte »
+de l'écran de connexion avait gardé son texte blanc, dessiné pour l'ancien fond
+violet ; posé sur la carte claire, il était illisible. Il devient une pastille
+teintée (titre 15:1, sous-titre 4,9:1, lisible aussi en thème sombre).
 
 ---
 

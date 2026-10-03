@@ -12,14 +12,16 @@
  *     traduction française effaçait le dërëm : 10 000 F devenaient 2 000 F) ;
  *   - la voix : Oolel-Voices (Soynade).
  *
- * Phase bêta : seuls les comptes listés dans COMPTES_ASSISTANT_VOCAL voient le
- * bouton. Chaque question coûte environ 20 à 25 F (oreille + voix), d'où le
- * quota quotidien.
+ * Réservé aux abonnés dont le plan inclut la fonctionnalité « assistant_vocal »
+ * (cochée pour les plans payants, réglable dans l'écran Plans de
+ * l'administration) ; pas pendant l'essai gratuit. Chaque question coûte
+ * environ 13 à 21 F chez Soynade (oreille wolof + voix), d'où le quota quotidien.
  */
 return [
 
-    // Identifiants de connexion autorisés, séparés par des virgules. « * »
-    // ouvre l'assistant à tous les comptes ; vide, il n'est proposé à personne.
+    // Comptes qui y ont droit EN PLUS des abonnés (essais, démonstrations),
+    // identifiants séparés par des virgules. « * » l'ouvre à tous les comptes ;
+    // vide, seuls les abonnés l'ont.
     'comptes' => array_values(array_filter(array_map(
         'trim',
         explode(',', (string) env('COMPTES_ASSISTANT_VOCAL', '')),

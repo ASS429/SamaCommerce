@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\PaiementAbonnement;
+use App\Models\Plan;
 use App\Models\QuestionAssistant;
 use App\Models\Utilisateur;
 use App\Services\AssistantVocal\AssistantVocal;
@@ -87,6 +89,58 @@ class AssistantVocalTest extends TestCase
         $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))
             ->assertOk()
             ->assertExactJson(['disponible' => true, 'questions_restantes' => 40, 'duree_max_secondes' => 30]);
+    }
+
+    // ── Réservé aux abonnés ──────────────────────────────────────────────────
+
+    public function test_un_abonne_dont_le_plan_inclut_l_assistant_a_le_micro(): void
+    {
+        config(['assistant_vocal.comptes' => []]);
+        foreach (['essentiel', 'pro', 'entreprise'] as $code) {
+            $this->assertTrue(Plan::parCode($code)->inclut('assistant_vocal'), "plan {$code}");
+        }
+        $this->abonner('essentiel');
+
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))
+            ->assertOk()->assertJson(['disponible' => true, 'questions_restantes' => 40]);
+    }
+
+    public function test_ni_l_essai_gratuit_ni_le_plan_gratuit_n_ont_l_assistant(): void
+    {
+        config(['assistant_vocal.comptes' => []]);
+        Http::fake();
+
+        // Juste inscrit : essai du plan Pro, mais aucun abonnement payé.
+        $this->assertNotNull($this->proprietaire->essai_jusqu_au);
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))->assertJson(['disponible' => false]);
+        $this->postJson('/api/assistant-vocal/questions', ['langue' => 'fr', 'texte' => 'Bonjour'], $this->entetes($this->jeton))
+            ->assertForbidden();
+
+        // Essai terminé : plan Gratuit.
+        $this->proprietaire->update(['essai_jusqu_au' => null]);
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))->assertJson(['disponible' => false]);
+        Http::assertNothingSent();
+    }
+
+    public function test_l_administrateur_peut_retirer_l_assistant_d_un_plan(): void
+    {
+        config(['assistant_vocal.comptes' => []]);
+        $this->abonner('pro');
+        $pro = Plan::parCode('pro');
+        $pro->update(['fonctionnalites' => array_values(array_diff($pro->fonctionnalites, ['assistant_vocal']))]);
+        Plan::oublierCatalogue();
+
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($this->jeton))->assertJson(['disponible' => false]);
+    }
+
+    public function test_l_employe_d_un_abonne_a_le_micro_de_la_boutique(): void
+    {
+        config(['assistant_vocal.comptes' => []]);
+        $this->abonner('pro');
+        [, $jetonEmploye] = $this->creerEmploye($this->proprietaire, ['vente' => true]);
+
+        // C'est le plan du PROPRIÉTAIRE qui compte (l'employé, lui, est en essai).
+        $this->getJson('/api/assistant-vocal/etat', $this->entetes($jetonEmploye))->assertJson(['disponible' => true]);
     }
 
     // ── Les trois étapes : oreille, cerveau, voix ────────────────────────────
@@ -439,6 +493,17 @@ class AssistantVocalTest extends TestCase
     }
 
     // ── Outils de test ───────────────────────────────────────────────────────
+
+    /** Un mois payé (et validé) du plan donné, essai terminé. */
+    private function abonner(string $plan): void
+    {
+        $this->proprietaire->update(['essai_jusqu_au' => null]);
+        PaiementAbonnement::create([
+            'utilisateur_id' => $this->proprietaire->id, 'plan_code' => $plan, 'periode' => 'mois',
+            'montant_attendu' => 5000, 'montant_declare' => 5000, 'moyen' => 'wave', 'statut' => 'valide',
+            'debut_le' => '2026-10-01', 'fin_le' => '2026-10-31',
+        ]);
+    }
 
     private function creerProduit(string $nom, int $prix): int
     {

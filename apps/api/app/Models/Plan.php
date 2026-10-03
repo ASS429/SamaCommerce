@@ -43,6 +43,7 @@ class Plan extends Modele
         'livraisons' => 'Livraisons',
         'journal_activite' => 'Journal d’activité',
         'tableau_boutiques' => 'Tableau commun à toutes les boutiques',
+        'assistant_vocal' => 'Assistant vocal (wolof et français)',
         'accompagnement' => 'Installation et formation sur place',
     ];
 

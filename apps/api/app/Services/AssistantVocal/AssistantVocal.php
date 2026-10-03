@@ -4,6 +4,7 @@ namespace App\Services\AssistantVocal;
 
 use App\Models\QuestionAssistant;
 use App\Models\Utilisateur;
+use App\Services\Abonnements;
 
 /**
  * Une question à l'assistant, du message vocal à la réponse lue :
@@ -18,6 +19,9 @@ use App\Models\Utilisateur;
  */
 final class AssistantVocal
 {
+    /** Code de la fonctionnalité dans le catalogue des plans (Plan::FONCTIONNALITES). */
+    public const FONCTIONNALITE = 'assistant_vocal';
+
     /** La voix d'une réponse se demande dans les minutes qui suivent, et une seule fois (elle est facturée). */
     public const VOIX_DISPONIBLE_MINUTES = 10;
 
@@ -38,12 +42,27 @@ final class AssistantVocal
         return filled(config('assistant_vocal.soynade.cle')) && filled(config('assistant_vocal.gemini.cle'));
     }
 
-    /** Ouvert au commerçant ? (la bêta est réservée aux comptes listés, ou à tous avec « * ») */
+    /**
+     * Ouvert au commerçant ?
+     *
+     * Réservé aux ABONNÉS dont le plan inclut l'assistant : période payée (ou
+     * offerte par l'administrateur), ou délai de grâce. Pas pendant l'essai
+     * gratuit : chaque question est facturée par Soynade. La liste
+     * COMPTES_ASSISTANT_VOCAL l'ouvre EN PLUS à d'autres comptes, pour les
+     * essais (« * » = tout le monde).
+     */
     public static function estOuvertA(Utilisateur $proprietaire): bool
     {
+        if (! self::estActive()) {
+            return false;
+        }
         $comptes = config('assistant_vocal.comptes', []);
+        if (in_array('*', $comptes, true) || in_array($proprietaire->identifiant, $comptes, true)) {
+            return true;
+        }
+        $etat = Abonnements::etat($proprietaire);
 
-        return self::estActive() && (in_array('*', $comptes, true) || in_array($proprietaire->identifiant, $comptes, true));
+        return in_array($etat->source, ['paye', 'grace'], true) && $etat->inclut(self::FONCTIONNALITE);
     }
 
     public static function questionsRestantes(Utilisateur $proprietaire): int

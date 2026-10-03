@@ -103,6 +103,7 @@ const FONCTIONS_EN_MOTS: [string[], string][] = [
   [['fournisseurs_commandes', 'inventaire_retours'], 'Fournisseurs, commandes et inventaire'],
   [['relances_whatsapp'], 'Relances de crédit par WhatsApp'],
   [['livraisons', 'journal_activite'], 'Livraisons et journal d’activité'],
+  [['assistant_vocal'], 'Assistant vocal : vos questions en wolof ou en français'],
   [['accompagnement'], 'Installation et formation sur place'],
 ]
 

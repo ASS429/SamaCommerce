@@ -6,8 +6,8 @@ const plan = (code: PlanPublic['code'], nom: string, prix: number, annuel: numbe
   code, nom, accroche: null, prix_mensuel: prix, prix_annuel: annuel, sur_devis: devis, prix_a_partir_de: devis ? 15000 : null,
   limites, fonctionnalites, ordre: 1,
 })
-// Le catalogue livré par la migration du 02/10/2026.
-const ESSENTIEL = ['rapports_complets', 'exports', 'relances_whatsapp', 'fournisseurs_commandes', 'inventaire_retours']
+// Le catalogue livré par les migrations du 02/10/2026 (abonnements, puis assistant vocal).
+const ESSENTIEL = ['rapports_complets', 'exports', 'relances_whatsapp', 'fournisseurs_commandes', 'inventaire_retours', 'assistant_vocal']
 const PRO = [...ESSENTIEL, 'livraisons', 'journal_activite', 'tableau_boutiques']
 const PLANS = [
   plan('gratuit', 'Gratuit', 0, 0, { boutiques: 1, employes: 0, produits: 100, ia: 5 }),
@@ -82,6 +82,7 @@ describe('ce que chaque plan apporte', () => {
     expect(atoutsDuPlan(PLANS[1], PLANS[0])).toEqual([
       'Produits illimités', '2 employés en plus de vous', '30 conseils de l’IA par mois',
       'Rapports complets, exports PDF et Excel', 'Fournisseurs, commandes et inventaire', 'Relances de crédit par WhatsApp',
+      'Assistant vocal : vos questions en wolof ou en français',
     ])
   })
 

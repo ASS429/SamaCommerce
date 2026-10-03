@@ -115,14 +115,15 @@ services:
         # silencieusement désactivée, le repli heuristique masquant la panne.
         value: https://samacommerce-ia.onrender.com
 
-      # ─ Assistant vocal (bêta) : oreille et voix chez Soynade, cerveau chez
-      #   Google (Gemini). Sans les deux clés, le micro ne s'affiche pour
-      #   personne. COMPTES_ASSISTANT_VOCAL liste les identifiants qui y ont
-      #   droit (séparés par des virgules ; « * » = tout le monde). ─
+      # ─ Assistant vocal : oreille et voix chez Soynade, cerveau chez Google
+      #   (Gemini). Sans les deux clés, le micro ne s'affiche pour personne.
+      #   Avec elles, il est réservé aux abonnés dont le plan l'inclut (écran
+      #   Plans de l'administration). COMPTES_ASSISTANT_VOCAL l'ouvre EN PLUS à
+      #   d'autres identifiants (séparés par des virgules ; « * » = tous). ─
       - key: CLE_API_SOYNADE
         sync: false
       - key: CLE_API_GEMINI
-        sync: false          # clé d'un projet Google AI Studio AVEC facturation
+        sync: false          # clé Google AI Studio ; offre gratuite pour l'instant (quota partagé, données utilisées par Google)
       - key: COMPTES_ASSISTANT_VOCAL
         sync: false
       - key: QUOTA_ASSISTANT_VOCAL
